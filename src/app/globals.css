@@ -1,0 +1,281 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Tokens
+   Verde y amarillo de Aldosivi. Se descarta cualquier acento que
+   pelee con esos dos: todas las fotos del sitio los tienen.
+   ============================================================ */
+
+@theme {
+  /* Color */
+  --color-verde-900: #0a3f24; /* bloques oscuros, footer */
+  --color-verde-600: #0f7a3d; /* acento principal, links, headers */
+  --color-verde-100: #e4f1e9; /* fondos suaves, filas alternas */
+  --color-amarillo: #ffc72c; /* acento secundario, resaltados, tarjeta */
+  --color-tinta: #111614; /* texto principal */
+  --color-gris: #5b6560; /* metadatos, epígrafes */
+  --color-papel: #ffffff;
+  --color-papel-alt: #f4f6f4; /* secciones alternas */
+  --color-linea: #dde2de;
+  --color-roja: #c42127; /* tarjeta roja, derrotas */
+
+  /* Tipografía */
+  --font-display: var(--fuente-display), system-ui, sans-serif;
+  --font-body: var(--fuente-body), Georgia, serif;
+  --font-data: var(--fuente-data), ui-monospace, monospace;
+
+  /* Layout */
+  --spacing-medida: 68ch; /* medida de lectura */
+  --container-sitio: 1200px;
+
+  /* Esquinas casi rectas: estética impresa */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-papel: #0d110f;
+    --color-papel-alt: #141a17;
+    --color-tinta: #ecf1ee;
+    --color-gris: #9aa5a0;
+    --color-linea: #26302b;
+    --color-verde-600: #34a15e; /* aclarado: mantiene AA sobre fondo oscuro */
+    --color-verde-100: #14261c;
+    /* El rojo del blueprint (#C42127) da 3.3:1 sobre el papel oscuro y no
+       llega a AA como texto. Aclarado: 6.3:1. */
+    --color-roja: #f06a6f;
+  }
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-papel);
+  color: var(--color-tinta);
+  font-family: var(--font-body);
+  text-rendering: optimizeLegibility;
+}
+
+/* Foco visible siempre. Requisito de accesibilidad, no decorativo. */
+:focus-visible {
+  outline: 2px solid var(--color-verde-600);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   Cuerpo de nota
+   REGLA NO NEGOCIABLE: 68ch de medida. El sitio de WordPress corre
+   a ~140 caracteres por línea y es el problema número uno de
+   legibilidad. No ampliar por razones de layout.
+   ============================================================ */
+
+.prose-nota {
+  max-width: var(--spacing-medida);
+  font-family: var(--font-body);
+  font-size: 1.125rem; /* 18px mobile */
+  line-height: 1.7;
+}
+
+@media (min-width: 768px) {
+  .prose-nota {
+    font-size: 1.1875rem; /* 19px desktop */
+    line-height: 1.75;
+  }
+}
+
+.prose-nota > * + * {
+  margin-top: 1.25em;
+}
+
+.prose-nota h2 {
+  font-family: var(--font-display);
+  font-size: 1.375rem; /* 22px */
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 2em;
+  padding-top: 0.6em;
+  border-top: 3px solid var(--color-verde-600); /* filete verde */
+}
+
+@media (min-width: 768px) {
+  .prose-nota h2 {
+    font-size: 1.75rem; /* 28px */
+  }
+}
+
+.prose-nota h3 {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.75em;
+}
+
+/* Subrayado obligatorio: el color solo no llega a AA. */
+.prose-nota a {
+  color: var(--color-verde-600);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.prose-nota blockquote {
+  border-left: 3px solid var(--color-amarillo);
+  padding-left: 1em;
+  font-style: italic;
+  color: var(--color-gris);
+}
+
+.prose-nota figure figcaption {
+  font-family: var(--font-display);
+  font-size: 0.8125rem; /* 13px */
+  color: var(--color-gris);
+  margin-top: 0.5em;
+}
+
+.prose-nota strong {
+  font-weight: 600;
+}
+
+/* Preflight de Tailwind deja las listas sin viñeta y sin sangría. Estas reglas
+   se las devuelven sólo adentro del cuerpo de la nota. */
+.prose-nota ul,
+.prose-nota ol {
+  padding-left: 1.4em;
+}
+
+.prose-nota ul {
+  list-style: disc;
+}
+
+.prose-nota ol {
+  list-style: decimal;
+}
+
+.prose-nota li + li {
+  margin-top: 0.4em;
+}
+
+.prose-nota li::marker {
+  color: var(--color-verde-600);
+}
+
+/* Un párrafo suelto adentro de un <li> no lleva el margen de bloque: TipTap
+   envuelve todo item en un <p> y sin esto cada viñeta arrastra 1.25em. */
+.prose-nota li > p {
+  margin-top: 0;
+}
+
+.prose-nota code {
+  font-family: var(--font-data);
+  font-size: 0.875em;
+  background: var(--color-papel-alt);
+  border: 1px solid var(--color-linea);
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.3em;
+}
+
+/* Separador de bloques: corto y centrado, no una línea de borde a borde. */
+.prose-nota hr {
+  width: 6rem;
+  margin: 2.5em auto;
+  border: 0;
+  border-top: 2px solid var(--color-linea);
+}
+
+/* ============================================================
+   La planilla embebida en el cuerpo de una nota
+
+   `<PlanillaPartido variante="embebida" />` cae adentro de `.prose-nota`, y su
+   marcador es un <h2>. Sin esto se lleva el filete verde, la serif y los 2em
+   de margen de los subtítulos de la nota. Las utilidades de Tailwind no
+   alcanzan para corregirlo: `.prose-nota h2` tiene más especificidad.
+   ============================================================ */
+
+.prose-nota .planilla h2,
+.prose-nota .planilla h3,
+.prose-nota .planilla h4 {
+  font-family: var(--font-display);
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* Las formaciones y la línea de tiempo son <ul> y <ol>, pero de estructura, no
+   de lectura: no llevan viñeta, ni sangría, ni el margen entre items del
+   cuerpo. */
+.prose-nota .planilla ul,
+.prose-nota .planilla ol {
+  padding-left: 0;
+  list-style: none;
+}
+
+.prose-nota .planilla li + li,
+.prose-nota .planilla li > p {
+  margin-top: 0;
+}
+
+/* Los apellidos de las formaciones no son links de lectura: no van en verde ni
+   subrayados como los del cuerpo de la nota. El único link de acción de la
+   planilla se marca con `.link-planilla`. */
+.prose-nota .planilla a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.prose-nota .planilla a.link-planilla,
+.prose-nota .planilla a:hover {
+  color: var(--color-verde-600);
+}
+
+/* ============================================================
+   Utilidades
+
+   Van en `@layer components` y no sueltas: las capas mandan por encima de la
+   especificidad, así que desde acá una clase de Tailwind —`text-[11px]`,
+   `text-verde-600`— puede pisar lo que definen. Sin la capa, `.meta` le gana a
+   cualquier utilidad y hay que pelearla con `!important`.
+   ============================================================ */
+
+@layer components {
+  /* Metadatos: categoría, fecha, temporada. */
+  .meta {
+    font-family: var(--font-display);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-gris);
+  }
+
+  /* Datos que tienen que alinearse en columna: minutos, dorsales, resultados. */
+  .dato {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Área táctil mínima. Aplicar a todo control del admin. */
+  .tactil {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

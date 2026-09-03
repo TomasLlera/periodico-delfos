@@ -1,0 +1,7 @@
+# pnpm 11 lee la configuración desde acá, no desde el campo "pnpm" de package.json,
+# y usa `allowBuilds` (mapa) en lugar del viejo `onlyBuiltDependencies` (lista).
+# Sin esto, pnpm ignora los postinstall de estos paquetes y sale con código 1,
+# lo que a su vez hace fallar cualquier `pnpm exec`.
+allowBuilds:
+  esbuild: true
+  protobufjs: true
