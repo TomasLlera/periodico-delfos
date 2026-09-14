@@ -1,5 +1,5 @@
 import { EventoPlanilla } from '@/components/partido/EventoPlanilla'
-import { agruparPorMinuto } from '@/lib/partido'
+import { agruparPorMinuto, ladosDelPartido } from '@/lib/partido'
 import type { PartidoCompleto } from '@/types'
 
 interface Props {
@@ -7,16 +7,29 @@ interface Props {
 }
 
 /**
- * La línea de tiempo vertical: los minutos bajan por una columna central y los
- * eventos caen a izquierda (Aldosivi) o derecha (rival).
+ * La línea de tiempo **horizontal**: los minutos avanzan de izquierda a derecha
+ * sobre un eje central, con los eventos de Aldosivi arriba y los del rival
+ * abajo.
  *
- * Cada minuto es un `<li>` con la frase completa de lo que pasó, y la grilla
- * va con `aria-hidden`. Es deliberado: una tabla de tres columnas leída celda
- * por celda —"Cortadi", "23 apóstrofo", vacío— no comunica nada. Lo que se
- * escucha es "Minuto 23. Gol de Aldosivi: Lucía Cortadi.".
+ * Era vertical y se dio vuelta porque dentro de una nota la versión vertical
+ * crece hacia abajo tanto como eventos tenga el partido, y empuja el resto del
+ * artículo fuera de la pantalla. En horizontal ocupa un alto fijo: un partido
+ * de dos goles y uno de nueve miden lo mismo.
  *
- * El `sr-only` de Tailwind es `position: absolute`, así que no ocupa una
- * columna de la grilla.
+ * Lo que **no** cambió, porque no es cuestión de layout:
+ *
+ * - Cada minuto sigue siendo un `<li>` con la frase completa de lo que pasó, y
+ *   la grilla visual sigue con `aria-hidden`. Una tabla leída celda por celda
+ *   —"Cortadi", "23 apóstrofo", vacío— no comunica nada; lo que se escucha es
+ *   "Minuto 23. Gol de Aldosivi: Lucía Cortadi.".
+ * - `agruparPorMinuto()` no se tocó: es lógica pura y no sabe de layout.
+ * - No hay links a jugadoras acá adentro: un elemento enfocable dentro de un
+ *   contenedor `aria-hidden` es una trampa de teclado.
+ *
+ * El scroll horizontal vive **sólo** en esta tira, nunca en el body de la
+ * página. `grid-rows-subgrid` es lo que mantiene el eje de minutos derecho: sin
+ * él cada columna resuelve sus tres filas por su cuenta y el eje queda en
+ * escalera cuando una columna tiene dos eventos y su vecina ninguno.
  */
 export function LineaDeTiempo({ partido }: Props) {
   const grupos = agruparPorMinuto(partido)
@@ -31,51 +44,60 @@ export function LineaDeTiempo({ partido }: Props) {
     )
   }
 
+  const lados = ladosDelPartido(partido)
+
   return (
-    // Sin tope de ancho, en un monitor las dos columnas quedan a media cuadra
-    // de la línea de minutos y la planilla deja de leerse como una planilla.
-    <ol className="mx-auto max-w-[34rem] font-display">
-      {grupos.map((grupo, indice) => (
-        <li
-          key={grupo.clave}
-          // `minmax(0,1fr)` y no `1fr`: con `1fr` el mínimo es el ancho del
-          // contenido, así que un evento largo —"Cortadi (errado)" con
-          // detalle— ensancha su columna y corre la línea de minutos de esa
-          // fila sola. Las casillas tienen que estar todas a la misma altura.
-          className="relative grid grid-cols-[minmax(0,1fr)_3.25rem_minmax(0,1fr)] items-stretch sm:grid-cols-[minmax(0,1fr)_3.75rem_minmax(0,1fr)]"
-        >
-          <span className="sr-only">{grupo.descripcion}</span>
+    <div className="font-display">
+      {/* Arriba y abajo del eje hay dos equipos y nada que lo diga: en vertical
+          lo resolvía la cabecera con los escudos a izquierda y derecha. Va
+          `aria-hidden` porque cada frase del `sr-only` ya nombra al equipo. */}
+      <p
+        aria-hidden="true"
+        className="meta mb-1 flex items-center justify-center gap-2 text-[11px]"
+      >
+        <span>↑ {lados.izquierda.nombre_corto}</span>
+        <span>·</span>
+        <span>↓ {lados.derecha.nombre_corto}</span>
+      </p>
 
-          <span
-            aria-hidden="true"
-            className="flex flex-col items-end justify-center gap-2 py-2.5 pr-2 sm:pr-3"
-          >
-            {grupo.aldosivi.map((evento) => (
-              <EventoPlanilla key={evento.id} evento={evento} alineacion="derecha" />
-            ))}
-          </span>
+      <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <ol className="grid w-max min-w-full auto-cols-[minmax(4.75rem,1fr)] grid-flow-col grid-rows-[1fr_auto_1fr]">
+          {grupos.map((grupo) => (
+            <li key={grupo.clave} className="row-span-3 grid grid-rows-subgrid">
+              {/* `sr-only` es `position: absolute`, así que no ocupa una fila
+                  de la subgrilla. */}
+              <span className="sr-only">{grupo.descripcion}</span>
 
-          <span
-            aria-hidden="true"
-            className={`flex items-center justify-center border-x border-t border-linea bg-papel-alt ${
-              indice === grupos.length - 1 ? 'border-b' : ''
-            }`}
-          >
-            <span className="dato py-1 text-[12px] font-medium text-gris sm:text-[13px]">
-              {grupo.etiqueta}
-            </span>
-          </span>
+              <span
+                aria-hidden="true"
+                className="flex flex-col items-center justify-end gap-1.5 px-1 pb-2"
+              >
+                {grupo.aldosivi.map((evento) => (
+                  <EventoPlanilla key={evento.id} evento={evento} alineacion="centro" />
+                ))}
+              </span>
 
-          <span
-            aria-hidden="true"
-            className="flex flex-col items-start justify-center gap-2 py-2.5 pl-2 sm:pl-3"
-          >
-            {grupo.rival.map((evento) => (
-              <EventoPlanilla key={evento.id} evento={evento} alineacion="izquierda" />
-            ))}
-          </span>
-        </li>
-      ))}
-    </ol>
+              <span
+                aria-hidden="true"
+                className="flex items-center justify-center border-y border-linea bg-papel-alt"
+              >
+                <span className="dato px-1 py-1 text-[12px] font-medium text-gris sm:text-[13px]">
+                  {grupo.etiqueta}
+                </span>
+              </span>
+
+              <span
+                aria-hidden="true"
+                className="flex flex-col items-center justify-start gap-1.5 px-1 pt-2"
+              >
+                {grupo.rival.map((evento) => (
+                  <EventoPlanilla key={evento.id} evento={evento} alineacion="centro" />
+                ))}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
   )
 }
