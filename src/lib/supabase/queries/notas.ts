@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createStaticClient } from '@/lib/supabase/server'
 import type { Categoria, NotaConRelaciones, NotaResumen } from '@/types'
 
 /**
@@ -159,9 +159,14 @@ export async function getNotasDeJugadora(
   return (data ?? []) as unknown as NotaResumen[]
 }
 
-/** Para generateStaticParams y el sitemap. */
+/**
+ * Para `generateStaticParams` y el sitemap.
+ *
+ * Usa el cliente estático, no el de request: los dos corren en build, donde
+ * pedir cookies tira "`cookies` was called outside a request scope".
+ */
 export async function getSlugsNotas(): Promise<{ slug: string; updated_at: string }[]> {
-  const supabase = await createClient()
+  const supabase = createStaticClient()
   const { data } = await supabase
     .from('notas')
     .select('slug, updated_at')

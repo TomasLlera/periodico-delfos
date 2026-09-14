@@ -8,6 +8,7 @@ import {
   nivelDeTitulo,
   parsearDocumento,
   partidoIdDeNodo,
+  partidoIdsDelCuerpo,
   tieneMarca,
 } from '@/lib/tiptap/esquema'
 
@@ -278,5 +279,56 @@ describe('inicioDeLista', () => {
     expect(inicioDeLista(undefined)).toBeUndefined()
     expect(inicioDeLista({ start: '3' })).toBeUndefined()
     expect(inicioDeLista({ start: 2.5 })).toBeUndefined()
+  })
+})
+
+describe('partidoIdsDelCuerpo', () => {
+  const planilla = (partidoId: unknown) => ({ type: 'planilla', attrs: { partidoId } })
+
+  it('junta los ids de las planillas embebidas, sin repetir', () => {
+    const cuerpo = {
+      type: 'doc',
+      content: [
+        { type: 'paragraph', content: [{ type: 'text', text: 'Hola' }] },
+        planilla('p-1'),
+        planilla('p-2'),
+        planilla('p-1'),
+      ],
+    }
+
+    expect(partidoIdsDelCuerpo(cuerpo)).toEqual(['p-1', 'p-2'])
+  })
+
+  it('encuentra una planilla anidada adentro de otro nodo', () => {
+    const cuerpo = {
+      type: 'doc',
+      content: [
+        { type: 'blockquote', content: [planilla('p-hondo')] },
+      ],
+    }
+
+    expect(partidoIdsDelCuerpo(cuerpo)).toEqual(['p-hondo'])
+  })
+
+  it('ignora las planillas sin un partidoId usable', () => {
+    const cuerpo = {
+      type: 'doc',
+      content: [planilla(''), planilla(null), { type: 'planilla' }, planilla('p-ok')],
+    }
+
+    expect(partidoIdsDelCuerpo(cuerpo)).toEqual(['p-ok'])
+  })
+
+  it('devuelve una lista vacía si el cuerpo no es un documento', () => {
+    expect(partidoIdsDelCuerpo('<p>WordPress</p>')).toEqual([])
+    expect(partidoIdsDelCuerpo(null)).toEqual([])
+    expect(partidoIdsDelCuerpo({ type: 'doc' })).toEqual([])
+  })
+
+  it('no se cuelga con un documento absurdamente anidado', () => {
+    let nodo: Record<string, unknown> = planilla('p-fondo')
+    for (let i = 0; i < 400; i += 1) nodo = { type: 'blockquote', content: [nodo] }
+
+    expect(() => partidoIdsDelCuerpo({ type: 'doc', content: [nodo] })).not.toThrow()
   })
 })

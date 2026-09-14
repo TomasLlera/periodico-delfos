@@ -18,6 +18,7 @@ import { Fragment, type ReactNode } from 'react'
 import { ImagenResponsive } from '@/components/content/ImagenResponsive'
 import { PlanillaPartido } from '@/components/partido/PlanillaPartido'
 import {
+  PROFUNDIDAD_MAXIMA,
   atributosImagen,
   esExterno,
   hrefDeMarcas,
@@ -46,12 +47,6 @@ export type MapaDePartidos = ReadonlyMap<string, PartidoCompleto>
 export function mapaDePartidos(partidos: readonly PartidoCompleto[]): MapaDePartidos {
   return new Map(partidos.map((partido) => [partido.id, partido]))
 }
-
-/**
- * Corte de seguridad ante un documento anidado sin fin. Una crónica real no
- * pasa de tres o cuatro niveles (lista → item → párrafo → texto).
- */
-const PROFUNDIDAD_MAXIMA = 12
 
 interface Contexto {
   partidos: MapaDePartidos
@@ -201,6 +196,9 @@ function renderNodo(
           partido={partido}
           variante="embebida"
           nivelTitulo={contexto.nivelBase}
+          // Igual que la del pie de la nota: es un aparte en medio del texto y
+          // el lector tiene que poder cerrarla para seguir leyendo.
+          plegable
         />
       )
     }

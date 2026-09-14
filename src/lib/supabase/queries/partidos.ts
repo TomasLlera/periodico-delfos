@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createStaticClient } from '@/lib/supabase/server'
 import type { PartidoCompleto, PartidoConEquipos } from '@/types'
 
 /**
@@ -37,6 +37,29 @@ export async function getPartidoPorSlug(slug: string): Promise<PartidoCompleto |
   // PostgREST no garantiza orden en las relaciones anidadas.
   partido.eventos.sort((a, b) => a.minuto - b.minuto || a.adicionado - b.adicionado)
   return partido
+}
+
+/**
+ * Los partidos que embebe el cuerpo de una nota, en **una sola** consulta.
+ *
+ * `<CuerpoTipTap />` no consulta la base: recibe un mapa ya armado. La página
+ * junta los ids con `partidoIdsDelCuerpo()` y los pide todos de una; pedirlos
+ * desde cada nodo `planilla` serían N consultas en serie.
+ */
+export async function getPartidosPorIds(
+  ids: readonly string[],
+): Promise<PartidoCompleto[]> {
+  if (ids.length === 0) return []
+
+  const supabase = await createClient()
+  const { data } = await supabase.from('partidos').select(CAMPOS_COMPLETO).in('id', ids)
+
+  const partidos = (data ?? []) as unknown as PartidoCompleto[]
+  for (const partido of partidos) {
+    // PostgREST no garantiza orden en las relaciones anidadas.
+    partido.eventos.sort((a, b) => a.minuto - b.minuto || a.adicionado - b.adicionado)
+  }
+  return partidos
 }
 
 /** Fixture completo de una temporada, en orden de fecha. */
@@ -102,8 +125,9 @@ export async function getHistorialContra(
   return (data ?? []) as unknown as PartidoConEquipos[]
 }
 
+/** Para `generateStaticParams` y el sitemap: corre en build, sin cookies. */
 export async function getSlugsPartidos(): Promise<{ slug: string }[]> {
-  const supabase = await createClient()
+  const supabase = createStaticClient()
   const { data } = await supabase.from('partidos').select('slug')
   return data ?? []
 }
