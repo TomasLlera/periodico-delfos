@@ -1,0 +1,414 @@
+{
+  "redirects": [
+    {
+      "source": "/a-dos-anos-de-aquel-20-de-abril-el-dia-que-comenzo-el-camino-hacia-el-ascenso/",
+      "destination": "/nota/a-dos-anos-de-aquel-20-de-abril-el-dia-que-comenzo-el-camino-hacia-el-ascenso",
+      "permanent": true
+    },
+    {
+      "source": "/all-boys-6-1-tiburonas-fecha-n2-aldosivi-en-la-primera-b-2026/",
+      "destination": "/nota/all-boys-6-1-tiburonas-fecha-n2-aldosivi-en-la-primera-b-2026",
+      "permanent": true
+    },
+    {
+      "source": "/almirante-brown-2-0-tiburonas-fecha-n2-aldosivi-femenino-en-la-primera-c-2023/",
+      "destination": "/nota/almirante-brown-2-0-tiburonas-fecha-n2-aldosivi-femenino-en-la-primera-c-2023",
+      "permanent": true
+    },
+    {
+      "source": "/almirante-brown-tiburonas-campeonas-postergado-fecha-n22-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/almirante-brown-tiburonas-campeonas-postergado-fecha-n22-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/analisis-del-rival-como-llega-all-boys-al-duelo-frente-a-las-tiburonas/",
+      "destination": "/nota/analisis-del-rival-como-llega-all-boys-al-duelo-frente-a-las-tiburonas",
+      "permanent": true
+    },
+    {
+      "source": "/arranque-accidentado-las-tiburonas-buscan-el-golpe-de-timon-en-el-puerto/",
+      "destination": "/nota/arranque-accidentado-las-tiburonas-buscan-el-golpe-de-timon-en-el-puerto",
+      "permanent": true
+    },
+    {
+      "source": "/arsenal-1-1-tiburonas-fecha-n8-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/arsenal-1-1-tiburonas-fecha-n8-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/author/",
+      "destination": "/quienes-somos",
+      "permanent": true
+    },
+    {
+      "source": "/author/redondocarlosrogeliogmail-com/",
+      "destination": "/quienes-somos",
+      "permanent": true
+    },
+    {
+      "source": "/campana-historica-de-las-tiburonas-primera-c-2024/",
+      "destination": "/nota/campana-historica-de-las-tiburonas-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/category/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/category/entrevistas/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/category/futbol-femenino/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/category/futbol-femenino/analisis/",
+      "destination": "/analisis",
+      "permanent": true
+    },
+    {
+      "source": "/category/futbol-femenino/aniversario/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/category/futbol-femenino/cronicas/",
+      "destination": "/cronicas",
+      "permanent": true
+    },
+    {
+      "source": "/category/futbol-femenino/planteles/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/category/futbol-femenino/temporadas/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/category/uncategorized/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/chacarita-0-1-tiburonas-fecha-n15-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/chacarita-0-1-tiburonas-fecha-n15-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/comunicaciones-2-2-tiburonas-aldosivi-femenino-en-la-primera-b-2026/",
+      "destination": "/nota/comunicaciones-2-2-tiburonas-aldosivi-femenino-en-la-primera-b-2026",
+      "permanent": true
+    },
+    {
+      "source": "/defensa-y-justicia-2-1-tiburonas-fecha-n12-aldosivi-femenino-en-la-primera-b-2026/",
+      "destination": "/nota/defensa-y-justicia-2-1-tiburonas-fecha-n12-aldosivi-femenino-en-la-primera-b-2026",
+      "permanent": true
+    },
+    {
+      "source": "/defensores-de-belgrano-2-1-tiburonas-fecha-n10-aldosivi-femenino-en-la-primera-b-2026/",
+      "destination": "/nota/defensores-de-belgrano-2-1-tiburonas-fecha-n10-aldosivi-femenino-en-la-primera-b-2026",
+      "permanent": true
+    },
+    {
+      "source": "/desafio-mayusculo-para-las-tiburonas-en-el-gigante-de-arroyito/",
+      "destination": "/nota/desafio-mayusculo-para-las-tiburonas-en-el-gigante-de-arroyito",
+      "permanent": true
+    },
+    {
+      "source": "/diez-anos-de-futbol-femenino-en-aldosivi/",
+      "destination": "/nota/diez-anos-de-futbol-femenino-en-aldosivi",
+      "permanent": true
+    },
+    {
+      "source": "/el-fronton-1-1-tiburonas-fecha-n7-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/el-fronton-1-1-tiburonas-fecha-n7-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/el-termometro-del-debut-las-tiburonas-y-la-madurez-de-un-proyecto-que-no-se-detiene/",
+      "destination": "/nota/el-termometro-del-debut-las-tiburonas-y-la-madurez-de-un-proyecto-que-no-se-detiene",
+      "permanent": true
+    },
+    {
+      "source": "/en-busca-del-equilibrio-perdido-las-tiburonas-reciben-a-defensa-y-justicia/",
+      "destination": "/nota/en-busca-del-equilibrio-perdido-las-tiburonas-reciben-a-defensa-y-justicia",
+      "permanent": true
+    },
+    {
+      "source": "/estrella-del-sur-0-0-tiburonas-fecha-n17-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/estrella-del-sur-0-0-tiburonas-fecha-n17-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/estrella-del-sur-2-1-tiburonas-fecha-n7-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/estrella-del-sur-2-1-tiburonas-fecha-n7-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/feed/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/laferrere-0-1-tiburonas-campeonas-fecha-n20-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/laferrere-0-1-tiburonas-campeonas-fecha-n20-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/las-tiburonas-afrontan-un-junio-clave-para-sus-aspiraciones/",
+      "destination": "/nota/las-tiburonas-afrontan-un-junio-clave-para-sus-aspiraciones",
+      "permanent": true
+    },
+    {
+      "source": "/las-tiburonas-buscan-estirar-su-racha-ganadora-frente-a-deportivo-moron/",
+      "destination": "/nota/las-tiburonas-buscan-estirar-su-racha-ganadora-frente-a-deportivo-moron",
+      "permanent": true
+    },
+    {
+      "source": "/las-tiburonas-buscan-sanar-heridas-ante-un-claypole-en-crisis/",
+      "destination": "/nota/las-tiburonas-buscan-sanar-heridas-ante-un-claypole-en-crisis",
+      "permanent": true
+    },
+    {
+      "source": "/las-tiburonas-competiran-en-afa/",
+      "destination": "/nota/las-tiburonas-competiran-en-afa",
+      "permanent": true
+    },
+    {
+      "source": "/las-tiburonas-ponen-a-prueba-su-envion-ante-uai-urquiza/",
+      "destination": "/nota/las-tiburonas-ponen-a-prueba-su-envion-ante-uai-urquiza",
+      "permanent": true
+    },
+    {
+      "source": "/las-tiburonas-y-la-oportunidad-perfecta-de-enderezar-el-rumbo-ante-comunicaciones/",
+      "destination": "/nota/las-tiburonas-y-la-oportunidad-perfecta-de-enderezar-el-rumbo-ante-comunicaciones",
+      "permanent": true
+    },
+    {
+      "source": "/lujan-0-3-tiburonas-fecha-n5-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/lujan-0-3-tiburonas-fecha-n5-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/nueva-chicago-1-3-tiburonas-fecha-n3-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/nueva-chicago-1-3-tiburonas-fecha-n3-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/nueva-chicago-1-5-tiburonas-fecha-n4-aldosivi-femenino-en-la-primera-c-2023/",
+      "destination": "/nota/nueva-chicago-1-5-tiburonas-fecha-n4-aldosivi-femenino-en-la-primera-c-2023",
+      "permanent": true
+    },
+    {
+      "source": "/nueva-chicago-2-5-tiburonas-fecha-n-4-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/nueva-chicago-2-5-tiburonas-fecha-n-4-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/plantel-2026-de-las-tiburonas/",
+      "destination": "/nota/plantel-2026-de-las-tiburonas",
+      "permanent": true
+    },
+    {
+      "source": "/primera-entrada-de-periodico-delfos/",
+      "destination": "/nota/primera-entrada-de-periodico-delfos",
+      "permanent": true
+    },
+    {
+      "source": "/quilmes-0-2-tiburonas-fecha-n1-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/quilmes-0-2-tiburonas-fecha-n1-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/quilmes-0-2-tiburonas-fecha-n2-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/quilmes-0-2-tiburonas-fecha-n2-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/rosario-central-9-0-tiburonas-fecha-n9-aldosivi-femenino-en-la-primera-b-2026/",
+      "destination": "/nota/rosario-central-9-0-tiburonas-fecha-n9-aldosivi-femenino-en-la-primera-b-2026",
+      "permanent": true
+    },
+    {
+      "source": "/sportivo-italiano-0-1-tiburonas-fecha-n8-aldosivi-femenino-en-la-primera-c-2023/",
+      "destination": "/nota/sportivo-italiano-0-1-tiburonas-fecha-n8-aldosivi-femenino-en-la-primera-c-2023",
+      "permanent": true
+    },
+    {
+      "source": "/talleres-de-remedios-de-escalada-0-0-tiburonas-fecha-n13-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/talleres-de-remedios-de-escalada-0-0-tiburonas-fecha-n13-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-0-1-all-boys-fecha-n11-aldosivi-femenino-en-la-primera-b-2026/",
+      "destination": "/nota/tiburonas-0-1-all-boys-fecha-n11-aldosivi-femenino-en-la-primera-b-2026",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-0-1-talleres-de-remedios-de-escalada-fecha-n2-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tiburonas-0-1-talleres-de-remedios-de-escalada-fecha-n2-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-1-0-country-canning-fecha-n3-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tiburonas-1-0-country-canning-fecha-n3-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-1-0-estrella-del-sur-fecha-n6-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tiburonas-1-0-estrella-del-sur-fecha-n6-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-1-0-quilmes-cuartos-de-final-aldosivi-femenino-en-la-primera-c-2023/",
+      "destination": "/nota/tiburonas-1-0-quilmes-cuartos-de-final-aldosivi-femenino-en-la-primera-c-2023",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-1-0-quilmes-fecha-n12-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tiburonas-1-0-quilmes-fecha-n12-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-1-0-quilmes-fecha-n5-aldosivi-femenino-en-la-primera-c-2023/",
+      "destination": "/nota/tiburonas-1-0-quilmes-fecha-n5-aldosivi-femenino-en-la-primera-c-2023",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-1-1-cambaceres-fecha-n3-aldosivi-femenino-en-la-primera-c-2023/",
+      "destination": "/nota/tiburonas-1-1-cambaceres-fecha-n3-aldosivi-femenino-en-la-primera-c-2023",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-1-3-almirante-brown-aldosivi-femenino-en-la-primera-c-2023/",
+      "destination": "/nota/tiburonas-1-3-almirante-brown-aldosivi-femenino-en-la-primera-c-2023",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-1-4-defensa-y-justicia-fecha-n3-aldosivi-femenino-en-la-primera-b-2026/",
+      "destination": "/nota/tiburonas-1-4-defensa-y-justicia-fecha-n3-aldosivi-femenino-en-la-primera-b-2026",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-2-0-chacarita-fecha-n4-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tiburonas-2-0-chacarita-fecha-n4-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-2-0-lujan-fecha-n16-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tiburonas-2-0-lujan-fecha-n16-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-2-0-nueva-chicago-fecha-n14-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tiburonas-2-0-nueva-chicago-fecha-n14-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-2-1-atletico-rafaela-aldosivi-femenino-en-la-primera-c-2023/",
+      "destination": "/nota/tiburonas-2-1-atletico-rafaela-aldosivi-femenino-en-la-primera-c-2023",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-2-1-defensores-de-belgrano-fecha-n1-aldosivi-femenino-en-la-primera-b/",
+      "destination": "/nota/tiburonas-2-1-defensores-de-belgrano-fecha-n1-aldosivi-femenino-en-la-primera-b",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-2-1-laferrere-fecha-n9-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tiburonas-2-1-laferrere-fecha-n9-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-2-3-deportivo-moron-fecha-n6-aldosivi-femenino-en-la-primera-b-2026/",
+      "destination": "/nota/tiburonas-2-3-deportivo-moron-fecha-n6-aldosivi-femenino-en-la-primera-b-2026",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-3-0-claypole-fecha-n5-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tiburonas-3-0-claypole-fecha-n5-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-3-0-lamadrid-fecha-n1-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tiburonas-3-0-lamadrid-fecha-n1-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-3-2-almagro-fecha-n6-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tiburonas-3-2-almagro-fecha-n6-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-3-2-estrella-del-sur-fecha-n8-aldosivi-femenino-en-la-primera-b-2026/",
+      "destination": "/nota/tiburonas-3-2-estrella-del-sur-fecha-n8-aldosivi-femenino-en-la-primera-b-2026",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-5-0-almirante-brown-fecha-n11-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tiburonas-5-0-almirante-brown-fecha-n11-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-5-0-lamadrid-fecha-n9-aldosivi-femenino-en-la-primera-c-2023/",
+      "destination": "/nota/tiburonas-5-0-lamadrid-fecha-n9-aldosivi-femenino-en-la-primera-c-2023",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-6-0-country-canning-fecha-n7-aldosivi-femenino-en-la-primera-c-2023/",
+      "destination": "/nota/tiburonas-6-0-country-canning-fecha-n7-aldosivi-femenino-en-la-primera-c-2023",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-6-1-claypole-fecha-n4-aldosivi-femenino-en-la-primera-b-2026/",
+      "destination": "/nota/tiburonas-6-1-claypole-fecha-n4-aldosivi-femenino-en-la-primera-b-2026",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-7-0-laferrere-semifinales-aldosivi-femenino-en-la-primera-b-2023/",
+      "destination": "/nota/tiburonas-7-0-laferrere-semifinales-aldosivi-femenino-en-la-primera-b-2023",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-campeonas-1-1-tigre-fecha-n21-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tiburonas-campeonas-1-1-tigre-fecha-n21-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-campeonas-1-2-arsenal-fecha-n19-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tiburonas-campeonas-1-2-arsenal-fecha-n19-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tiburonas-campeonas-5-1-el-fronton-fecha-n18-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tiburonas-campeonas-5-1-el-fronton-fecha-n18-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/tigre-1-3-tiburonas-fecha-n10-aldosivi-femenino-en-la-primera-c-2024/",
+      "destination": "/nota/tigre-1-3-tiburonas-fecha-n10-aldosivi-femenino-en-la-primera-c-2024",
+      "permanent": true
+    },
+    {
+      "source": "/uai-urquiza-2-4-tiburonas-fecha-n5-aldosivi-femenino-en-la-primera-b-2026/",
+      "destination": "/nota/uai-urquiza-2-4-tiburonas-fecha-n5-aldosivi-femenino-en-la-primera-b-2026",
+      "permanent": true
+    },
+    {
+      "source": "/un-clasico-moderno-del-ascenso-pone-a-prueba-el-temple-de-las-tiburonas/",
+      "destination": "/nota/un-clasico-moderno-del-ascenso-pone-a-prueba-el-temple-de-las-tiburonas",
+      "permanent": true
+    },
+    {
+      "source": "/villa-dalmine-1-6-tiburonas-fecha-n6-aldosivi-femenino-en-la-primera-c-2023/",
+      "destination": "/nota/villa-dalmine-1-6-tiburonas-fecha-n6-aldosivi-femenino-en-la-primera-c-2023",
+      "permanent": true
+    }
+  ]
+}

@@ -14,8 +14,11 @@ export default function Home() {
       <Header />
 
       <main className="mx-auto max-w-[1200px] px-4 py-12">
-        <p className="meta">Primera B 2026</p>
-        <h1 className="mt-2 max-w-[18ch] font-[family-name:var(--font-display)] text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
+        <div className="flex items-center gap-3">
+          <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-verde-600" />
+          <p className="meta text-verde-600">Primera B 2026</p>
+        </div>
+        <h1 className="titular mt-3 max-w-[18ch] text-[32px] md:text-[48px]">
           El fútbol femenino de Aldosivi, fecha a fecha
         </h1>
 

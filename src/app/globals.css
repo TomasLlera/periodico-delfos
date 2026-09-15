@@ -6,17 +6,33 @@
    pelee con esos dos: todas las fotos del sitio los tienen.
    ============================================================ */
 
+/* El tema por omisión es el CLARO: papel de diario, crema cálido, verde de
+   Aldosivi en los bloques y amarillo en los filetes. Es la dirección de los
+   bocetos de portada y crónica, y la que pide la sección 8 del blueprint —
+   "una publicación con criterio editorial, no un template de noticias".
+
+   El oscuro sigue existiendo como variante, más abajo. Los dos están medidos:
+   ningún par de color que se use en la interfaz baja de AA. */
 @theme {
   /* Color */
-  --color-verde-900: #0a3f24; /* bloques oscuros, footer */
-  --color-verde-600: #0f7a3d; /* acento principal, links, headers */
-  --color-verde-100: #e4f1e9; /* fondos suaves, filas alternas */
-  --color-amarillo: #ffc72c; /* acento secundario, resaltados, tarjeta */
-  --color-tinta: #111614; /* texto principal */
-  --color-gris: #5b6560; /* metadatos, epígrafes */
-  --color-papel: #ffffff;
-  --color-papel-alt: #f4f6f4; /* secciones alternas */
-  --color-linea: #dde2de;
+  --color-verde-900: #0f3b2a; /* bloques verdes: cabecera, tapa, aside, pie */
+  --color-verde-600: #1c5a3e; /* acento sobre claro: links, filetes de sección */
+  --color-verde-100: #e4f1e9; /* fondos suaves, filas resaltadas */
+  --color-amarillo: #f2a900; /* acento: filetes, subrayados, botón */
+  --color-tinta: #111511; /* texto principal */
+  --color-tinta-suave: #3f433f; /* copetes de tarjeta y de listado */
+  --color-gris: #5f645e; /* metadatos, epígrafes */
+  /* El gris del boceto. Es el más claro que todavía llega a AA sobre el crema
+     (4.61:1), así que `gris` va un escalón más oscuro y este queda de tenue:
+     el #78837E que había antes daba 3.54 y no llegaba. */
+  --color-gris-tenue: #6b6f69;
+  --color-papel: #f6f3ea; /* crema: el fondo del sitio */
+  --color-papel-alt: #efebdf; /* secciones alternas */
+  --color-tarjeta: #ffffff; /* planilla y fichas: papel blanco sobre el crema */
+  --color-tarjeta-hover: #fbfaf5;
+  --color-negro-cancha: #092619; /* barra de resultados y pie */
+  --color-linea: #ddd8cb;
+  --color-linea-fuerte: #c6bfae;
   --color-roja: #c42127; /* tarjeta roja, derrotas */
 
   /* Tipografía */
@@ -33,18 +49,28 @@
   --radius-md: 4px;
 }
 
+/* El tema oscuro, para quien lo pida desde el sistema. Es la paleta del
+   rediseño "portal deportivo", que se midió entera a AA cuando era el tema por
+   omisión y se conserva tal cual: no se pierde nada por haber invertido. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-papel: #0d110f;
-    --color-papel-alt: #141a17;
-    --color-tinta: #ecf1ee;
-    --color-gris: #9aa5a0;
-    --color-linea: #26302b;
-    --color-verde-600: #34a15e; /* aclarado: mantiene AA sobre fondo oscuro */
-    --color-verde-100: #14261c;
-    /* El rojo del blueprint (#C42127) da 3.3:1 sobre el papel oscuro y no
-       llega a AA como texto. Aclarado: 6.3:1. */
-    --color-roja: #f06a6f;
+    color-scheme: dark;
+    --color-verde-900: #007a41;
+    --color-verde-600: #00a859;
+    --color-verde-100: #0e2a1b;
+    --color-amarillo: #f5a623; /* el #F2A900 sobre fondo oscuro pierde brillo */
+    --color-tinta: #f9fafb;
+    --color-tinta-suave: #d7dbe0;
+    --color-gris: #9ca3af;
+    --color-gris-tenue: #808a96;
+    --color-papel: #111418;
+    --color-papel-alt: #16191d;
+    --color-tarjeta: #1e2228;
+    --color-tarjeta-hover: #252b33;
+    --color-negro-cancha: #0b0d0f;
+    --color-linea: #2a303a;
+    --color-linea-fuerte: #384150;
+    --color-roja: #ef4444;
   }
 }
 
@@ -54,6 +80,11 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Sin esto el navegador dibuja su propia mitad de la página con el tema
+     equivocado: barras de scroll, controles de formulario y el fondo que pinta
+     antes de que cargue el CSS. `color-scheme` es lo único que se lo dice, y no
+     lo deduce de nuestros tokens. Acompaña al tema en los dos sentidos. */
+  color-scheme: light;
 }
 
 body {
@@ -257,14 +288,44 @@ body {
    ============================================================ */
 
 @layer components {
-  /* Metadatos: categoría, fecha, temporada. */
+  /* Metadatos: categoría, fecha, temporada. Pasó de 500/0.06em a 700/0.08em
+     para el aire de portal deportivo: son las "badges" del rediseño. */
   .meta {
     font-family: var(--font-display);
     font-size: 0.8125rem;
-    font-weight: 500;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     color: var(--color-gris);
+  }
+
+  /**
+   * El titular deportivo: mayúsculas, apretado y pesado.
+   *
+   * La fuente sigue siendo Archivo y no una condensada. El mockup usaba Barlow
+   * Condensed, que es justo lo que el blueprint descartó ("sin caer en el
+   * condensado que usa medio internet"); el aire se consigue con el
+   * tratamiento —caja alta, tracking negativo, peso 800— y no cambiando de
+   * familia. El tamaño lo pone quien la usa.
+   */
+  .titular {
+    font-family: var(--font-display);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+
+  /* La tarjeta del rediseño: fondo propio sobre el fondo de página. */
+  .tarjeta {
+    background: var(--color-tarjeta);
+    border: 1px solid var(--color-linea);
+    border-radius: 0.5rem;
+  }
+
+  /* La barra/franja oscura: header, footer y tiras de datos. */
+  .franja {
+    background: var(--color-negro-cancha);
   }
 
   /* Datos que tienen que alinearse en columna: minutos, dorsales, resultados. */

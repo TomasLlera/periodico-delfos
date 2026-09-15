@@ -68,7 +68,7 @@ export function ImagenResponsive({
   return (
     <figure className="my-6">
       {imagen}
-      <figcaption className="mt-2 text-[13px] leading-snug text-[var(--color-gris)] font-[family-name:var(--font-display)]">
+      <figcaption className="mt-2 font-display text-[13px] leading-snug text-gris">
         {epigrafe}
         {credito && (
           <span className="ml-1 italic">

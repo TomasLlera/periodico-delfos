@@ -4,9 +4,25 @@ import type { EventoConJugadora } from '@/types'
 
 interface Props {
   evento: EventoConJugadora
-  /** Aldosivi cae a la derecha de su columna; el rival, a la izquierda. */
-  alineacion: 'derecha' | 'izquierda'
+  /**
+   * En la planilla vertical Aldosivi cae a la derecha de su columna y el rival
+   * a la izquierda, para que ambos queden contra la línea de minutos. En la
+   * horizontal los dos van centrados bajo su casilla.
+   */
+  alineacion: 'derecha' | 'izquierda' | 'centro'
 }
+
+const ALINEAR = {
+  derecha: 'items-end text-right',
+  izquierda: 'items-start text-left',
+  centro: 'items-center text-center',
+} as const
+
+const JUSTIFICAR = {
+  derecha: 'justify-end',
+  izquierda: 'justify-start',
+  centro: 'justify-center',
+} as const
 
 /**
  * Un evento dentro de su columna de la planilla.
@@ -17,8 +33,8 @@ interface Props {
  * Los links a jugadoras van en las formaciones, que sí son una lista normal.
  */
 export function EventoPlanilla({ evento, alineacion }: Props) {
-  const alinear = `min-w-0 ${alineacion === 'derecha' ? 'items-end text-right' : 'items-start text-left'}`
-  const justificar = alineacion === 'derecha' ? 'justify-end' : 'justify-start'
+  const alinear = `min-w-0 ${ALINEAR[alineacion]}`
+  const justificar = JUSTIFICAR[alineacion]
 
   if (evento.tipo === 'cambio') {
     return (

@@ -51,6 +51,15 @@ export const esquemaDocumento = z.object({
 })
 
 /**
+ * Corte de seguridad ante un documento anidado sin fin. Una crónica real no
+ * pasa de tres o cuatro niveles (lista → item → párrafo → texto).
+ *
+ * Vive acá y no en el renderer porque lo comparten los dos recorridos del
+ * árbol: el que dibuja y el que junta los `partidoId`.
+ */
+export const PROFUNDIDAD_MAXIMA = 12
+
+/**
  * Devuelve el documento si tiene forma de documento TipTap, o `null` si no.
  *
  * El `try/catch` no es decorativo: `safeParse` atrapa los `ZodError` pero no un
@@ -187,6 +196,39 @@ const esquemaPlanilla = z.object({
 export function partidoIdDeNodo(attrs: unknown): string | null {
   const resultado = esquemaPlanilla.safeParse(attrs)
   return resultado.success ? resultado.data.partidoId : null
+}
+
+/**
+ * Los `partidoId` de todos los nodos `planilla` del cuerpo, sin repetir.
+ *
+ * La página los usa para traer los partidos en **una sola** consulta antes de
+ * renderizar. El renderer no consulta la base: si un `partidoId` no está en el
+ * mapa que recibe, el nodo desaparece. Hacer la consulta desde el nodo serían
+ * N consultas en serie, una por planilla embebida.
+ *
+ * Un cuerpo que no valida devuelve la lista vacía, no una excepción: la nota
+ * se dibuja igual, sin las planillas.
+ */
+export function partidoIdsDelCuerpo(cuerpo: unknown): string[] {
+  const documento = parsearDocumento(cuerpo)
+  if (!documento) return []
+
+  const ids = new Set<string>()
+
+  function recorrer(nodos: NodoTipTap[] | undefined, profundidad: number): void {
+    if (!nodos || profundidad > PROFUNDIDAD_MAXIMA) return
+
+    for (const nodo of nodos) {
+      if (nodo.type === 'planilla') {
+        const id = partidoIdDeNodo(nodo.attrs)
+        if (id) ids.add(id)
+      }
+      recorrer(nodo.content, profundidad + 1)
+    }
+  }
+
+  recorrer(documento.content, 0)
+  return [...ids]
 }
 
 /**

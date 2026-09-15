@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # Periódico Delfos
 
 Medio digital de Mar del Plata dedicado al fútbol femenino de Aldosivi. Un solo autor
@@ -6,16 +10,25 @@ datos del partido — goles, formaciones, tarjetas, goleadoras — para que deje
 a mano dentro del texto de las notas. Al publicar, cada nota se auto-postea a Facebook,
 Instagram y X.
 
-El plan completo está en `../periodico-delfos-blueprint-v2.md`. El Build Order es la
-sección 10.
+El plan completo está en `periodico-delfos-blueprint-v2.md`. El Build Order es la
+sección 10. El estado real del build (qué está hecho, qué decisiones no hay que
+volver a discutir, cuál es la próxima tarea) está en `HANDOFF.md` — leerlo antes
+de asumir que algo de la Architecture de abajo ya existe: es la estructura
+objetivo del blueprint, no necesariamente lo que hay hoy en `src/`.
 
 ## Commands
 
 - `pnpm dev` — Desarrollo
-- `pnpm build` / `pnpm lint`
+- `pnpm build` / `pnpm lint` / `pnpm test`
+- `pnpm test:watch` — Vitest en modo watch
+- `npx vitest run ruta/al/archivo.test.ts` — Un solo archivo de test
 - `npx inngest-cli dev` — Auto-posting local (terminal aparte)
 - `pnpm dlx supabase db push` — Aplicar migraciones
 - `pnpm dlx supabase gen types typescript --project-id <id> > src/lib/supabase/types.ts`
+
+> `eslint.config.mjs` está roto (quedó de un scaffolding de Next 16, importa
+> `eslint-config-next/core-web-vitals` sin extensión) — `pnpm lint` falla. No
+> afecta a `pnpm build`. Ver `HANDOFF.md` § "Pendiente manual" antes de tocarlo.
 
 ## Tech Stack
 
@@ -63,11 +76,32 @@ en el request.
 
 ## Design System
 
-- Verde 900 `#0A3F24` · Verde 600 `#0F7A3D` · Verde 100 `#E4F1E9` · Amarillo `#FFC72C`
-- Tinta `#111614` · Gris `#5B6560` · Papel `#FFFFFF` / `#F4F6F4` · Línea `#DDE2DE` · Roja `#C42127`
+**El tema por omisión es el oscuro** (dirección "portal deportivo", ver
+`referencia/estilo-prueba.html`). El claro existe como variante en
+`@media (prefers-color-scheme: light)`. Los valores viven en `@theme` de
+`globals.css`; los componentes usan siempre las utilidades semánticas
+(`bg-papel`, `text-tinta`, `border-linea`) y nunca un color fijo, que es lo que
+permite revestir el sitio entero cambiando sólo los tokens.
+
+- Oscuro: Papel `#111418` · Tarjeta `#1E2228` · Negro cancha `#0B0D0F`
+  · Verde 600 `#00A859` · Amarillo `#F5A623` · Tinta `#F9FAFB` · Gris `#9CA3AF`
+  · Línea `#2A303A` · Roja `#EF4444`
+- Claro: Papel `#FFFFFF` · Verde 600 `#0F7A3D` · Amarillo `#E08C00`
+  · Tinta `#111614` · Gris `#5B6560` · Línea `#DDE2DE` · Roja `#C42127`
 - Titulares: Archivo · Cuerpo: Source Serif 4 · Datos: IBM Plex Mono
-- Cuerpo 18/19px, line-height 1.7, **máx 68ch** (clase `.prose-nota`)
-- Radius 2–4px. Espaciado base 4px. Mobile-first a 375px. Áreas táctiles 44px (clase `.tactil`)
+- **`.titular`** es el titular deportivo: caja alta, tracking −0.02em, peso 800.
+  La fuente sigue siendo Archivo: el mockup usaba Barlow Condensed y se
+  descartó por la misma razón que el blueprint descartó Oswald.
+- `.meta` son las badges (13px, 700, uppercase, 0.08em). `.tarjeta` y `.franja`
+  son los dos fondos del rediseño.
+- Cuerpo 18/19px, line-height 1.7, **máx 68ch** (clase `.prose-nota`). **El
+  rediseño no toca el cuerpo de la nota**: entra en chrome, portada, listados y
+  componentes.
+- Radius 2–4px (tarjetas 8px). Espaciado base 4px. Mobile-first a 375px. Áreas
+  táctiles 44px (clase `.tactil`)
+- Todo color nuevo se verifica a AA antes de entrar: del mockup ya se corrigieron
+  el gris tenue (3.8:1 → 5.3:1) y el amarillo como texto sobre tarjeta clara
+  (2.6:1 → se usa verde).
 
 ## Reglas No Negociables
 

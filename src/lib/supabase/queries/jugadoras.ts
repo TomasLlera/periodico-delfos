@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createStaticClient } from '@/lib/supabase/server'
 import type {
   EstadisticasJugadora,
   EventoConJugadora,
@@ -106,8 +106,9 @@ export async function getGolesDeJugadora(
   return (data ?? []) as unknown as EventoConJugadora[]
 }
 
+/** Para `generateStaticParams` y el sitemap: corre en build, sin cookies. */
 export async function getSlugsJugadoras(): Promise<{ slug: string }[]> {
-  const supabase = await createClient()
+  const supabase = createStaticClient()
   const { data } = await supabase.from('jugadoras').select('slug')
   return data ?? []
 }
