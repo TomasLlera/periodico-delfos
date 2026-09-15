@@ -49,6 +49,7 @@
    del blueprint, con los tokens nuevos resueltos en su equivalente claro. */
 @media (prefers-color-scheme: light) {
   :root {
+    color-scheme: light;
     --color-verde-900: #0a3f24;
     --color-verde-600: #0f7a3d;
     --color-verde-100: #e4f1e9;
@@ -73,6 +74,11 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Sin esto el navegador dibuja su propia mitad de la página en claro sobre un
+     sitio oscuro: barras de scroll, controles de formulario y el fondo que pinta
+     antes de que cargue el CSS. `color-scheme` es lo único que se lo dice, y no
+     lo deduce de nuestros tokens. Acompaña al tema en los dos sentidos. */
+  color-scheme: dark;
 }
 
 body {

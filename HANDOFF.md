@@ -560,6 +560,34 @@ adoptaron los Material Symbols: los iconos siguen saliendo de lucide (regla 5
 del CLAUDE.md), que tiene equivalentes para todos los del mockup y evita sumar
 otra webfont.
 
+### Auditoría de la rama contra el blueprint
+
+Se revisó la rama entera —no lo que decía este archivo, sino el código— y **se
+sostiene**: `tsc --noEmit` limpio, 256 tests, `pnpm build` verde con 8 rutas,
+sin `any` ni `@ts-ignore`, `lang="es-AR"`, la 68ch intacta y los únicos
+`"use client"` son `BotonesCompartir` y `supabase/client.ts`. La paleta oscura
+se verificó a mano con la fórmula de WCAG y da AA en todos los pares que se
+usan. Salieron tres cosas:
+
+1. **Faltaba `color-scheme`.** Con el oscuro por omisión, el navegador seguía
+   dibujando su mitad de la página en claro: barras de scroll, controles de
+   formulario y el fondo previo a que cargue el CSS. **Arreglado:** `html` lleva
+   `color-scheme: dark` y el media query lo pasa a `light`. El `:root` del media
+   query le gana al `html` por especificidad, así que anda en los dos sentidos.
+2. **El blueprint contradecía al código** en el tema por omisión. **Arreglado:**
+   se actualizó la sección 8 del blueprint —tokens, `color-scheme` y los ratios
+   de contraste medidos— con una nota explicando que la inversión fue deliberada
+   y qué *no* se tocó. El blueprint vuelve a ser fuente de verdad.
+3. **`vercel.json` no existía.** El script estaba escrito y testeado pero nunca
+   había corrido: este archivo asumía que `.migracion-wp/` no estaba en la
+   máquina, y sí está. **Corrido:** 82 reglas, 82 orígenes únicos, 0 loops,
+   todas 301. La regla no negociable 8 pasó de "datos sueltos" a cumplida.
+
+Queda anotado y sin arreglar, porque hoy no se viola: la roja sobre
+`--color-tarjeta` da 4.24:1 y no llegaría a AA como texto normal. El chip de
+resultado vive sobre `bg-papel` (4.91:1). Mirarlo si algún texto rojo se muda a
+una tarjeta.
+
 ### Cambios al design system que hubo que hacer
 
 1. `--color-roja` se aclara a `#F06A6F` en modo oscuro. El `#C42127` del
@@ -596,9 +624,6 @@ otra webfont.
 
 ### Cosas menores anotadas, sin arreglar
 
-- `Header.tsx` usa `text-[var(--color-verde-900)]` para el logo. `--color-verde-900`
-  no se redefine en modo oscuro, así que en tema oscuro queda casi invisible
-  (~1.3:1). Arreglar cuando se toque el header.
 - A 320px de ancho —abajo del objetivo de 375 del blueprint— el icono del penal
   errado se recorta un par de píxeles contra el borde de la tarjeta. No hay
   scroll horizontal. A 375 está limpio.

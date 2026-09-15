@@ -758,21 +758,41 @@ No es un blog deportivo genérico. Es **un medio de un solo club**, con una iden
 
 Se descarta el naranja/marrón actual del theme: pelea con el verde y amarillo de todas las fotos del sitio. (También se descarta la paleta rojo + azul pizarra que proponía el blueprint v1, por la misma razón.)
 
+> **Revisión del rediseño "portal deportivo".** Esta sección se escribió con el
+> tema claro como base y el oscuro como variante. Se invirtió: **el tema por
+> omisión es el oscuro** y el claro quedó en `@media (prefers-color-scheme:
+> light)`. El bloque de tokens de abajo ya refleja lo que hay en `globals.css`,
+> que es la fuente de verdad. La dirección editorial no cambió —sigue siendo un
+> medio de un solo club, con el verde y el amarillo de Aldosivi—, cambió el
+> fondo sobre el que se apoya. Lo que **no** se tocó: la medida de 68ch, la
+> Source Serif del cuerpo y Archivo en los titulares (el mockup proponía Barlow
+> Condensed y se descartó por la misma razón por la que acá abajo se descarta
+> Oswald).
+
 ### Tokens — `globals.css`
+
+El tema oscuro va en `@theme` y no en un media query, porque `@theme` es lo que
+genera las utilidades de Tailwind: el que esté ahí es el tema por omisión. El
+claro sobreescribe `:root` más abajo.
 
 ```css
 @theme {
-  /* Color — claro */
-  --color-verde-900:  #0A3F24;   /* bloques oscuros, footer */
-  --color-verde-600:  #0F7A3D;   /* acento principal, links, headers */
-  --color-verde-100:  #E4F1E9;   /* fondos suaves, filas alternas */
-  --color-amarillo:   #FFC72C;   /* acento secundario, resaltados, tarjeta */
-  --color-tinta:      #111614;   /* texto principal */
-  --color-gris:       #5B6560;   /* metadatos, epígrafes */
-  --color-papel:      #FFFFFF;
-  --color-papel-alt:  #F4F6F4;   /* secciones alternas */
-  --color-linea:      #DDE2DE;
-  --color-roja:       #C42127;   /* tarjeta roja, derrotas */
+  /* Color — oscuro, el tema por omisión */
+  --color-verde-900:     #007A41;   /* bloques verdes; en claro vuelve a ser oscuro */
+  --color-verde-600:     #00A859;   /* acento principal, links, marcadores */
+  --color-verde-100:     #0E2A1B;   /* fondos suaves, filas resaltadas */
+  --color-amarillo:      #F5A623;   /* acento secundario, badges */
+  --color-tinta:         #F9FAFB;   /* texto principal */
+  --color-gris:          #9CA3AF;   /* metadatos, epígrafes */
+  --color-gris-tenue:    #808A96;   /* el #6B7280 del mockup da 3.8:1 y no llega a AA */
+  --color-papel:         #111418;   /* fondo de la página */
+  --color-papel-alt:     #16191D;   /* secciones alternas */
+  --color-tarjeta:       #1E2228;   /* tarjetas y widgets sobre el fondo */
+  --color-tarjeta-hover: #252B33;
+  --color-negro-cancha:  #0B0D0F;   /* header, footer y barras: más negro que el fondo */
+  --color-linea:         #2A303A;
+  --color-linea-fuerte:  #384150;
+  --color-roja:          #EF4444;   /* tarjeta roja, derrotas, "en vivo" */
 
   /* Tipografía */
   --font-display: "Archivo", system-ui, sans-serif;   /* variable, eje expandido */
@@ -780,18 +800,37 @@ Se descarta el naranja/marrón actual del theme: pelea con el verde y amarillo d
   --font-data:    "IBM Plex Mono", monospace;         /* minutos, resultados, dorsales */
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --color-papel:     #0D110F;
-    --color-papel-alt: #141A17;
-    --color-tinta:     #ECF1EE;
-    --color-gris:      #9AA5A0;
-    --color-linea:     #26302B;
-    --color-verde-600: #34A15E;   /* aclarado para mantener contraste AA sobre fondo oscuro */
-    --color-verde-100: #14261C;
+    color-scheme: light;
+    --color-verde-900:     #0A3F24;
+    --color-verde-600:     #0F7A3D;
+    --color-verde-100:     #E4F1E9;
+    --color-amarillo:      #E08C00;   /* el #F5A623 sobre papel blanco no llega a AA */
+    --color-tinta:         #111614;
+    --color-gris:          #5B6560;
+    --color-gris-tenue:    #78837E;
+    --color-papel:         #FFFFFF;
+    --color-papel-alt:     #F4F6F4;
+    --color-tarjeta:       #FFFFFF;
+    --color-tarjeta-hover: #F4F6F4;
+    --color-negro-cancha:  #0A3F24;   /* en claro la barra oscura es verde, no negra */
+    --color-linea:         #DDE2DE;
+    --color-linea-fuerte:  #C3CCC6;
+    --color-roja:          #C42127;
   }
 }
 ```
+
+`html` lleva `color-scheme: dark` y el media query lo pasa a `light`. Sin eso el
+navegador dibuja su mitad de la página en claro —barras de scroll, controles de
+formulario y el fondo previo a que cargue el CSS— sobre un sitio oscuro:
+`color-scheme` no se deduce de los tokens, hay que declararlo.
+
+**Todo color nuevo se verifica a AA antes de entrar.** Verificados sobre el
+papel oscuro: tinta 17.7:1, amarillo 9.1:1, gris 7.3:1, verde 5.9:1, roja
+4.9:1. Ojo con la roja sobre `--color-tarjeta`, que baja a 4.24:1 y ahí sólo
+alcanza para texto grande o para UI, no para texto normal.
 
 **Por qué esta combinación:** *Archivo* en su eje expandido da titulares con peso de portada deportiva sin caer en el condensado de Oswald que usa medio internet. *Source Serif 4* es una serif de pantalla diseñada para textos largos — el problema número uno del sitio actual es la legibilidad de notas de 800 palabras, y una serif bien seteada lo resuelve mejor que cualquier sans. La mono es para datos: minutos, dorsales y resultados tienen que alinearse en columna.
 
@@ -1142,11 +1181,15 @@ fan-out a FB/IG/X con reintentos e idempotencia vía `social_posts`. Nada de pos
 4. Componentes específicos de una página, junto a su page.
 
 ## Design System
-- Verde 900 `#0A3F24` · Verde 600 `#0F7A3D` · Verde 100 `#E4F1E9` · Amarillo `#FFC72C`
-- Tinta `#111614` · Gris `#5B6560` · Papel `#FFFFFF` / `#F4F6F4` · Línea `#DDE2DE` · Roja `#C42127`
+**El tema por omisión es el oscuro**; el claro va en `@media (prefers-color-scheme: light)`.
+- Oscuro: Papel `#111418` · Tarjeta `#1E2228` · Negro cancha `#0B0D0F` · Verde 600 `#00A859`
+  · Amarillo `#F5A623` · Tinta `#F9FAFB` · Gris `#9CA3AF` · Línea `#2A303A` · Roja `#EF4444`
+- Claro: Papel `#FFFFFF` / `#F4F6F4` · Verde 600 `#0F7A3D` · Amarillo `#E08C00`
+  · Tinta `#111614` · Gris `#5B6560` · Línea `#DDE2DE` · Roja `#C42127`
 - Titulares: Archivo (expandido) · Cuerpo: Source Serif 4 · Datos: IBM Plex Mono
-- Cuerpo 18/19px, line-height 1.7, **máx 68ch**. Radius 2–4px. Base de espaciado 4px.
+- Cuerpo 18/19px, line-height 1.7, **máx 68ch**. Radius 2–4px (tarjetas 8px). Base de espaciado 4px.
 - Mobile-first a 375px. Áreas táctiles 44px mínimo.
+- Los componentes usan utilidades semánticas (`bg-papel`, `text-tinta`), nunca un color fijo.
 
 ## Reglas No Negociables
 1. TypeScript strict, prohibido `any`. Usar los tipos generados de Supabase.
