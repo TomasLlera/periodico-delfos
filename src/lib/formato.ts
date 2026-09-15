@@ -1,6 +1,6 @@
 import { format, formatDistanceToNowStrict } from 'date-fns'
 import { es } from 'date-fns/locale'
-import type { Evento, PartidoConEquipos } from '@/types'
+import type { Categoria, Evento, PartidoConEquipos } from '@/types'
 
 /** "2 de agosto de 2026" */
 export function fechaLarga(iso: string): string {
@@ -86,4 +86,22 @@ export function rival(partido: PartidoConEquipos) {
 export function etiquetaFecha(partido: PartidoConEquipos): string {
   const fecha = partido.fecha_numero ? `Fecha ${partido.fecha_numero}` : null
   return [fecha, partido.temporada.nombre].filter(Boolean).join(' · ')
+}
+
+/**
+ * El nombre que se muestra de cada categoría.
+ *
+ * Vive acá y no en un componente porque lo usan la portada, las relacionadas y
+ * los listados, y son las mismas cinco palabras en los tres lados.
+ */
+const ETIQUETAS_CATEGORIA: Record<Categoria, string> = {
+  cronica: 'Crónica',
+  analisis: 'Análisis',
+  temporada: 'Temporada',
+  plantel: 'Plantel',
+  institucional: 'Institucional',
+}
+
+export function etiquetaCategoria(categoria: Categoria): string {
+  return ETIQUETAS_CATEGORIA[categoria]
 }
