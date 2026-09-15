@@ -60,7 +60,14 @@ export function LineaDeTiempo({ partido }: Props) {
         <span>↓ {lados.derecha.nombre_corto}</span>
       </p>
 
-      <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+      {/* `relative` no es decorativo: los `sr-only` de cada evento y los iconos
+          son `position: absolute`, y sin un contenedor posicionado su bloque
+          contenedor es la página. Se escapaban del scroll horizontal y estiraban
+          el documento a 1117px en un viewport de 375 — scroll lateral en toda la
+          página, en la planilla, en la nota y en la ficha de partido. Con esto
+          el contenedor con scroll pasa a ser su bloque contenedor y quedan
+          adentro. */}
+      <div className="relative -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <ol className="grid w-max min-w-full auto-cols-[minmax(4.75rem,1fr)] grid-flow-col grid-rows-[1fr_auto_1fr]">
           {grupos.map((grupo) => (
             <li key={grupo.clave} className="row-span-3 grid grid-rows-subgrid">
