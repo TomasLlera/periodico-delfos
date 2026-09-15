@@ -51,11 +51,17 @@
 
 /* El tema oscuro, para quien lo pida desde el sistema. Es la paleta del
    rediseño "portal deportivo", que se midió entera a AA cuando era el tema por
-   omisión y se conserva tal cual: no se pierde nada por haber invertido. */
+   omisión. Se conserva entera salvo `verde-900`, que era un acento y este tema
+   lo necesita como superficie (ver abajo): no se pierde nada por haber
+   invertido. */
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --color-verde-900: #007a41;
+    /* Superficie, no acento. Este token es la cabecera y los bloques verdes: el
+       #007A41 que había acá es un verde de acento y con texto blanco encima
+       parece un resaltador. Es la misma superficie traducida al tema oscuro —
+       blanco 15.32:1, amarillo 7.56:1 — y nunca se usó como acento. */
+    --color-verde-900: #102a1e;
     --color-verde-600: #00a859;
     --color-verde-100: #0e2a1b;
     --color-amarillo: #f5a623; /* el #F2A900 sobre fondo oscuro pierde brillo */
@@ -332,6 +338,26 @@ body {
   .dato {
     font-family: var(--font-data);
     font-variant-numeric: tabular-nums;
+  }
+
+  /**
+   * La marca del sitio, en la cabecera y en el pie.
+   *
+   * Es el único lugar donde Archivo sale de su eje por omisión: `wdth` 110 es
+   * el "eje expandido" que pide el blueprint, y lo que separa la marca de un
+   * titular cualquiera. Va en caja mixta y no en `.titular` —que fuerza caja
+   * alta— porque así está en los dos bocetos.
+   *
+   * `font-variation-settings` y no la utilidad `font-stretch`: `next/font` no
+   * declara el rango de `wdth` en el `@font-face` que genera, así que el atajo
+   * de CSS no engancha con el eje y la utilidad no hace nada.
+   */
+  .marca {
+    font-family: var(--font-display);
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+    font-variation-settings: 'wdth' 110;
   }
 
   /* Área táctil mínima. Aplicar a todo control del admin. */

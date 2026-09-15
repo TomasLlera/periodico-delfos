@@ -1,82 +1,57 @@
 import Link from 'next/link'
 import { Search } from 'lucide-react'
+import { FechaDeHoy } from './FechaDeHoy'
+import { NavPrincipal } from './NavPrincipal'
 
 /**
- * El header del rediseño de portal deportivo.
+ * La cabecera de los dos bocetos de `referencia/`.
  *
- * Dos franjas sobre fondo casi negro: la marca arriba y la navegación abajo,
- * en cajas altas. La tipografía sigue siendo Archivo —no una condensada—; el
- * aire lo dan la caja alta, el tracking y el peso (`.titular`).
+ * Un solo bloque verde con tres piezas arriba —marca, buscador y fecha— y la
+ * navegación abajo, separada por un filete tenue. La marca usa `.marca`, que
+ * es Archivo en su eje `wdth` 110: el "eje expandido" que pide el blueprint, y
+ * lo único que distingue la marca de un titular cualquiera.
  *
- * El logo iba en `verde-900`, que no se redefinía en tema oscuro y quedaba en
- * ~1.3:1 contra el fondo (estaba anotado en HANDOFF.md como pendiente). Ahora
- * "PERIÓDICO" va en `verde-600`, que es el verde saturado del rediseño.
+ * **El texto va en blanco fijo y no en `text-tinta`.** `verde-900` es una
+ * superficie oscura en los dos temas, así que acá el color lo manda el fondo y
+ * no el tema. Antes de esto la cabecera era `.franja` con `text-tinta`, que en
+ * el tema crema pintaba texto casi negro sobre verde oscuro: ilegible. Medido:
+ * blanco 12.51:1 en claro, 15.32:1 en oscuro.
  *
- * **Falta la tira de resultados en vivo del mockup** (marcador del partido en
- * curso, próximo partido, fecha). No es un olvido: necesita datos reales de
- * `partidos` y es el `<BarraEstado />` del Step 19 del Build Order. Poner
- * resultados inventados en el header del sitio real sería peor que no tenerla.
+ * **Falta la tira de resultados que los dos bocetos tienen arriba de la
+ * cabecera** (marcador en curso, próximo partido, posición en la tabla). No es
+ * un olvido: es el `<BarraEstado />` del Step 19 y necesita `partidos` cargado.
+ * Rellenarla con marcadores de ejemplo viola la regla no negociable 1, y un
+ * resultado inventado en el header del sitio real es peor que no tener la tira.
  */
-const SECCIONES = [
-  { href: '/', label: 'Portada' },
-  { href: '/cronicas', label: 'Crónicas' },
-  { href: '/analisis', label: 'Análisis' },
-  { href: '/plantel', label: 'Plantel' },
-  { href: '/quienes-somos', label: 'Quiénes somos' },
-] as const
-
 export function Header() {
   return (
-    <header className="franja border-b border-linea">
-      <div className="mx-auto max-w-[1200px] px-4">
-        <div className="flex items-center justify-between gap-4 py-4">
-          <Link href="/" className="group">
-            <span className="flex items-center gap-2">
-              <span className="titular text-2xl sm:text-3xl">
-                <span className="text-verde-600">PERIÓDICO</span>{' '}
-                <span className="text-tinta">DELFOS</span>
-              </span>
-              <span
-                aria-hidden="true"
-                className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-amarillo"
-              />
-            </span>
-            <span className="meta mt-1 block text-amarillo">
-              La voz de las Tiburonas
-            </span>
-          </Link>
+    <header className="bg-verde-900 text-white">
+      <div className="mx-auto grid max-w-[1200px] items-end gap-4 px-4 pb-[1.1rem] pt-[1.6rem] md:grid-cols-[auto_1fr_auto] md:gap-8">
+        <Link href="/" className="marca text-[2rem] md:text-[2.3rem]">
+          Periódico <span className="text-amarillo">Delfos</span>
+          <span className="mt-[0.55rem] block text-[0.72rem] font-medium uppercase tracking-[0.14em] text-amarillo [font-variation-settings:'wdth'_100]">
+            La voz de las Tiburonas
+          </span>
+        </Link>
 
-          <Link
-            href="/buscar"
-            className="tactil flex items-center gap-2 rounded-sm border border-linea bg-tarjeta px-3 text-gris hover:border-verde-600 hover:text-tinta"
-          >
-            <Search size={18} aria-hidden="true" className="shrink-0" />
-            <span className="hidden font-display text-[13px] sm:inline">
-              Buscar crónicas, jugadoras…
-            </span>
-            <span className="sr-only sm:hidden">Buscar</span>
-          </Link>
+        {/* Un link y no un `<input>`: el buscador es un componente cliente del
+            Step 10 y `/buscar` todavía no existe. Un campo de texto que no
+            busca nada promete más de lo que hay. */}
+        <Link
+          href="/buscar"
+          className="tactil flex items-center gap-2 border border-white/20 bg-white/10 px-[0.9rem] font-display text-[0.85rem] text-white/70 hover:bg-white/15 hover:text-white"
+        >
+          <Search size={16} aria-hidden="true" className="shrink-0" />
+          Buscar crónicas, jugadoras…
+        </Link>
+
+        <div className="dato text-[0.78rem] leading-relaxed text-white/60 md:text-right">
+          <span className="block">Mar del Plata</span>
+          <FechaDeHoy />
         </div>
       </div>
 
-      {/* En 375px la nav scrollea en lugar de apilarse: no se come el alto del
-          viewport antes de que aparezca la primera nota. */}
-      <nav aria-label="Secciones" className="border-t border-linea bg-papel-alt">
-        <div className="mx-auto max-w-[1200px] px-4">
-          <ul className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {SECCIONES.map((seccion) => (
-              <li key={seccion.href} className="shrink-0">
-                <Link
-                  href={seccion.href}
-                  className="meta tactil flex items-center rounded-sm px-3 text-gris hover:bg-tarjeta-hover hover:text-verde-600"
-                >
-                  {seccion.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </nav>
+      <NavPrincipal />
     </header>
   )
 }
