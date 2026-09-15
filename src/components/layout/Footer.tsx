@@ -1,11 +1,24 @@
 import Link from 'next/link'
 
 /**
- * Todos los destinos son reales.
+ * El pie de los dos bocetos de `referencia/`: fondo `negro-cancha`, filete
+ * amarillo de 6px arriba, columnas y una línea legal en mono abajo.
  *
- * El footer de WordPress arrastra links del demo import del theme: Cookies
- * apunta a /blog/, Términos a /contact-2/ y Contacto a /contact-3/. Y los
- * títulos están en inglés ("Useful Links", "Read More"). Acá no.
+ * **Todos los destinos son reales.** El pie de WordPress arrastra links del
+ * demo import del theme —Cookies apunta a `/blog/`, Términos a `/contact-2/` y
+ * Contacto a `/contact-3/`— y los títulos están en inglés ("Useful Links",
+ * "Read More"). Acá no: esto es lo que pide el Step 10 del Build Order.
+ *
+ * Como en la cabecera, el texto va en blanco con alfa y no en `text-tinta`:
+ * `negro-cancha` es oscuro en los dos temas. El hover de los links es amarillo
+ * (8.02:1) y no `verde-600`, que sobre este fondo da 1.98:1 y no se lee.
+ *
+ * **Falta la cuarta columna del boceto, "Seguinos"** (Instagram, X, YouTube).
+ * No hay un solo handle del medio en el proyecto ni en los datos de WordPress
+ * —los únicos links a redes en las notas son embeds de cuentas ajenas— y
+ * escribir `instagram.com/periodicodelfos` a ojo es inventar un dato. Las
+ * cuentas hacen falta igual para el auto-posteo: cuando estén, entra la
+ * columna.
  */
 const SECCIONES = [
   {
@@ -14,6 +27,7 @@ const SECCIONES = [
       { href: '/plantel', label: 'Plantel' },
       { href: '/cronicas', label: 'Crónicas' },
       { href: '/analisis', label: 'Análisis' },
+      { href: '/fixture', label: 'Fixture y tabla' },
     ],
   },
   {
@@ -30,37 +44,28 @@ export function Footer() {
   const anio = new Date().getFullYear()
 
   return (
-    <footer className="franja mt-16 border-t-4 border-amarillo">
-      <div className="mx-auto max-w-[1200px] px-4 py-10">
-        <div className="grid gap-8 sm:grid-cols-[2fr_1fr_1fr]">
+    <footer className="franja mt-14 border-t-[6px] border-amarillo text-white/70">
+      <div className="mx-auto max-w-[1200px] px-4">
+        <div className="grid gap-8 py-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr]">
           <div>
-            <p className="titular text-xl">
-              <span className="text-verde-600">PERIÓDICO</span>{' '}
-              <span className="text-tinta">DELFOS</span>
+            <p className="marca text-[1.6rem] text-white">
+              Periódico <span className="text-amarillo">Delfos</span>
             </p>
-            <p className="mt-3 max-w-[40ch] font-display text-sm leading-relaxed text-gris">
-              El fútbol femenino de Aldosivi, fecha a fecha. Crónicas, análisis y
-              estadísticas de las Tiburonas, desde Mar del Plata.
-            </p>
-
-            <p className="mt-4 inline-flex items-center gap-2 rounded-sm border border-linea bg-tarjeta px-3 py-1">
-              <span
-                aria-hidden="true"
-                className="inline-block h-2 w-2 rounded-full bg-verde-600"
-              />
-              <span className="meta text-tinta">Mar del Plata, Argentina</span>
+            <p className="mt-3 max-w-[34ch] text-[0.9rem]">
+              El fútbol femenino de Aldosivi, fecha a fecha. Crónicas, análisis
+              y estadísticas de las Tiburonas, desde Mar del Plata.
             </p>
           </div>
 
           {SECCIONES.map((seccion) => (
             <nav key={seccion.titulo} aria-label={seccion.titulo}>
               <h2 className="meta text-amarillo">{seccion.titulo}</h2>
-              <ul className="mt-3 space-y-2">
+              <ul className="mt-3 space-y-[0.45rem]">
                 {seccion.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="font-display text-sm text-gris underline-offset-4 hover:text-verde-600 hover:underline"
+                      className="font-display text-[0.9rem] underline-offset-4 hover:text-amarillo hover:underline"
                     >
                       {link.label}
                     </Link>
@@ -71,9 +76,10 @@ export function Footer() {
           ))}
         </div>
 
-        <p className="mt-10 border-t border-linea pt-6 font-display text-[13px] text-gris-tenue">
-          © {anio} Periódico Delfos · Hecho para el fútbol femenino argentino
-        </p>
+        <div className="dato flex flex-col gap-2 border-t border-white/15 py-4 text-[0.72rem] sm:flex-row sm:justify-between">
+          <span>© {anio} Periódico Delfos · Mar del Plata, Argentina</span>
+          <span>Hecho para el fútbol femenino argentino</span>
+        </div>
       </div>
     </footer>
   )
