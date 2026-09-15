@@ -8,7 +8,7 @@
  * sin `NewsArticle` y sin canonical. Las tres cosas se arreglan acá.
  */
 
-import type { NotaConRelaciones } from '@/types'
+import type { Equipo, EstadoPartido, NotaConRelaciones, PartidoConEquipos } from '@/types'
 
 export const NOMBRE_SITIO = 'Periódico Delfos'
 
@@ -54,6 +54,86 @@ export function jsonLdNota(nota: NotaConRelaciones, urlSitio: string): Record<st
   }
 
   if (nota.imagen_portada) datos.image = [nota.imagen_portada]
+
+  return datos
+}
+
+/**
+ * La URL de la imagen OG generada, para las notas que no tienen portada.
+ *
+ * De las 70 notas que trajo la migración, muchas no tienen imagen: sin esto se
+ * comparten como un rectángulo gris con el dominio. La genera `/api/og`.
+ *
+ * Los parámetros van con `encodeURIComponent` y no concatenados: los títulos de
+ * este sitio tienen `&`, `?` y `#` —"Tiburonas 7-0 Laferrere: Semifinales"— y
+ * cualquiera de los tres corta el querystring en el lugar equivocado.
+ */
+export function urlOg(
+  { titulo, volanta }: { titulo: string; volanta?: string | null },
+  urlSitio: string,
+): string {
+  const parametros = new URLSearchParams({ titulo })
+  if (volanta) parametros.set('volanta', volanta)
+
+  return `${urlSitio.replace(/\/+$/, '')}/api/og?${parametros.toString()}`
+}
+
+/** URL absoluta de un partido. */
+export function urlDePartido(slug: string, urlSitio: string): string {
+  return `${urlSitio.replace(/\/+$/, '')}/partido/${slug}`
+}
+
+/**
+ * El JSON-LD `SportsEvent` de un partido.
+ *
+ * Es lo que hace que un partido pueda aparecer en Google como evento y no como
+ * una página cualquiera. El sitio viejo no emite nada de esto.
+ *
+ * `eventStatus` se mapea al vocabulario de schema.org y no se inventa: sólo
+ * `postergado` y `suspendido` tienen término propio; `programado`, `en_curso` y
+ * `finalizado` son todos `EventScheduled`, que es lo que schema.org entiende
+ * por "el evento ocurre como estaba previsto".
+ */
+const ESTADO_SCHEMA: Record<EstadoPartido, string> = {
+  programado: 'https://schema.org/EventScheduled',
+  en_curso: 'https://schema.org/EventScheduled',
+  finalizado: 'https://schema.org/EventScheduled',
+  postergado: 'https://schema.org/EventPostponed',
+  suspendido: 'https://schema.org/EventCancelled',
+}
+
+function equipoSchema(equipo: Equipo): Record<string, unknown> {
+  const datos: Record<string, unknown> = { '@type': 'SportsTeam', name: equipo.nombre }
+  if (equipo.escudo_url) datos.logo = equipo.escudo_url
+  return datos
+}
+
+export function jsonLdPartido(
+  partido: PartidoConEquipos,
+  urlSitio: string,
+): Record<string, unknown> {
+  const local = partido.equipo_local
+  const visitante = partido.equipo_visitante
+
+  const datos: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'SportsEvent',
+    name: `${local.nombre} vs ${visitante.nombre}`,
+    startDate: partido.fecha_hora,
+    eventStatus: ESTADO_SCHEMA[partido.estado],
+    url: urlDePartido(partido.slug, urlSitio),
+    inLanguage: 'es-AR',
+    homeTeam: equipoSchema(local),
+    awayTeam: equipoSchema(visitante),
+    competitor: [equipoSchema(local), equipoSchema(visitante)],
+    superEvent: { '@type': 'SportsOrganization', name: partido.temporada.nombre },
+  }
+
+  // La cancha sólo se emite si está cargada: un `Place` sin nombre no sirve de
+  // nada y ensucia el dato estructurado.
+  if (partido.cancha) {
+    datos.location = { '@type': 'Place', name: partido.cancha }
+  }
 
   return datos
 }

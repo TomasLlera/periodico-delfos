@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { jsonLdNota, urlDeNota } from '@/lib/seo'
+import { jsonLdNota, jsonLdPartido, urlDeNota, urlOg } from '@/lib/seo'
 import type { Autor, NotaConRelaciones } from '@/types'
 
 const AUTOR: Autor = {
@@ -84,5 +84,111 @@ describe('jsonLdNota', () => {
     const datos = jsonLdNota(nota({ imagen_portada: null }), sitio)
 
     expect(datos).not.toHaveProperty('image')
+  })
+})
+
+describe('urlOg', () => {
+  it('apunta a /api/og con el título', () => {
+    expect(urlOg({ titulo: 'Un título' }, 'https://periodicodelfos.com')).toBe(
+      'https://periodicodelfos.com/api/og?titulo=Un+t%C3%ADtulo',
+    )
+  })
+
+  it('escapa los caracteres que cortarían el querystring', () => {
+    const url = urlOg({ titulo: 'Aldosivi & Morón: ¿el 2-1?' }, 'https://x.com')
+    expect(url).toContain('titulo=Aldosivi+%26+Mor%C3%B3n')
+    expect(url).not.toContain('& Morón')
+    // Un único `?`: el del querystring.
+    expect(url.split('?')).toHaveLength(2)
+  })
+
+  it('la volanta es opcional', () => {
+    expect(urlOg({ titulo: 'T' }, 'https://x.com')).not.toContain('volanta')
+    expect(urlOg({ titulo: 'T', volanta: null }, 'https://x.com')).not.toContain('volanta')
+    expect(urlOg({ titulo: 'T', volanta: 'Crónica' }, 'https://x.com')).toContain(
+      'volanta=Cr%C3%B3nica',
+    )
+  })
+
+  it('no duplica la barra final del sitio', () => {
+    expect(urlOg({ titulo: 'T' }, 'https://x.com/')).toContain('https://x.com/api/og?')
+  })
+})
+
+describe('jsonLdPartido', () => {
+  const equipo = (nombre: string, esAldosivi: boolean, escudo: string | null = null) => ({
+    id: nombre,
+    nombre,
+    nombre_corto: nombre.slice(0, 8),
+    apodo: null,
+    slug: nombre.toLowerCase(),
+    escudo_url: escudo,
+    ciudad: null,
+    es_aldosivi: esAldosivi,
+  })
+
+  const partido = (parcial: Record<string, unknown> = {}) =>
+    ({
+      id: 'p1',
+      temporada_id: 't1',
+      fecha_numero: 12,
+      fecha_hora: '2026-09-13T18:00:00Z',
+      equipo_local_id: 'Aldosivi',
+      equipo_visitante_id: 'Morón',
+      goles_local: 2,
+      goles_visitante: 1,
+      estado: 'finalizado',
+      cancha: 'Cancha 2 Aldosivi',
+      arbitra: null,
+      slug: 'aldosivi-moron-f12',
+      observaciones: null,
+      created_at: '2026-09-13T18:00:00Z',
+      equipo_local: equipo('Aldosivi', true),
+      equipo_visitante: equipo('Morón', false),
+      temporada: {
+        id: 't1',
+        nombre: 'Primera B 2026',
+        slug: 'primera-b-2026',
+        division: 'Primera B',
+        anio: 2026,
+        zona: null,
+        activa: true,
+        created_at: '2026-01-01T00:00:00Z',
+      },
+      ...parcial,
+    }) as Parameters<typeof jsonLdPartido>[0]
+
+  it('emite un SportsEvent con los dos equipos', () => {
+    const ld = jsonLdPartido(partido(), 'https://periodicodelfos.com')
+    expect(ld['@type']).toBe('SportsEvent')
+    expect(ld.name).toBe('Aldosivi vs Morón')
+    expect(ld.url).toBe('https://periodicodelfos.com/partido/aldosivi-moron-f12')
+    expect(ld.homeTeam).toMatchObject({ '@type': 'SportsTeam', name: 'Aldosivi' })
+    expect(ld.awayTeam).toMatchObject({ name: 'Morón' })
+  })
+
+  it('mapea el estado al vocabulario de schema.org', () => {
+    const base = 'https://x.com'
+    expect(jsonLdPartido(partido({ estado: 'finalizado' }), base).eventStatus).toBe(
+      'https://schema.org/EventScheduled',
+    )
+    expect(jsonLdPartido(partido({ estado: 'postergado' }), base).eventStatus).toBe(
+      'https://schema.org/EventPostponed',
+    )
+    expect(jsonLdPartido(partido({ estado: 'suspendido' }), base).eventStatus).toBe(
+      'https://schema.org/EventCancelled',
+    )
+  })
+
+  it('omite la cancha cuando no está cargada', () => {
+    expect(jsonLdPartido(partido({ cancha: null }), 'https://x.com').location).toBeUndefined()
+    expect(jsonLdPartido(partido(), 'https://x.com').location).toMatchObject({
+      name: 'Cancha 2 Aldosivi',
+    })
+  })
+
+  it('omite el logo del equipo cuando no hay escudo', () => {
+    const ld = jsonLdPartido(partido(), 'https://x.com')
+    expect(ld.homeTeam).not.toHaveProperty('logo')
   })
 })
