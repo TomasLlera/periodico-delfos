@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# La plantilla si va al repo: son nombres de variables sin un solo valor, y
+# sin ella quien clona el proyecto no sabe que hay que completar.
+!.env.example
 
 # volcado de la migración desde WordPress (crudo + binarios de las fotos)
 /.migracion-wp/
