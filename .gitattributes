@@ -1,0 +1,29 @@
+# Finales de línea
+#
+# Sin este archivo, cada persona commitea con la convención de SU sistema:
+# Windows manda CRLF, macOS y Linux mandan LF, y el que abre el archivo
+# después lo ve entero como cambiado aunque haya tocado una línea. Los diffs
+# se vuelven ilegibles y los conflictos, inventados.
+#
+# `text=auto eol=lf` fija una sola regla: en el repo todo se guarda con LF,
+# sin importar quién lo suba ni en qué sistema. Cada uno lo ve en su working
+# directory como su Git esté configurado.
+* text=auto eol=lf
+
+# Los binarios no se tocan: normalizarlos los corrompe.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary
+
+# El lockfile lo genera pnpm. Marcarlo como binario evita que Git intente
+# un merge línea por línea, que siempre sale mal: ante un conflicto se
+# regenera con `pnpm install`, no se resuelve a mano.
+pnpm-lock.yaml -diff -merge linguist-generated=true
