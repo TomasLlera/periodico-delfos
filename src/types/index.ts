@@ -266,6 +266,26 @@ export interface Goleadora {
   de_penal: number
 }
 
+/**
+ * Un gol con el partido en el que se hizo.
+ *
+ * Es lo que devuelve `getGolesDeJugadora`: la query ya pide el partido
+ * embebido —slug, fecha y los dos equipos— para poder decir "23' a All Boys,
+ * fecha 11" sin una consulta por gol. El tipo lo declara porque el `select`
+ * por sí solo no lo hace: mientras esa query se casteó a `EventoConJugadora`,
+ * la ficha no podía ver los datos que ya estaba trayendo.
+ */
+export interface GolDeJugadora extends EventoConJugadora {
+  partido: {
+    slug: string
+    fecha_numero: number | null
+    fecha_hora: string
+    temporada_id: string
+    equipo_local: Pick<Equipo, 'nombre_corto' | 'es_aldosivi'>
+    equipo_visitante: Pick<Equipo, 'nombre_corto' | 'es_aldosivi'>
+  }
+}
+
 export interface EstadisticasJugadora {
   jugadora_id: string
   temporada_id: string
@@ -292,4 +312,21 @@ export interface SocialPost {
   attempts: number
   created_at: string
   updated_at: string
+}
+
+/**
+ * Lo que devuelve la función `buscar_notas` de `0009_busqueda.sql`.
+ *
+ * **Es más chica que `NotaResumen` a propósito**: la búsqueda no trae la foto
+ * ni el autor, así que los resultados no se pueden dibujar con la tarjeta de la
+ * portada. El `rank` es el `ts_rank` con el que ordena la propia función.
+ */
+export interface ResultadoBusqueda {
+  id: string
+  titulo: string
+  slug: string
+  bajada: string
+  categoria: Categoria
+  publicada_en: string | null
+  rank: number
 }
