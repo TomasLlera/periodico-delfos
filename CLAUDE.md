@@ -41,7 +41,8 @@ Next.js 15 (App Router) + TypeScript strict + Tailwind v4 + shadcn/ui + Supabase
 ## Architecture
 
 - `src/app/` — Rutas públicas + `/admin`
-- `src/components/` — layout, content, partido, temporada, jugadora, admin, ui
+- `src/components/` — layout, content, portada, listado, partido, temporada, plantel,
+  jugadora, y más adelante admin y ui
 - `src/lib/` — supabase/, tiptap/, social/, inngest/, seo.ts, formato.ts
 - `src/actions/` — Server Actions (publicar, eventos)
 - `supabase/migrations/` — Schema completo, 0001–0009
@@ -56,7 +57,11 @@ en el request.
 
 ### Key Patterns
 
-- Server Components por defecto. `"use client"` sólo en BotonesCompartir, buscador y /admin.
+- Server Components por defecto. `"use client"` sólo en `BotonesCompartir`,
+  `PlanillaPartido` (es plegable), `NavPrincipal` (necesita la ruta actual para
+  `aria-current`) y `FechaDeHoy` (la portada se prerenderiza y la fecha se
+  congelaría en el build), más todo `/admin` cuando exista. **El buscador no es
+  cliente**: es un `<form method="get">` que anda sin JS.
 - Todas las queries en `lib/supabase/queries/*`. Nunca inline en un componente.
 - Todo posteo pasa por `lib/social/*` y se registra en `social_posts` (un row por red por nota).
 - Idempotencia: chequear `social_posts (nota_id, platform)` antes de postear.
@@ -76,32 +81,44 @@ en el request.
 
 ## Design System
 
-**El tema por omisión es el oscuro** (dirección "portal deportivo", ver
-`referencia/estilo-prueba.html`). El claro existe como variante en
-`@media (prefers-color-scheme: light)`. Los valores viven en `@theme` de
-`globals.css`; los componentes usan siempre las utilidades semánticas
-(`bg-papel`, `text-tinta`, `border-linea`) y nunca un color fijo, que es lo que
-permite revestir el sitio entero cambiando sólo los tokens.
+**El tema por omisión es el claro**: el crema de los dos bocetos que trajo el
+usuario, guardados en `referencia/boceto-portada.html` y
+`referencia/boceto-cronica.html`. El oscuro existe como variante en
+`@media (prefers-color-scheme: dark)` y está medido a AA entero. Los valores
+viven en `@theme` de `globals.css`; los componentes usan siempre las utilidades
+semánticas (`bg-papel`, `text-tinta`, `border-linea`) y nunca un color fijo, que
+es lo que permite revestir el sitio entero cambiando sólo los tokens — quedó
+demostrado al invertir el tema sin tocar un solo componente.
 
-- Oscuro: Papel `#111418` · Tarjeta `#1E2228` · Negro cancha `#0B0D0F`
-  · Verde 600 `#00A859` · Amarillo `#F5A623` · Tinta `#F9FAFB` · Gris `#9CA3AF`
-  · Línea `#2A303A` · Roja `#EF4444`
-- Claro: Papel `#FFFFFF` · Verde 600 `#0F7A3D` · Amarillo `#E08C00`
-  · Tinta `#111614` · Gris `#5B6560` · Línea `#DDE2DE` · Roja `#C42127`
-- Titulares: Archivo · Cuerpo: Source Serif 4 · Datos: IBM Plex Mono
+- Claro: Papel `#F6F3EA` · Papel alt `#EFEBDF` · Tarjeta `#FFFFFF`
+  · Verde 900 `#0F3B2A` · Verde 600 `#1C5A3E` · Negro cancha `#092619`
+  · Amarillo `#F2A900` · Tinta `#111511` · Gris `#5F645E` · Línea `#DDD8CB`
+  · Roja `#C42127`
+- Oscuro: Papel `#111418` · Tarjeta `#1E2228` · Verde 900 `#102A1E`
+  · Verde 600 `#00A859` · Negro cancha `#0B0D0F` · Amarillo `#F5A623`
+  · Tinta `#F9FAFB` · Gris `#9CA3AF` · Línea `#2A303A` · Roja `#EF4444`
+- **`verde-900` es una superficie, no un acento**: es el bloque verde de la
+  cabecera, la tapa y el aside. Lleva texto blanco en los dos temas.
+- Titulares: Archivo · Cuerpo: Source Serif 4 · Datos: IBM Plex Mono.
+  Los bocetos usan JetBrains Mono para los datos; **la decisión no está tomada**
+  y hasta que lo esté vale IBM Plex, que es la del blueprint y la que está
+  cargada con `next/font`.
+- **`.marca`** es la marca del sitio: Archivo 900 con `font-variation-settings:
+  'wdth' 110` —el eje expandido del blueprint— en caja mixta.
 - **`.titular`** es el titular deportivo: caja alta, tracking −0.02em, peso 800.
-  La fuente sigue siendo Archivo: el mockup usaba Barlow Condensed y se
+  La fuente sigue siendo Archivo: el mockup oscuro usaba Barlow Condensed y se
   descartó por la misma razón que el blueprint descartó Oswald.
 - `.meta` son las badges (13px, 700, uppercase, 0.08em). `.tarjeta` y `.franja`
-  son los dos fondos del rediseño.
+  son los dos fondos heredados del rediseño.
 - Cuerpo 18/19px, line-height 1.7, **máx 68ch** (clase `.prose-nota`). **El
   rediseño no toca el cuerpo de la nota**: entra en chrome, portada, listados y
   componentes.
 - Radius 2–4px (tarjetas 8px). Espaciado base 4px. Mobile-first a 375px. Áreas
   táctiles 44px (clase `.tactil`)
-- Todo color nuevo se verifica a AA antes de entrar: del mockup ya se corrigieron
-  el gris tenue (3.8:1 → 5.3:1) y el amarillo como texto sobre tarjeta clara
-  (2.6:1 → se usa verde).
+- **Todo color nuevo se verifica a AA antes de entrar**, con la fórmula de WCAG
+  y no a ojo. La única excepción a "nunca un color fijo" es el texto sobre los
+  bloques verdes, que va en blanco con alfa (`text-white/70`): esa superficie es
+  oscura en los dos temas, así que el blanco no depende del tema sino del fondo.
 
 ## Reglas No Negociables
 
