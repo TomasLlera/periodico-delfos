@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createStaticClient } from '@/lib/supabase/server'
 import type { FilaTablaConEquipo, Goleadora, Temporada } from '@/types'
 
 /** La temporada en curso. Hay un índice único que garantiza que sea una sola. */
@@ -31,6 +31,19 @@ export async function getTemporadas(): Promise<Temporada[]> {
     .select('*')
     .order('anio', { ascending: false })
 
+  return data ?? []
+}
+
+/**
+ * Para `generateStaticParams` y el sitemap: corre en build, sin cookies.
+ *
+ * No puede ser `getTemporadas()`, que pide las cookies del request y en build
+ * corta con "`cookies` was called outside a request scope". Es el mismo par
+ * que ya tienen notas y partidos.
+ */
+export async function getSlugsTemporadas(): Promise<{ slug: string }[]> {
+  const supabase = createStaticClient()
+  const { data } = await supabase.from('temporadas').select('slug')
   return data ?? []
 }
 

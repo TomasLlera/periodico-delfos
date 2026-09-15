@@ -309,6 +309,19 @@ describe('resumenGoles', () => {
       rival: ["L. Ferrari 55'"],
     })
   })
+
+  it('un partido sin eventos cargados no tiene goleadoras, y no rompe', () => {
+    // Es el caso del fixture de la temporada: `getPartidosTemporada()` no trae
+    // los eventos, y la misma tarjeta compacta tiene que dibujarse igual.
+    const { eventos, ...sinEventos } = partido({
+      aldosiviDeLocal: true,
+      golesAldosivi: 2,
+      golesRival: 1,
+    })
+    void eventos
+
+    expect(resumenGoles(sinEventos)).toEqual({ aldosivi: [], rival: [] })
+  })
 })
 
 describe('tituloAccesible', () => {

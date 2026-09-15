@@ -295,11 +295,24 @@ export interface ResumenGoles {
   rival: string[]
 }
 
+/**
+ * Un partido del que se pueden resumir los goles.
+ *
+ * Los eventos son **opcionales** a propósito: el fixture de la temporada sale
+ * de `getPartidosTemporada()`, que devuelve `PartidoConEquipos` —sin eventos,
+ * porque traer la planilla entera de cada fecha para dibujar una grilla de
+ * tarjetas es pedir la base completa. La tarjeta compacta es la misma en los
+ * dos casos; cuando no hay eventos, no dibuja la línea de goleadoras.
+ */
+export type PartidoResumible = PartidoConEquipos & {
+  eventos?: readonly EventoConJugadora[]
+}
+
 /** "Cortadi 23'", "Garro 61' (p)" — para la variante compacta. */
-export function resumenGoles(partido: PartidoCompleto): ResumenGoles {
+export function resumenGoles(partido: PartidoResumible): ResumenGoles {
   const resumen: ResumenGoles = { aldosivi: [], rival: [] }
 
-  for (const evento of [...partido.eventos].sort(
+  for (const evento of [...(partido.eventos ?? [])].sort(
     (a, b) => a.minuto - b.minuto || a.adicionado - b.adicionado,
   )) {
     if (!esGol(evento.tipo)) continue
