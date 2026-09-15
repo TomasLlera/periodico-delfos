@@ -12,18 +12,22 @@
 
 import Link from 'next/link'
 import { ImagenResponsive } from '@/components/content/ImagenResponsive'
-import { fechaCorta } from '@/lib/formato'
+import { etiquetaCategoria, fechaCorta } from '@/lib/formato'
 import type { NotaResumen } from '@/types'
 
-const ETIQUETA_CATEGORIA = {
-  cronica: 'Crónica',
-  analisis: 'Análisis',
-  temporada: 'Temporada',
-  plantel: 'Plantel',
-  institucional: 'Institucional',
-} as const
-
-export function NotasRelacionadas({ notas }: { notas: readonly NotaResumen[] }) {
+/**
+ * `titulo` es parametrizable porque el mismo bloque cierra dos páginas
+ * distintas: al pie de una nota es "Seguí leyendo", pero al pie de la ficha de
+ * un partido lo que sigue no es lectura suelta, es lo que se escribió sobre ese
+ * partido, y decirlo cambia para qué sirve el bloque.
+ */
+export function NotasRelacionadas({
+  notas,
+  titulo = 'Seguí leyendo',
+}: {
+  notas: readonly NotaResumen[]
+  titulo?: string
+}) {
   if (notas.length === 0) return null
 
   return (
@@ -33,7 +37,7 @@ export function NotasRelacionadas({ notas }: { notas: readonly NotaResumen[] }) 
       <div className="flex items-center gap-3">
         <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-verde-600" />
         <h2 id="relacionadas" className="titular text-[22px]">
-          Seguí leyendo
+          {titulo}
         </h2>
       </div>
 
@@ -70,14 +74,14 @@ function TarjetaNota({ nota }: { nota: NotaResumen }) {
           {/* La categoría va sobre la foto, como badge, y no arriba del título:
               es el patrón del rediseño. */}
           <span className="absolute left-3 top-3 rounded-sm bg-amarillo px-2 py-0.5 font-display text-[12px] font-bold uppercase tracking-[0.08em] text-negro-cancha">
-            {ETIQUETA_CATEGORIA[nota.categoria]}
+            {etiquetaCategoria(nota.categoria)}
           </span>
         </div>
       )}
 
       <div className="flex flex-1 flex-col p-4">
         <p className="meta">
-          {!nota.imagen_portada && `${ETIQUETA_CATEGORIA[nota.categoria]} · `}
+          {!nota.imagen_portada && `${etiquetaCategoria(nota.categoria)} · `}
           {nota.publicada_en && fechaCorta(nota.publicada_en)}
         </p>
 

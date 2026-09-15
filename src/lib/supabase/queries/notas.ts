@@ -1,5 +1,5 @@
 import { createClient, createStaticClient } from '@/lib/supabase/server'
-import type { Categoria, NotaConRelaciones, NotaResumen } from '@/types'
+import type { Categoria, NotaConRelaciones, NotaResumen, ResultadoBusqueda } from '@/types'
 
 /**
  * Todas las queries de notas viven acá. Nunca inline en un componente.
@@ -175,8 +175,42 @@ export async function getSlugsNotas(): Promise<{ slug: string; updated_at: strin
   return data ?? []
 }
 
-export async function buscarNotas(termino: string, limite = 20) {
+/**
+ * Búsqueda full-text. La función vive en `0009_busqueda.sql` y es
+ * `SECURITY INVOKER`, así que RLS sigue filtrando los borradores.
+ *
+ * El tipo de vuelta se declara acá: `rpc()` no lo conoce, y sin esto los
+ * resultados entran al componente como `any` y se pierde la regla no
+ * negociable 1.
+ */
+export async function buscarNotas(
+  termino: string,
+  limite = 20,
+): Promise<ResultadoBusqueda[]> {
   const supabase = await createClient()
   const { data } = await supabase.rpc('buscar_notas', { termino, limite })
-  return data ?? []
+  return (data ?? []) as unknown as ResultadoBusqueda[]
+}
+
+/**
+ * Las notas escritas sobre un partido, para su ficha.
+ *
+ * Es la vuelta del link que la planilla embebida ya hace al revés: desde la
+ * crónica se llega al partido, y desde el partido a todo lo que se escribió
+ * sobre él —la previa, la crónica y el análisis posterior.
+ */
+export async function getNotasDePartido(
+  partidoId: string,
+  limite = 5,
+): Promise<NotaResumen[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('notas')
+    .select(CAMPOS_RESUMEN)
+    .eq('estado', 'publicada')
+    .eq('partido_id', partidoId)
+    .order('publicada_en', { ascending: false })
+    .limit(limite)
+
+  return (data ?? []) as unknown as NotaResumen[]
 }

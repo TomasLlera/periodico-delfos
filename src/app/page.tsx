@@ -1,46 +1,123 @@
-import { Header } from '@/components/layout/Header'
+import type { Metadata } from 'next'
 import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { BloqueArchivo } from '@/components/portada/BloqueArchivo'
+import { GrillaNotas } from '@/components/portada/GrillaNotas'
+import { ListaAnalisis } from '@/components/portada/ListaAnalisis'
+import { NotaTapa } from '@/components/portada/NotaTapa'
+import { TarjetaPlantel } from '@/components/portada/TarjetaPlantel'
+import { getNotaPrincipal, getUltimasNotas } from '@/lib/supabase/queries/notas'
+import { haySupabase } from '@/lib/supabase/server'
+import type { NotaResumen } from '@/types'
 
 /**
- * Portada provisoria.
+ * La portada. Step 9 del Build Order, dibujada según `boceto-portada.html`.
  *
- * La real se construye en el Step 9 del blueprint (nota principal + últimas 4 +
- * fecha a fecha + goleadoras + archivo), y necesita datos en Supabase. Hasta
- * entonces esto sirve para verificar tokens, fuentes y layout.
+ * Server Component puro de datos: lee y le pasa todo a componentes que no
+ * consultan nada. Es lo que permite mirar el diseño con datos falsos en
+ * `/demo/portada` mientras no haya base.
+ *
+ * **Ninguna nota se repite entre bloques**, que es el problema número uno de la
+ * home de WordPress: muestra las mismas seis notas cuatro veces (blueprint
+ * 7.2). Cada query excluye los ids que ya salieron.
+ *
+ * **Lo que el boceto trae y acá no está, a propósito:** la barra de resultados
+ * de arriba del header, la planilla del último partido, el widget de próximo
+ * partido y la tabla de posiciones. Son `<BarraEstado />`, `<FechaAFecha />` y
+ * `<Goleadoras />`, que el Build Order excluye explícitamente de este step
+ * porque todavía no hay datos deportivos. El bloque de plantel se dibuja sin
+ * sus caras ni sus estadísticas por la misma razón. Y el newsletter no está en
+ * el Build Order: no se decidió si es un step o una maqueta.
+ *
+ * ISR 60s (blueprint 7.1). Al publicar, el Server Action además revalida `/`.
  */
-export default function Home() {
+export const revalidate = 60
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+
+/**
+ * El canónico de la portada es la raíz y nada más. Sin esto, cualquier variante
+ * con parámetros —los `?fbclid=` que agregan las redes al compartir— se indexa
+ * como una página distinta con el mismo contenido.
+ */
+export const metadata: Metadata = {
+  alternates: { canonical: SITE_URL },
+}
+
+interface Contenido {
+  tapa: NotaResumen | null
+  cronicas: NotaResumen[]
+  analisis: NotaResumen[]
+}
+
+/**
+ * Sin proyecto de Supabase la portada se dibuja vacía, con sus estados
+ * escritos, en lugar de reventar el build. Es el mismo criterio que usa
+ * `generateStaticParams` en `/nota/[slug]`.
+ */
+async function leerContenido(): Promise<Contenido> {
+  if (!haySupabase()) return { tapa: null, cronicas: [], analisis: [] }
+
+  const tapa = await getNotaPrincipal()
+  const yaSalieron = tapa ? [tapa.id] : []
+
+  const cronicas = await getUltimasNotas({
+    limite: 5,
+    categoria: 'cronica',
+    excluirIds: yaSalieron,
+  })
+
+  const analisis = await getUltimasNotas({
+    limite: 3,
+    categoria: 'analisis',
+    excluirIds: [...yaSalieron, ...cronicas.map((n) => n.id)],
+  })
+
+  return { tapa, cronicas, analisis }
+}
+
+export default async function Portada() {
+  const { tapa, cronicas, analisis } = await leerContenido()
+
   return (
     <>
       <Header />
 
-      <main className="mx-auto max-w-[1200px] px-4 py-12">
-        <div className="flex items-center gap-3">
-          <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-verde-600" />
-          <p className="meta text-verde-600">Primera B 2026</p>
-        </div>
-        <h1 className="titular mt-3 max-w-[18ch] text-[32px] md:text-[48px]">
-          El fútbol femenino de Aldosivi, fecha a fecha
-        </h1>
+      <main className="mx-auto max-w-[1200px] px-4 pb-4">
+        {tapa ? (
+          <NotaTapa nota={tapa} />
+        ) : (
+          <p className="mt-8 border-l-4 border-verde-600 bg-papel-alt py-6 pl-5 font-body text-gris">
+            Todavía no hay ninguna nota publicada. La primera que se publique
+            abre la portada.
+          </p>
+        )}
 
-        <div className="prose-nota mt-8">
-          <p>
-            Este es el texto de prueba de la medida de lectura. La regla no
-            negociable del proyecto es que el cuerpo de las notas no supere los
-            68 caracteres por línea: el sitio actual corre a unos 140 y es el
-            problema número uno de legibilidad. Si esta línea se corta antes de
-            llegar al borde de la pantalla en un monitor ancho, el token está
-            bien aplicado.
-          </p>
-          <h2>Un subtítulo con su filete</h2>
-          <p>
-            Los <a href="/cronicas">links del cuerpo</a> van en verde y
-            subrayados, porque el color solo no llega al contraste mínimo de
-            WCAG AA. Los datos deportivos —{' '}
-            <span className="dato">23&apos;</span>,{' '}
-            <span className="dato">0 - 1</span> — usan la mono para que
-            alineen en columna.
-          </p>
+        <GrillaNotas
+          id="cronicas"
+          titulo="Crónicas"
+          notas={cronicas}
+          enlace={{ href: '/cronicas', texto: 'Todas las crónicas' }}
+          vacio="Todavía no hay crónicas publicadas. Las de cada fecha aparecen acá apenas salen."
+        />
+
+        <div className="mt-14 grid gap-12 lg:grid-cols-[2fr_1fr]">
+          <ListaAnalisis
+            id="analisis"
+            titulo="Análisis"
+            notas={analisis}
+            enlace={{ href: '/analisis', texto: 'Ver más' }}
+            vacio="Todavía no hay análisis publicados."
+          />
+
+          <TarjetaPlantel
+            titulo="El plantel"
+            descripcion="Fichas, estadísticas y trayectoria de cada una de las jugadoras de Aldosivi."
+            enlace={{ href: '/plantel', texto: 'Ver el plantel completo' }}
+          />
         </div>
+
+        <BloqueArchivo />
       </main>
 
       <Footer />
