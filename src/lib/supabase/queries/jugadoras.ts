@@ -1,30 +1,17 @@
 import { createClient, createStaticClient } from '@/lib/supabase/server'
 import type {
   EstadisticasJugadora,
-  EventoConJugadora,
+  GolDeJugadora,
   Jugadora,
   JugadoraEnPlantel,
   Posicion,
 } from '@/types'
 
-/** Orden en el que se agrupa el plantel. No es alfabético a propósito. */
-export const ORDEN_POSICIONES: Posicion[] = [
-  'arquera',
-  'defensora',
-  'mediocampista',
-  'delantera',
-  'dt',
-  'ayudante',
-]
-
-export const NOMBRE_POSICION: Record<Posicion, string> = {
-  arquera: 'Arqueras',
-  defensora: 'Defensoras',
-  mediocampista: 'Mediocampistas',
-  delantera: 'Delanteras',
-  dt: 'Cuerpo técnico',
-  ayudante: 'Cuerpo técnico',
-}
+/**
+ * El orden y los nombres de los puestos viven en `src/lib/plantel.ts`, no acá:
+ * son presentación pura, y desde este archivo arrastraban el cliente de
+ * Supabase —y con él `next/headers`— adentro de cualquier test que los tocara.
+ */
 
 export async function getPlantel(temporadaId: string): Promise<JugadoraEnPlantel[]> {
   const supabase = await createClient()
@@ -85,7 +72,7 @@ export async function getEstadisticasJugadora(
 export async function getGolesDeJugadora(
   jugadoraId: string,
   temporadaId?: string,
-): Promise<EventoConJugadora[]> {
+): Promise<GolDeJugadora[]> {
   const supabase = await createClient()
   let query = supabase
     .from('eventos')
@@ -103,7 +90,7 @@ export async function getGolesDeJugadora(
   if (temporadaId) query = query.eq('partido.temporada_id', temporadaId)
 
   const { data } = await query
-  return (data ?? []) as unknown as EventoConJugadora[]
+  return (data ?? []) as unknown as GolDeJugadora[]
 }
 
 /** Para `generateStaticParams` y el sitemap: corre en build, sin cookies. */

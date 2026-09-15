@@ -2,10 +2,15 @@ import Link from 'next/link'
 import { CabeceraPartido } from '@/components/partido/CabeceraPartido'
 import { etiquetaFecha, fechaCorta } from '@/lib/formato'
 import { ETIQUETA_ESTADO, resumenGoles, tituloAccesible } from '@/lib/partido'
-import type { PartidoCompleto } from '@/types'
+import type { PartidoResumible } from '@/lib/partido'
 
 interface Props {
-  partido: PartidoCompleto
+  /**
+   * Con eventos o sin ellos: en la portada llega la planilla completa y en el
+   * fixture de la temporada llega el partido pelado. Sin eventos, la tarjeta
+   * es el marcador y nada más (ver `PartidoResumible`).
+   */
+  partido: PartidoResumible
   className?: string
 }
 
