@@ -7,9 +7,32 @@ Actualizar este archivo al terminar cada step.
 
 ---
 
-## Estado al cierre de la página de nota
+## Estado al cierre del cambio de paleta a crema
 
-**Verificado:** `pnpm build` pasa (typecheck limpio, 8 rutas, `/nota/[slug]`
+> **LEER PRIMERO.** La sesión anterior invirtió el tema **dos veces** en el
+> mismo día: primero a oscuro (rediseño "portal deportivo"), después de vuelta
+> a **claro/crema**, que es el estado actual y el definitivo. Si algo de este
+> archivo más abajo dice "el tema por omisión es el oscuro", **está viejo**:
+> vale esta sección. Lo que sigue vigente del rediseño oscuro es todo lo que no
+> es color — la planilla plegable, la línea de tiempo horizontal, el Header
+> arreglado, `.titular`/`.meta`/`.tarjeta`/`.franja` y la decisión de no usar
+> Barlow Condensed.
+
+**Lo último que se hizo:** el swap de `globals.css` a la paleta crema de los dos
+bocetos que trajo el usuario (portada y crónica). `@theme` tiene ahora el tema
+claro y el oscuro pasó a `@media (prefers-color-scheme: dark)` — la estructura
+original del blueprint. **La paleta oscura no se perdió**: estaba medida a AA
+entera y se conservó tal cual como variante.
+
+**No se tocó un solo componente y no hizo falta**, porque están escritos con
+utilidades semánticas (`bg-papel`, `text-tinta`, `border-linea`). El sitio
+cambió de piel editando un bloque de CSS. Esa es la razón por la que la regla
+está en `CLAUDE.md`, y quedó demostrada.
+
+**Verificado después del swap:** `tsc --noEmit` limpio, 256 tests, y `/`,
+`/demo/articulo` y `/demo/planilla` respondiendo 200.
+
+**Verificado antes:** `pnpm build` pasa (typecheck limpio, 8 rutas, `/nota/[slug]`
 registrada como SSG) y `pnpm test` pasa (**256 tests**). `/demo/articulo`
 renderiza el artículo entero en el navegador: 442 KB de HTML con el título, la
 bajada, la firma, el tiempo de lectura, la barra de compartir, el cuerpo, la
@@ -643,7 +666,132 @@ una tarjeta.
 
 ---
 
+## La paleta crema y los dos bocetos
+
+El usuario trajo dos bocetos HTML —portada y crónica— que **comparten tokens** y
+que son la dirección definitiva. Respetan lo que el blueprint ya pedía y que el
+mockup oscuro rompía: Archivo con el eje variable (`font-variation-settings:
+"wdth"`, que es el "eje expandido" del blueprint), Source Serif en el cuerpo,
+`--medida:68ch` declarada y aplicada, `focus-visible` con outline de 3px,
+`prefers-reduced-motion`, HTML semántico con `aria-current` y `aria-label`.
+
+**Todo el contraste está medido** con la fórmula de WCAG, no estimado:
+
+```
+bajada #2f342f / crema      11.45      gris #6B6F69 / crema        4.61
+cuerpo #1e221e / crema      14.53      gris / papel blanco         5.12
+verde-tinta / crema          7.33      verde-tinta / papel blanco  8.14
+amarillo / verde             6.22      blanco 60% / verde          5.56
+amarillo / verde-oscuro      8.02      blanco 50% / verde-oscuro   5.01
+```
+
+Lo único que falla es el texto del placeholder gris (`.ph.claro`, 2.82:1) y no
+existe en producción: ahí van fotos reales.
+
+**Dos arreglos que salieron del swap:**
+
+1. `--color-gris-tenue` daba **3.54:1** en el tema claro y no llegaba a AA.
+   Ahora `--color-gris` va un escalón más oscuro (`#5F645E`) y `tenue` toma el
+   `#6B6F69` del boceto, que es el gris más claro que todavía pasa.
+2. `html { color-scheme }` quedó invertido al cambiar de tema. Está en `light`,
+   y la variante oscura lo pisa desde su media query.
+
+### Lo que falta portar, en orden
+
+1. **El blueprint miente.** La sección 8 se editó en esta misma sesión para
+   decir "el tema por omisión es el oscuro", y después se invirtió a crema.
+   **Hay que revertir esa sección** con los tokens de `globals.css`, que es la
+   fuente de verdad. Lo mismo el bloque resumen de Design System más abajo y la
+   sección homónima de `CLAUDE.md`. Esto va primero: si no, el próximo agente
+   lee el blueprint y construye en oscuro.
+2. **Guardar los dos bocetos en `referencia/`**, al lado de
+   `estilo-prueba.html`. **Vienen mojibakeados** —UTF-8 leído como Latin-1:
+   "PeriÃ³dico", "crÃ³nicas", "Â·"— y hay que corregir la codificación al
+   guardarlos, o violan la regla no negociable 9.
+3. **El chrome:** `Header` (marca con el eje variable + buscador + fecha + nav
+   con `aria-current` y el filete amarillo abajo del activo) y `Footer` (fondo
+   `negro-cancha`, cuatro columnas, filete amarillo de 6px arriba). Ojo que
+   Step 10 pide además arreglar los links rotos del pie.
+4. **La página de nota ya existe y funciona** — esto no se construye de cero, se
+   le agrega lo que el boceto trae de más: miga de pan, la byline compacta con
+   iniciales sobre verde, `figcaption` con epígrafe y crédito, la tira de temas,
+   el anterior/siguiente y la tabla de estadísticas del partido. La `.cita` con
+   filete amarillo y el `.dato` en mono son del renderer de TipTap.
+5. **Step 9, la portada.** La grilla de 3 columnas con la primera ocupando 2 es
+   exactamente el "nota principal + últimas 4" que pide el Build Order.
+
+### Decisiones que el usuario todavía no tomó
+
+- **JetBrains Mono vs IBM Plex Mono.** Los bocetos usan JetBrains; el blueprint
+  especifica IBM Plex Mono y ya está cargada con `next/font`. No cambiar sin
+  preguntar.
+- **El newsletter no está en el Build Order** y aparece en los dos bocetos (en
+  la portada como sección, en la crónica como widget del aside). Es un backend
+  —lista, doble opt-in, proveedor de envío—, no un `<form>`. Decidir si entra
+  como step nuevo o si va como maqueta inerte.
+- **El ticker de resultados, el widget de próximo partido y la tabla de
+  posiciones son Step 19**, no Step 9. Necesitan Supabase con la temporada 2026
+  cargada. El Build Order excluye explícitamente `BarraEstado`, `FechaAFecha` y
+  `Goleadoras` de la portada "todavía no hay datos deportivos". **No inventar
+  datos deportivos para llenarlos**: regla no negociable 1.
+- La `.planilla` de los bocetos **no es** `<PlanillaPartido />`: es más parecida
+  a `<PlanillaCompacta />`, que ya existe, más una ficha técnica. Y `.planilla`
+  ya es una clase con reglas propias en `globals.css`. Cuidado con el choque de
+  nombres.
+
+---
+
 ## Prompt para la próxima sesión
+
+````
+Estoy construyendo Periódico Delfos, un medio digital de Mar del Plata dedicado
+al fútbol femenino de Aldosivi (las "Tiburonas"). Lo escribe una sola persona.
+Es una migración desde WordPress.
+
+El plan está en `periodico-delfos-blueprint-v2.md` y el estado real en
+`HANDOFF.md`. **Leé la sección "Estado al cierre del cambio de paleta a crema"
+antes que nada**: el tema se invirtió dos veces en un día y hay partes viejas
+más abajo en ese mismo archivo.
+
+Proyecto en `periodico-delfos/`. Next 15.5 App Router + TypeScript strict +
+Tailwind v4 + Supabase + TipTap + Inngest. Hoy pasan `tsc --noEmit` y 256 tests,
+y `pnpm build` prerenderiza 8 rutas. Mantenelos verdes. **Parar el dev server
+antes de buildear**: `next build` reescribe `.next/` y rompe el `next dev` que
+esté corriendo.
+
+Sigue sin haber proyecto de Supabase ni `.env.local`, así que la tarea no puede
+depender de leer o escribir en la base.
+
+CONTEXTO: se acaba de cambiar la paleta al crema de dos bocetos HTML que trajo
+el usuario (portada y crónica). El swap de tokens en `globals.css` ya está hecho
+y verificado, y no hizo falta tocar ningún componente porque todos usan
+utilidades semánticas. Falta portar el resto.
+
+TAREA, en este orden:
+
+1. Revertir la sección 8 del blueprint —y el bloque resumen de Design System más
+   abajo, y el de `CLAUDE.md`— para que reflejen la paleta crema que hoy está en
+   `globals.css`. Ahora dicen que el tema por omisión es el oscuro, y es falso.
+   Esto va primero porque si no el blueprint desinforma.
+
+2. Guardar los dos bocetos en `referencia/`. Vienen mojibakeados (UTF-8 leído
+   como Latin-1) y hay que corregir la codificación.
+
+3. Portar el chrome a los bocetos: `Header` y `Footer`. Sin inventar datos
+   deportivos — el ticker de resultados es Step 19 y necesita la base.
+
+Al terminar, actualizá `HANDOFF.md` y dejá un prompt para el siguiente step, que
+es la portada (Step 9).
+
+Ojo con tres decisiones que el usuario NO tomó y que no hay que tomar por él:
+la fuente mono (JetBrains del boceto vs IBM Plex del blueprint), el newsletter
+(no está en el Build Order) y qué hacer con los widgets que necesitan datos.
+Están detalladas en HANDOFF.md.
+````
+
+---
+
+## Prompt anterior, ya cumplido
 
 ````
 Estoy construyendo Periódico Delfos, un medio digital de Mar del Plata dedicado
