@@ -14,7 +14,8 @@ import { notFound } from 'next/navigation'
 import { ArticuloNota } from '@/components/content/ArticuloNota'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
-import { jsonLdNota, urlDeNota } from '@/lib/seo'
+import { etiquetaCategoria } from '@/lib/formato'
+import { jsonLdNota, urlDeNota, urlOg } from '@/lib/seo'
 import { getNotaPorSlug, getNotasRelacionadas, getSlugsNotas } from '@/lib/supabase/queries/notas'
 import { getPartidosPorIds } from '@/lib/supabase/queries/partidos'
 import { haySupabase } from '@/lib/supabase/server'
@@ -42,6 +43,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
+  if (!haySupabase()) return { title: 'Nota' }
+
   const { slug } = await params
   const nota = await getNotaPorSlug(slug)
 
@@ -61,12 +64,24 @@ export async function generateMetadata({
       publishedTime: nota.publicada_en ?? undefined,
       authors: [nota.autor.nombre],
       // `imagen_alt` es obligatorio en la base, así que si hay portada hay alt.
-      images: nota.imagen_portada
-        ? [{ url: nota.imagen_portada, alt: nota.imagen_alt }]
-        : undefined,
+      // Las notas que no la tienen —son varias de las 70 que trajo la
+      // migración— se comparten con la imagen que genera `/api/og`, en lugar
+      // del rectángulo gris con el dominio que muestran hoy.
+      images: [
+        nota.imagen_portada
+          ? { url: nota.imagen_portada, alt: nota.imagen_alt }
+          : {
+              url: urlOg(
+                { titulo: nota.titulo, volanta: etiquetaCategoria(nota.categoria) },
+                SITE_URL,
+              ),
+              alt: nota.titulo,
+            },
+      ],
     },
     twitter: {
-      card: nota.imagen_portada ? 'summary_large_image' : 'summary',
+      // Siempre grande: ahora siempre hay una imagen de 1200×630.
+      card: 'summary_large_image',
       title: nota.titulo,
       description: nota.bajada,
     },
@@ -78,6 +93,11 @@ export default async function PaginaNota({
 }: {
   params: Promise<{ slug: string }>
 }) {
+  // Sin proyecto de Supabase la ruta no puede resolver ningún slug. Sin esto,
+  // el cliente se construye con las variables en `undefined` y la página
+  // revienta con un 500 en lugar de decir que no existe.
+  if (!haySupabase()) notFound()
+
   const { slug } = await params
   const nota = await getNotaPorSlug(slug)
 
