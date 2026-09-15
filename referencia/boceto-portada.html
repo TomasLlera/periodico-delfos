@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Periódico Delfos — Portada (boceto)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --verde:#0F3B2A;
+    --verde-oscuro:#092619;
+    --verde-tinta:#1C5A3E;
+    --amarillo:#F2A900;
+    --crema:#F6F3EA;
+    --papel:#FFFFFF;
+    --tinta:#111511;
+    --gris:#6B6F69;
+    --linea:#DDD8CB;
+    --medida:68ch;
+    --display:"Archivo",system-ui,sans-serif;
+    --serif:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--crema);color:var(--tinta);font-family:var(--serif);line-height:1.55}
+  a{color:inherit;text-decoration:none}
+  a:focus-visible,button:focus-visible{outline:3px solid var(--amarillo);outline-offset:3px}
+  img,.ph{display:block;max-width:100%}
+  .wrap{width:min(1280px,100% - 3rem);margin-inline:auto}
+
+  /* ---------- placeholder de imagen ---------- */
+  .ph{position:relative;background:
+      repeating-linear-gradient(135deg,transparent 0 14px,rgba(255,255,255,.07) 14px 15px),
+      linear-gradient(160deg,#1C5A3E,#0F3B2A);
+      color:rgba(255,255,255,.55);font-family:var(--display);font-size:.8rem;
+      display:grid;place-items:center;letter-spacing:.02em}
+  .ph.claro{background:
+      repeating-linear-gradient(135deg,transparent 0 14px,rgba(0,0,0,.04) 14px 15px),#E6E1D2;color:#8a8577}
+
+  /* ---------- barra de marcador ---------- */
+  .ticker{background:var(--verde-oscuro);color:#fff;font-family:var(--mono);font-size:.82rem}
+  .ticker .wrap{display:flex;align-items:center;gap:1.5rem;min-height:40px;flex-wrap:wrap}
+  .ticker .partido{display:flex;align-items:center;gap:.6rem;white-space:nowrap}
+  .ticker .res{background:var(--amarillo);color:var(--tinta);padding:.1rem .45rem;font-weight:500}
+  .ticker .vivo{color:var(--amarillo)}
+  .ticker .vivo::before{content:"";display:inline-block;width:.5rem;height:.5rem;border-radius:50%;background:var(--amarillo);margin-right:.4rem;animation:latir 1.4s infinite}
+  @keyframes latir{50%{opacity:.3}}
+  .ticker .sep{opacity:.3}
+
+  /* ---------- cabecera ---------- */
+  header.top{background:var(--verde);color:#fff}
+  header.top .wrap{display:grid;grid-template-columns:auto 1fr auto;align-items:end;gap:2rem;padding:1.6rem 0 1.1rem}
+  .marca{font-family:var(--display);font-weight:900;font-size:2.3rem;line-height:.9;letter-spacing:-.03em;font-variation-settings:"wdth" 110}
+  .marca span{color:var(--amarillo)}
+  .marca small{display:block;font-weight:500;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;margin-top:.55rem;color:var(--amarillo);font-variation-settings:"wdth" 100}
+  .buscar{display:flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:.55rem .9rem;color:rgba(255,255,255,.7);font-family:var(--display);font-size:.85rem;min-width:260px}
+  .fecha{font-family:var(--mono);font-size:.78rem;color:rgba(255,255,255,.6);text-align:right}
+  nav.principal{background:var(--verde);border-top:1px solid rgba(255,255,255,.14)}
+  nav.principal ul{display:flex;gap:0;list-style:none;overflow-x:auto}
+  nav.principal a{display:block;padding:.85rem 1.15rem;font-family:var(--display);font-weight:700;font-size:.9rem;letter-spacing:.02em;color:#fff;border-bottom:3px solid transparent}
+  nav.principal a[aria-current]{border-bottom-color:var(--amarillo);color:var(--amarillo)}
+  nav.principal a:hover{background:rgba(255,255,255,.06)}
+
+  /* ---------- tapa ---------- */
+  .tapa{display:grid;grid-template-columns:7fr 5fr;gap:0;margin-top:2rem;background:var(--verde);color:#fff}
+  .tapa .foto{aspect-ratio:4/3;min-height:100%}
+  .tapa .texto{padding:2.5rem 2.5rem 2.2rem;display:flex;flex-direction:column;justify-content:flex-end}
+  .seccion{font-family:var(--display);font-weight:800;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--amarillo);border-left:4px solid var(--amarillo);padding-left:.6rem;line-height:1}
+  .tapa h1{font-family:var(--display);font-weight:900;font-size:clamp(2rem,3.6vw,3.4rem);line-height:.98;letter-spacing:-.02em;text-transform:uppercase;margin:1.1rem 0 1rem;font-variation-settings:"wdth" 105}
+  .tapa p{font-size:1.05rem;color:rgba(255,255,255,.82);max-width:var(--medida)}
+  .firma{margin-top:1.4rem;font-family:var(--display);font-size:.8rem;color:rgba(255,255,255,.6);display:flex;gap:1rem;align-items:center}
+  .firma b{color:#fff;font-weight:600}
+  .firma .t{font-family:var(--mono)}
+
+  /* ---------- resultado / planilla ---------- */
+  .planilla{margin-top:1.4rem;display:grid;grid-template-columns:1fr auto;border:1px solid var(--linea);background:var(--papel)}
+  .planilla .marcador{padding:1.4rem 1.8rem;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1.5rem;border-right:1px solid var(--linea)}
+  .marcador .equipo{font-family:var(--display);font-weight:800;font-size:1.25rem;line-height:1.05;text-transform:uppercase}
+  .marcador .equipo small{display:block;font-weight:500;font-size:.72rem;color:var(--gris);text-transform:none;margin-top:.3rem;font-family:var(--serif)}
+  .marcador .equipo.visita{text-align:right}
+  .marcador .goles{font-family:var(--mono);font-size:3rem;font-weight:500;letter-spacing:-.04em;background:var(--tinta);color:var(--amarillo);padding:.1rem .9rem;line-height:1.1}
+  .planilla .linea{padding:1.4rem 1.8rem;font-family:var(--mono);font-size:.8rem;display:flex;flex-direction:column;justify-content:center;gap:.4rem;min-width:280px}
+  .planilla .linea li{list-style:none;display:flex;gap:.8rem}
+  .planilla .linea .min{color:var(--gris);width:3ch;text-align:right}
+  .planilla .linea .gol{color:var(--verde-tinta);font-weight:500}
+  .planilla .linea a{font-family:var(--display);color:var(--verde-tinta);font-weight:700;margin-top:.4rem;text-decoration:underline;text-underline-offset:3px}
+
+  /* ---------- grilla de notas ---------- */
+  .bloque{margin-top:3.5rem}
+  .bloque-cab{display:flex;align-items:baseline;justify-content:space-between;border-bottom:3px solid var(--tinta);padding-bottom:.5rem;margin-bottom:1.6rem}
+  .bloque-cab h2{font-family:var(--display);font-weight:900;font-size:1.9rem;letter-spacing:-.02em;text-transform:uppercase;line-height:1;font-variation-settings:"wdth" 110}
+  .bloque-cab a{font-family:var(--display);font-weight:700;font-size:.85rem;color:var(--verde-tinta);text-decoration:underline;text-underline-offset:3px}
+  .grilla{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem}
+  .nota .ph{aspect-ratio:3/2;margin-bottom:.9rem}
+  .nota .seccion{color:var(--verde-tinta);border-color:var(--verde-tinta);font-size:.7rem}
+  .nota h3{font-family:var(--display);font-weight:800;font-size:1.3rem;line-height:1.1;letter-spacing:-.01em;margin:.6rem 0 .5rem}
+  .nota h3 a:hover{text-decoration:underline;text-decoration-color:var(--amarillo);text-decoration-thickness:3px;text-underline-offset:4px}
+  .nota p{color:#3f433f;font-size:.95rem}
+  .nota .firma{color:var(--gris);margin-top:.7rem}
+  .nota .firma b{color:var(--tinta)}
+  .grilla .nota:first-child{grid-column:span 2}
+  .grilla .nota:first-child .ph{aspect-ratio:16/8}
+  .grilla .nota:first-child h3{font-size:1.9rem;max-width:22ch}
+
+  /* ---------- análisis + plantel ---------- */
+  .dos{display:grid;grid-template-columns:2fr 1fr;gap:3rem}
+  .lista{list-style:none}
+  .lista li{display:grid;grid-template-columns:120px 1fr;gap:1.2rem;padding:1.1rem 0;border-bottom:1px solid var(--linea)}
+  .lista .ph{aspect-ratio:1;}
+  .lista h3{font-family:var(--display);font-weight:800;font-size:1.15rem;line-height:1.15;margin:.35rem 0 .3rem}
+  .lista p{font-size:.92rem;color:#3f433f}
+  .plantel{background:var(--verde);color:#fff;padding:1.8rem}
+  .plantel h2{font-family:var(--display);font-weight:900;font-size:1.6rem;text-transform:uppercase;line-height:1;letter-spacing:-.02em}
+  .plantel p{color:rgba(255,255,255,.75);font-size:.95rem;margin:.6rem 0 1.2rem}
+  .caras{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:1.2rem}
+  .caras .ph{aspect-ratio:1;font-size:.7rem}
+  .stat{display:flex;gap:1.6rem;border-top:1px solid rgba(255,255,255,.18);padding-top:1rem;margin-bottom:1.2rem}
+  .stat div{font-family:var(--mono);font-size:.78rem;color:rgba(255,255,255,.6)}
+  .stat div b{display:block;font-family:var(--display);font-size:1.9rem;font-weight:900;color:var(--amarillo);line-height:1}
+  .boton{display:inline-block;background:var(--amarillo);color:var(--tinta);font-family:var(--display);font-weight:800;font-size:.9rem;padding:.7rem 1.1rem}
+  .boton:hover{background:#ffbb1f}
+
+  /* ---------- newsletter ---------- */
+  .news{margin-top:3.5rem;border-top:3px solid var(--tinta);border-bottom:1px solid var(--linea);padding:2rem 0;display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:center}
+  .news h2{font-family:var(--display);font-weight:900;font-size:1.6rem;line-height:1.05;letter-spacing:-.02em}
+  .news p{color:#3f433f;margin-top:.4rem}
+  .news form{display:flex;gap:.5rem}
+  .news input{flex:1;padding:.75rem 1rem;border:1px solid var(--tinta);background:var(--papel);font-family:var(--display);font-size:.95rem}
+  .news button{border:0;cursor:pointer}
+
+  /* ---------- pie ---------- */
+  footer{margin-top:3.5rem;background:var(--verde-oscuro);color:rgba(255,255,255,.7);border-top:6px solid var(--amarillo)}
+  footer .wrap{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:2rem;padding:2.5rem 0}
+  footer .marca{font-size:1.6rem}
+  footer h4{font-family:var(--display);color:var(--amarillo);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.8rem}
+  footer li{list-style:none;font-family:var(--display);font-size:.9rem;margin-bottom:.45rem}
+  footer p{font-size:.9rem;max-width:34ch;margin-top:.8rem}
+  footer .legal{border-top:1px solid rgba(255,255,255,.12);padding:1rem 0;font-family:var(--mono);font-size:.72rem;display:flex;justify-content:space-between}
+
+  @media (max-width:900px){
+    header.top .wrap{grid-template-columns:1fr;align-items:start;gap:1rem}
+    .fecha{text-align:left}
+    .tapa{grid-template-columns:1fr}
+    .tapa .foto{aspect-ratio:16/10}
+    .planilla{grid-template-columns:1fr}
+    .planilla .marcador{border-right:0;border-bottom:1px solid var(--linea)}
+    .grilla{grid-template-columns:1fr 1fr}
+    .grilla .nota:first-child{grid-column:span 2}
+    .dos,.news{grid-template-columns:1fr}
+    footer .wrap{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width:600px){
+    .grilla{grid-template-columns:1fr}
+    .grilla .nota:first-child{grid-column:auto}
+    .tapa .texto{padding:1.6rem 1.4rem}
+    footer .wrap{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion:reduce){.ticker .vivo::before{animation:none}}
+</style>
+</head>
+<body>
+
+<!-- Barra de resultados -->
+<div class="ticker">
+  <div class="wrap">
+    <span class="vivo">Fecha 12 · Primera B</span>
+    <span class="partido">Aldosivi <span class="res">2 - 1</span> Deportivo Morón</span>
+    <span class="sep">|</span>
+    <span class="partido">Próximo: vs. Argentino de Rosario · sáb 20/09 15:00 · Cancha 2 Aldosivi</span>
+    <span class="sep">|</span>
+    <span class="partido">Tabla: 3° · 25 pts</span>
+  </div>
+</div>
+
+<header class="top">
+  <div class="wrap">
+    <a class="marca" href="#">Periódico <span>Delfos</span><small>La voz de las Tiburonas</small></a>
+    <div class="buscar">⌕ Buscar crónicas, jugadoras…</div>
+    <div class="fecha">Mar del Plata<br>Martes 15 de septiembre de 2026</div>
+  </div>
+  <nav class="principal"><div class="wrap">
+    <ul>
+      <li><a href="#" aria-current="page">Portada</a></li>
+      <li><a href="#">Crónicas</a></li>
+      <li><a href="#">Análisis</a></li>
+      <li><a href="#">Plantel</a></li>
+      <li><a href="#">Fixture y tabla</a></li>
+      <li><a href="#">Quiénes somos</a></li>
+    </ul>
+  </div></nav>
+</header>
+
+<main class="wrap">
+
+  <!-- Nota de tapa -->
+  <article class="tapa">
+    <div class="ph foto">Foto principal · 1200×900</div>
+    <div class="texto">
+      <span class="seccion">Crónica · Fecha 12</span>
+      <h1>Las Tiburonas lo dieron vuelta en diez minutos</h1>
+      <p>Perdían 0-1 desde el primer tiempo y parecía otra tarde amarga en la Cancha 2. Dos goles en el tramo final, uno de cabeza y otro de pelota parada, cambiaron el ánimo del equipo y la tabla.</p>
+      <div class="firma"><b>Charlie Redondo</b><span class="t">hace 3 h · 6 min de lectura</span></div>
+    </div>
+  </article>
+
+  <!-- Planilla del último partido -->
+  <section class="planilla" aria-label="Último resultado">
+    <div class="marcador">
+      <div class="equipo">Aldosivi<small>Local</small></div>
+      <div class="goles">2-1</div>
+      <div class="equipo visita">Dep. Morón<small>Visitante</small></div>
+    </div>
+    <ul class="linea">
+      <li><span class="min">31'</span><span>Gol de Morón</span></li>
+      <li><span class="min">78'</span><span class="gol">Gol · Aldosivi (cabezazo)</span></li>
+      <li><span class="min">87'</span><span class="gol">Gol · Aldosivi (tiro libre)</span></li>
+      <li><a href="#">Ver la planilla completa</a></li>
+    </ul>
+  </section>
+
+  <!-- Crónicas -->
+  <section class="bloque">
+    <div class="bloque-cab"><h2>Crónicas</h2><a href="#">Todas las crónicas</a></div>
+    <div class="grilla">
+      <article class="nota">
+        <div class="ph claro">Foto · 1200×600</div>
+        <span class="seccion">Fecha 11</span>
+        <h3><a href="#">Empate con sabor a poco frente a Excursionistas</a></h3>
+        <p>El equipo dominó la pelota pero le faltó puntería. Las claves de un 0-0 que dejó preguntas sobre la delantera.</p>
+        <div class="firma"><b>Charlie Redondo</b><span class="t">12/09</span></div>
+      </article>
+      <article class="nota">
+        <div class="ph claro">Foto · 800×533</div>
+        <span class="seccion">Fecha 10</span>
+        <h3><a href="#">Goleada en Rosario y liderazgo momentáneo</a></h3>
+        <p>Cuatro goles de visitante y una defensa que casi no sufrió.</p>
+        <div class="firma"><b>Charlie Redondo</b><span class="t">05/09</span></div>
+      </article>
+      <article class="nota">
+        <div class="ph claro">Foto · 800×533</div>
+        <span class="seccion">Fecha 9</span>
+        <h3><a href="#">Derrota ajustada en el clásico</a></h3>
+        <p>Un gol en contra decidió un partido parejo que se jugó con lluvia.</p>
+        <div class="firma"><b>Charlie Redondo</b><span class="t">29/08</span></div>
+      </article>
+      <article class="nota">
+        <div class="ph claro">Foto · 800×533</div>
+        <span class="seccion">Fecha 8</span>
+        <h3><a href="#">Debut de la arquera juvenil con valla invicta</a></h3>
+        <p>Diecisiete años y tres atajadas clave en su primer partido oficial.</p>
+        <div class="firma"><b>Charlie Redondo</b><span class="t">22/08</span></div>
+      </article>
+      <article class="nota">
+        <div class="ph claro">Foto · 800×533</div>
+        <span class="seccion">Fecha 7</span>
+        <h3><a href="#">Victoria de local con dos goles de la capitana</a></h3>
+        <p>Una tarde de esas que se recuerdan: doblete y ovación.</p>
+        <div class="firma"><b>Charlie Redondo</b><span class="t">15/08</span></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- Análisis + Plantel -->
+  <section class="bloque dos">
+    <div>
+      <div class="bloque-cab"><h2>Análisis</h2><a href="#">Ver más</a></div>
+      <ul class="lista">
+        <li><div class="ph claro">Gráfico</div><div>
+          <span class="seccion" style="color:var(--verde-tinta);border-color:var(--verde-tinta);font-size:.7rem">Estadísticas</span>
+          <h3><a href="#">Por qué Aldosivi convierte más en los últimos 15 minutos</a></h3>
+          <p>Siete de los diecinueve goles del torneo llegaron después del minuto 75. Los números del físico y del banco.</p>
+        </div></li>
+        <li><div class="ph claro">Gráfico</div><div>
+          <span class="seccion" style="color:var(--verde-tinta);border-color:var(--verde-tinta);font-size:.7rem">Táctica</span>
+          <h3><a href="#">El cambio al 4-3-3 y lo que ganó el mediocampo</a></h3>
+          <p>Desde la fecha 6 el equipo presiona más alto y recupera antes.</p>
+        </div></li>
+        <li><div class="ph claro">Gráfico</div><div>
+          <span class="seccion" style="color:var(--verde-tinta);border-color:var(--verde-tinta);font-size:.7rem">Tabla</span>
+          <h3><a href="#">Qué necesita el equipo para meterse en el reducido</a></h3>
+          <p>Faltan seis fechas y hay tres equipos en cuatro puntos.</p>
+        </div></li>
+      </ul>
+    </div>
+    <aside class="plantel">
+      <h2>El plantel 2026</h2>
+      <p>Fichas, estadísticas y trayectoria de cada una de las jugadoras de Aldosivi.</p>
+      <div class="caras">
+        <div class="ph">1</div><div class="ph">4</div><div class="ph">7</div><div class="ph">9</div>
+        <div class="ph">10</div><div class="ph">11</div><div class="ph">14</div><div class="ph">+16</div>
+      </div>
+      <div class="stat">
+        <div><b>24</b>jugadoras</div>
+        <div><b>19</b>goles</div>
+        <div><b>3°</b>en la tabla</div>
+      </div>
+      <a class="boton" href="#">Ver el plantel completo</a>
+    </aside>
+  </section>
+
+  <!-- Newsletter -->
+  <section class="news">
+    <div>
+      <h2>Recibí la crónica de cada fecha por correo</h2>
+      <p>Un mail después de cada partido. Sin publicidad y sin spam.</p>
+    </div>
+    <form onsubmit="return false">
+      <input type="email" placeholder="tu@correo.com" aria-label="Correo electrónico">
+      <button class="boton" type="submit">Suscribirme</button>
+    </form>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <div class="marca">Periódico <span>Delfos</span></div>
+      <p>El fútbol femenino de Aldosivi, fecha a fecha. Crónicas, análisis y estadísticas de las Tiburonas, desde Mar del Plata.</p>
+    </div>
+    <div><h4>El equipo</h4><ul><li>Plantel</li><li>Crónicas</li><li>Análisis</li><li>Fixture y tabla</li></ul></div>
+    <div><h4>El medio</h4><ul><li>Quiénes somos</li><li>Contacto</li><li>Privacidad</li></ul></div>
+    <div><h4>Seguinos</h4><ul><li>Instagram</li><li>X</li><li>YouTube</li></ul></div>
+  </div>
+  <div class="wrap legal"><span>© 2026 Periódico Delfos · Mar del Plata, Argentina</span><span>Hecho con React + Supabase</span></div>
+</footer>
+
+</body>
+</html>

@@ -704,10 +704,10 @@ existe en producción: ahí van fotos reales.
    fuente de verdad. Lo mismo el bloque resumen de Design System más abajo y la
    sección homónima de `CLAUDE.md`. Esto va primero: si no, el próximo agente
    lee el blueprint y construye en oscuro.
-2. **Guardar los dos bocetos en `referencia/`**, al lado de
-   `estilo-prueba.html`. **Vienen mojibakeados** —UTF-8 leído como Latin-1:
-   "PeriÃ³dico", "crÃ³nicas", "Â·"— y hay que corregir la codificación al
-   guardarlos, o violan la regla no negociable 9.
+2. ~~Guardar los dos bocetos en `referencia/`.~~ **Hecho.** Están en
+   `referencia/boceto-portada.html` y `referencia/boceto-cronica.html`, en
+   UTF-8 correcto y verificado. Son la fuente visual de todo lo que sigue:
+   comparten tokens entre sí y con `globals.css`.
 3. **El chrome:** `Header` (marca con el eje variable + buscador + fecha + nav
    con `aria-current` y el filete amarillo abajo del activo) y `Footer` (fondo
    `negro-cancha`, cuatro columnas, filete amarillo de 6px arriba). Ojo que
