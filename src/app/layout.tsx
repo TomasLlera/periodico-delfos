@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { Archivo, Source_Serif_4, IBM_Plex_Mono } from 'next/font/google'
+import { BarraEstado } from '@/components/layout/BarraEstado'
+import { getEstadoDelSitio } from '@/lib/supabase/queries/estado'
 import './globals.css'
 
 /**
@@ -50,16 +52,38 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+/**
+ * `<BarraEstado />` va acá y no en cada página: el blueprint la pide "fija
+ * arriba, siempre visible", y en el layout raíz aparece en todas sin que
+ * ninguna tenga que acordarse de ponerla.
+ *
+ * Se dibuja sola cuando haya base. Hoy `getEstadoDelSitio()` devuelve todo en
+ * `null` —no hay proyecto de Supabase— y la barra no renderiza nada, que es lo
+ * correcto: un resultado inventado en el borde superior de todas las páginas
+ * es la peor forma de romper la regla no negociable 1.
+ */
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const { temporada, ultimo, proximo, posicion } = await getEstadoDelSitio()
+
   return (
     // es-AR, no es-ES: el sitio de WordPress lo tiene mal configurado.
     <html
       lang="es-AR"
       className={`${archivo.variable} ${sourceSerif.variable} ${plexMono.variable}`}
     >
-      <body className="min-h-dvh antialiased">{children}</body>
+      <body className="min-h-dvh antialiased">
+        {temporada && (
+          <BarraEstado
+            temporada={temporada}
+            ultimo={ultimo}
+            proximo={proximo}
+            posicion={posicion}
+          />
+        )}
+        {children}
+      </body>
     </html>
   )
 }

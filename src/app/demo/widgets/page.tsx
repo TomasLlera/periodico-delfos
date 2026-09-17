@@ -25,6 +25,11 @@ import {
  * otros dos van donde irían en la portada: la franja debajo de las últimas
  * notas y las goleadoras abajo de todo.
  *
+ * **Esta barra es la de la demo, con datos.** La de verdad la pone el layout
+ * raíz en todas las páginas, y hoy no se dibuja porque no hay base. El día que
+ * la haya se van a ver dos apiladas acá: para entonces esta página ya no tiene
+ * razón de existir y se borra.
+ *
  * Se borra —con `datos-demo.ts`— cuando la migración cargue datos reales.
  */
 export const metadata: Metadata = {

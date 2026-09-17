@@ -19,11 +19,10 @@ import { NavPrincipal } from './NavPrincipal'
  * blanco 12.51:1 en claro, 15.32:1 en oscuro.
  *
  * **La tira de resultados que los dos bocetos tienen arriba no va acá adentro**:
- * es `<BarraEstado />`, y la pone la página, arriba de este componente. No está
- * en ninguna ruta pública todavía —necesita `partidos` cargado, Step 19— y se
- * la puede mirar en `/demo/widgets`. Rellenarla con marcadores de ejemplo viola
- * la regla no negociable 1: un resultado inventado en el borde superior del
- * sitio real es peor que no tener la tira.
+ * es `<BarraEstado />`, y la pone el layout raíz, arriba de este componente, en
+ * todas las páginas del sitio. Hoy no se dibuja en ninguna porque no hay base
+ * —`getEstadoDelSitio()` devuelve todo en `null`—; con datos aparece sola. Se
+ * la puede mirar con datos en `/demo/widgets`.
  *
  * **La temperatura es opcional y la pasa la página.** El componente no la
  * consulta: si la leyera él, las diez rutas estáticas del sitio pasarían a

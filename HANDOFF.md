@@ -1163,10 +1163,22 @@ forma posible de romperla. Los datos de `/demo/widgets` salen de
 `src/app/demo/temporada/datos-demo.ts`, el mismo archivo falso que ya usaban las
 páginas deportivas.
 
-Lo pendiente para cerrar el Step 19 es sólo el cableado: leer la temporada
-activa, sus partidos, la tabla y las goleadoras en `/`, y pasárselos. Las
-queries **ya existen**: `getPosicionAldosivi()` y `getGoleadoras()` (con límite
-5 por omisión) estaban escritas desde el Step 3b.
+**`<BarraEstado />` ya está cableada y va en todas las páginas.** Vive en el
+layout raíz (`src/app/layout.tsx`) y se alimenta de `getEstadoDelSitio()`, en
+`src/lib/supabase/queries/estado.ts`. Hoy no se dibuja en ninguna ruta porque
+no hay base: la query devuelve todo en `null` y el componente no renderiza nada.
+El día que haya datos aparece sola, sin tocar una línea.
+
+> **Esa query lee con `createStaticClient()` a propósito.** `createClient()`
+> pide las cookies, y **una sola lectura con cookies desde el layout raíz
+> vuelve dinámicas todas las rutas del sitio**, ISR incluido. Comprobado
+> después del cambio: el build sigue dando `/` estática con revalidate de 1m y
+> las diez rutas estáticas intactas. Si alguien la cambia por `createClient()`,
+> el sitio entero deja de prerenderizarse y no lo va a avisar ningún test.
+
+Para cerrar el Step 19 falta el cableado de los otros dos —`<FechaAFecha />` y
+`<Goleadoras />` en `/`—. Las queries **ya existen**: `getPartidosTemporada()`
+y `getGoleadoras()` (con límite 5 por omisión) estaban escritas desde el Step 3b.
 
 **Decisiones que tomó este step:**
 
