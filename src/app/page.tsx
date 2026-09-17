@@ -6,6 +6,7 @@ import { GrillaNotas } from '@/components/portada/GrillaNotas'
 import { ListaAnalisis } from '@/components/portada/ListaAnalisis'
 import { NotaTapa } from '@/components/portada/NotaTapa'
 import { TarjetaPlantel } from '@/components/portada/TarjetaPlantel'
+import { getTemperatura } from '@/lib/clima'
 import { getNotaPrincipal, getUltimasNotas } from '@/lib/supabase/queries/notas'
 import { haySupabase } from '@/lib/supabase/server'
 import type { NotaResumen } from '@/types'
@@ -79,11 +80,15 @@ async function leerContenido(): Promise<Contenido> {
 }
 
 export default async function Portada() {
-  const { tapa, cronicas, analisis } = await leerContenido()
+  // Las dos lecturas son independientes: el clima no espera a la base.
+  const [{ tapa, cronicas, analisis }, temperatura] = await Promise.all([
+    leerContenido(),
+    getTemperatura(),
+  ])
 
   return (
     <>
-      <Header />
+      <Header temperatura={temperatura} />
 
       <main className="mx-auto max-w-[1200px] px-4 pb-4">
         {tapa ? (

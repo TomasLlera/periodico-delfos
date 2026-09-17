@@ -120,7 +120,15 @@ no pudo reemplazar los archivos que tenía tomados y el server siguió sirviendo
 el build viejo con los chunks del nuevo — páginas sin CSS, sin hidratar, y una
 tanda entera de verificación que decía cosas falsas. Matar el proceso que
 escucha el puerto (`Get-NetTCPConnection -LocalPort <puerto>` → `Stop-Process`),
-no sólo el shell que lo lanzó, y ante la duda borrar `.next` y buildear limpio. `pnpm` no se usó, así que no
+no sólo el shell que lo lanzó, y ante la duda borrar `.next` y buildear limpio.
+
+> **Pasa igual con `next dev`, y el síntoma engaña.** Un `pnpm build` con el dev
+> server levantado le pisa `.next`: el server sigue en pie pero tira
+> `Cannot find module './716.js'` y devuelve 500 en los chunks, así que la
+> página se dibuja **sin hidratar**. Lo primero que se nota es que **la fecha de
+> la cabecera desaparece** —`<FechaDeHoy />` la escribe recién en el
+> `useEffect`—, y parece un bug del componente cuando es el server podrido.
+> Se arregla parando el server, borrando `.next` y volviendo a arrancar. `pnpm` no se usó, así que no
 está confirmado que ande; si falla, hay un Node 22 portátil en `~/tools/node22`
 y pnpm preparado con `corepack prepare pnpm@11.1.2 --activate`. **No arrancar el
 dev server con `| head`**: cuando `head` cierra el pipe, el server queda colgado
@@ -150,6 +158,7 @@ escuchando el puerto pero sin responder. Redirigir a un archivo.
 | **15** | **`/partido/[slug]` con JSON-LD `SportsEvent`. Mirala en `/demo/partido`** | `src/app/partido/[slug]/`, `jsonLdPartido()` en `src/lib/seo.ts` |
 | **16** | **Lo que faltaba del Step 14: `/temporada/[slug]` (fixture, tabla y goleadoras), `/plantel/[temporadaSlug]` y `/jugadora/[slug]`. Miralas en `/demo/temporada`, `/demo/plantel` y `/demo/jugadora`** | `src/app/temporada/`, `plantel/[temporadaSlug]/`, `jugadora/[slug]/`, `src/components/` (temporada, plantel, jugadora), `src/lib/temporada.ts`, `plantel.ts`, `jugadora.ts` |
 | **17** | **Los tres widgets deportivos del Step 19, como componentes puros. NO están enchufados a `/`. Miralos en `/demo/widgets`** | `src/components/layout/BarraEstado.tsx`, `src/components/partido/FechaAFecha.tsx` y `ChipResultado.tsx`, `src/components/portada/Goleadoras.tsx`, `src/lib/temporada.ts` |
+| **18** | **La temperatura de Mar del Plata en la línea de fecha de la cabecera (fuera del Build Order, lo pidió el usuario)** | `src/lib/clima.ts`, `src/components/layout/Header.tsx`, `src/app/page.tsx` |
 
 ---
 
@@ -1201,6 +1210,28 @@ la tapa desde que existen. El arreglo son tres líneas en `globals.css`
 `.franja :focus-visible` con `outline-color: var(--color-amarillo)`, que da
 8:1), pero cambia el foco en todo el sitio y **no se hizo sin preguntar**.
 
+### La línea de fecha de la cabecera
+
+`Mar del Plata · 12°` arriba y la fecha del día abajo. No está en el Build
+Order: lo pidió el usuario. La temperatura sale de **Open-Meteo**
+(`src/lib/clima.ts`), que no pide API key ni atribución, cacheada 30 minutos
+con `next: { revalidate: 1800 }`.
+
+- **La ciudad es fija.** Es la línea de fecha del diario —de dónde se escribe—,
+  como en un diario impreso, no dónde está el lector. Geolocalizar al visitante
+  pide permiso al entrar o mirar la IP en cada request, y las dos vuelven
+  dinámica una portada que hoy es estática con ISR. Comprobado después: `/`
+  sigue saliendo `○ (Static)` con revalidate de 1m.
+- **La cabecera no consulta: recibe.** `<Header temperatura={...} />` es un prop
+  opcional y **sólo la portada se lo pasa**. Si el fetch viviera adentro del
+  componente, las diez rutas estáticas del sitio pasarían a revalidarse por una
+  temperatura. En `/demo/portada` va un 14 fijo para poder ver el diseño sin red.
+- **Si la API falla, no hay dato y no pasa nada más.** `getTemperatura()` nunca
+  tira: la cabecera está en todas las páginas y una API de clima caída no puede
+  tumbar ninguna. La forma de la respuesta se valida con Zod.
+- Los grados van en amarillo sobre `verde-900` (7.56:1, ya medido) y el punto
+  separador en `white/25`, el mismo de `<BarraEstado />`.
+
 ### Decisiones que el usuario todavía no tomó
 
 - **Lo que bloquea `/contacto` y `/privacidad`** (lo único que le falta al Step
@@ -1267,7 +1298,7 @@ el tema se invirtió dos veces en un día y hay partes viejas más abajo en ese
 mismo archivo. El blueprint y `CLAUDE.md` sí están al día.
 
 Proyecto en `periodico-delfos/`. Next 15.5 App Router + TypeScript strict +
-Tailwind v4 + Supabase + TipTap + Inngest. Hoy pasan `tsc --noEmit` y 341 tests,
+Tailwind v4 + Supabase + TipTap + Inngest. Hoy pasan `tsc --noEmit` y 347 tests,
 y `next build` da 27 rutas. Mantenelos verdes.
 
 **Parar el server antes de buildear, y matar el proceso, no el shell.** En la

@@ -34,7 +34,8 @@ export const metadata: Metadata = {
 export default function DemoPortada() {
   return (
     <>
-      <Header />
+      {/* Fija, para ver la línea de fecha con clima sin depender de la red. */}
+      <Header temperatura={14} />
 
       <main className="mx-auto max-w-[1200px] px-4 py-10">
         <p className="meta">Banco de pruebas · datos falsos</p>

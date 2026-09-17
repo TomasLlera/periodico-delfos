@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Search } from 'lucide-react'
+import { etiquetaTemperatura, temperaturaAccesible } from '@/lib/clima'
 import { FechaDeHoy } from './FechaDeHoy'
 import { NavPrincipal } from './NavPrincipal'
 
@@ -23,8 +24,18 @@ import { NavPrincipal } from './NavPrincipal'
  * la puede mirar en `/demo/widgets`. Rellenarla con marcadores de ejemplo viola
  * la regla no negociable 1: un resultado inventado en el borde superior del
  * sitio real es peor que no tener la tira.
+ *
+ * **La temperatura es opcional y la pasa la página.** El componente no la
+ * consulta: si la leyera él, las diez rutas estáticas del sitio pasarían a
+ * revalidarse por una temperatura. Hoy se la pasa sólo la portada, que es donde
+ * un diario impreso pone el clima. Sin dato, la cabecera queda como antes.
  */
-export function Header() {
+interface Props {
+  /** Grados enteros de Mar del Plata. `null` cuando no se pudieron leer. */
+  temperatura?: number | null
+}
+
+export function Header({ temperatura = null }: Props) {
   return (
     <header className="bg-verde-900 text-white">
       <div className="mx-auto grid max-w-[1200px] items-end gap-4 px-4 pb-[1.1rem] pt-[1.6rem] md:grid-cols-[auto_1fr_auto] md:gap-8">
@@ -46,8 +57,24 @@ export function Header() {
           Buscar crónicas, jugadoras…
         </Link>
 
-        <div className="dato text-[0.78rem] leading-relaxed text-white/60 md:text-right">
-          <span className="block">Mar del Plata</span>
+        {/* La línea de fecha del diario: dónde se escribe, cuándo y qué tiempo
+            hace. Las dos líneas van con interlineado corto para que se lean
+            como un bloque y no como dos datos sueltos. */}
+        <div className="dato text-[0.78rem] leading-snug text-white/60 md:text-right">
+          <span className="block">
+            Mar del Plata
+            {temperatura !== null && (
+              <>
+                <span aria-hidden="true" className="px-1.5 text-white/25">
+                  ·
+                </span>
+                <span className="font-semibold text-amarillo">
+                  <span aria-hidden="true">{etiquetaTemperatura(temperatura)}</span>
+                  <span className="sr-only">{temperaturaAccesible(temperatura)}</span>
+                </span>
+              </>
+            )}
+          </span>
           <FechaDeHoy />
         </div>
       </div>
