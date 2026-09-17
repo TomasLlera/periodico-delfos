@@ -1361,6 +1361,77 @@ de pruebas del renderer y existe para ejercitar los nueve tipos de evento
 
 ---
 
+## Arrancar el backend
+
+**Es el próximo paso del proyecto y lo único que desbloquea todo lo demás.**
+Hoy el sitio es una cáscara terminada esperando datos: `/` está vacía, la barra
+de estado no se dibuja en ninguna página, y los Steps 5, 6 y 7 —auth, migración
+y editor— están todos frenados por esto. La migración ya se probó en seco
+contra el sitio real y salió limpia: 70 notas, 0 categorías sin mapear, 82
+reglas de redirección.
+
+### Parte 1 — en la consola de Supabase (esto no lo puede hacer el agente)
+
+1. Crear el proyecto en `supabase.com`. **Región São Paulo (`sa-east-1`)**: es
+   la más cercana a Mar del Plata y el sitio se lee desde acá.
+2. **Settings → API**, copiar tres valores: *Project URL*, *anon public key* y
+   *service_role key*.
+3. `cp .env.example .env.local` y completar **sólo** estas tres:
+   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y
+   `SUPABASE_SERVICE_ROLE_KEY`. Las de Inngest, Meta y X pueden quedar vacías:
+   recién hacen falta para el auto-posteo. **`.env.local` no se commitea nunca**
+   (regla no negociable 10), y la `service_role` bypassea RLS: jamás en un
+   componente cliente ni en una variable `NEXT_PUBLIC_*`.
+4. **Authentication → Users → Add user**, con el mail de Charlie. **Anotar el
+   UUID que queda**: hace falta en el paso 6 y no se puede inventar.
+
+### Parte 2 — el schema y la carga
+
+5. Aplicar las nueve migraciones: `pnpm dlx supabase db push`.
+6. **Sembrar los catálogos a mano.** Ninguna migración trae datos, y sin esto la
+   carga falla:
+   - La fila de `autores`. **Su `id` es FK a `auth.users(id)`**, así que va con
+     el UUID del paso 4, no con uno nuevo. `slug` tiene que ser
+     `charlie-redondo` o hay que pasarle `--autor <slug>` al script.
+   - La temporada activa, `primera-b-2026`. **Hay un índice único que permite
+     una sola activa**: marcar las viejas con `activa = false`.
+   - Los equipos, con Aldosivi en `es_aldosivi = true`. **También hay un índice
+     único ahí**: un solo Aldosivi, o las vistas de goleadoras rompen los
+     conteos. Los diez de la Zona B están en
+     `src/app/demo/temporada/datos-demo.ts` con sus nombres y ciudades reales.
+7. Correr la migración **en seco** y leer el informe:
+   `pnpm tsx scripts/migrate-wp.ts` → `.migracion-wp/informe.md`.
+8. **Completar a mano `alt.json` y `bajadas.json`**, que el paso anterior deja
+   listos. Son 109 textos alternativos y 43 bajadas. No es opcional: sin `alt`
+   ninguna nota migra con portada (regla no negociable 4) y las 43 sin bajada
+   se quedan esperando. Se puede hacer de a poco: el script es idempotente por
+   slug y correrlo de nuevo no duplica nada.
+9. Escribir de verdad: `pnpm tsx scripts/migrate-wp.ts --escribir`. Sube las
+   imágenes al bucket `media` —lo crea público si no existe, que Instagram lo
+   exige— y hace upsert de las notas.
+10. Regenerar los tipos y dejar de mantenerlos a mano:
+    `pnpm dlx supabase gen types typescript --project-id <id> > src/lib/supabase/types.ts`
+11. Las redirecciones: `pnpm tsx scripts/generate-redirects.ts` y confirmar que
+    `vercel.json` queda con las 82 reglas. **Ninguna URL vieja puede dar 404**
+    (regla no negociable 8).
+
+### Qué aparece solo cuando esto esté
+
+Nada de lo que sigue necesita código nuevo:
+
+- `/` deja de estar vacía y se llena con las notas reales.
+- **`<BarraEstado />` aparece en todas las páginas del sitio**: ya está cableada
+  en el layout raíz y hoy devuelve `null` sólo porque no hay base.
+- `/nota/[slug]`, `/partido/[slug]`, `/temporada/[slug]`, `/plantel` y
+  `/jugadora/[slug]` empiezan a prerenderizarse desde `generateStaticParams`.
+- El sitemap y el RSS dejan de salir vacíos.
+
+Lo que **sí** necesita código después: el Step 5 (auth + shell del admin), el 6
+(la planilla de carga) y el 7 (el editor de notas), que es donde Charlie carga
+los goles y deja de escribirlos a mano adentro del texto.
+
+---
+
 ## Prompt para la próxima sesión
 
 ````
@@ -1411,8 +1482,8 @@ TAREA, en este orden:
    todavía no tomó" y las dos son de menos de media hora una vez decididas.
 
 Sin base no queda nada más del Build Order que se pueda hacer sin inventar datos
-deportivos. Lo que sigue —enchufar los widgets a `/`, que es lo único que falta
-para cerrar el Step 19— necesita Supabase con la temporada cargada.
+deportivos. **El próximo paso del proyecto es levantar Supabase, y está escrito
+paso por paso en "Arrancar el backend" más arriba.**
 
 **Medí el scroll horizontal en cada página que toques.** Comparando
 `document.documentElement.scrollWidth` con `clientWidth` **y** mirando
