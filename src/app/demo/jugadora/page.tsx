@@ -52,14 +52,19 @@ export default function DemoJugadora() {
       <Header />
 
       <main className="mx-auto max-w-[1200px] px-4 py-10">
-        <p className="meta">Banco de pruebas · datos falsos</p>
+        <p className="meta">Banco de pruebas · campaña 2026 real</p>
         <h1 className="mt-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
           La ficha de una jugadora
         </h1>
         <p className="prose-nota mt-4 text-gris">
-          Esta página no se indexa y no llega a producción. Los partidos, los
-          goles y las tarjetas son inventados: en la ficha real se calculan
-          solos desde las planillas de cada partido.
+          Esta página no se indexa y no llega a producción, pero la campaña de
+          Morena Larea es <strong>la de verdad</strong>, contada de las doce
+          crónicas: goleadora del torneo con ocho goles, titular en todas las
+          fechas menos la sexta. <strong>La lista de goles muestra cuatro</strong>,
+          y no es un error del diseño: las incidencias de las fechas 3, 4 y 7
+          dicen que convirtió pero no en qué minuto, y un gol sin minuto no
+          entra en la planilla. Es el agujero que hay que completar a mano antes
+          de correr la migración de verdad.
         </p>
 
         {/* El título de la ficha real es el nombre de la jugadora, en `<h1>`.

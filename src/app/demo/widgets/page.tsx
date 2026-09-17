@@ -48,15 +48,18 @@ export default function DemoWidgets() {
       <Header />
 
       <main className="mx-auto max-w-[1200px] px-4 py-10">
-        <p className="meta">Banco de pruebas · datos falsos</p>
+        <p className="meta">Banco de pruebas · Primera B 2026 real</p>
         <h1 className="mt-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
           Los widgets deportivos
         </h1>
         <p className="prose-nota mt-4 text-gris">
-          Esta página no se indexa y no llega a producción. El fixture, la tabla
-          y las goleadoras son inventados. La barra de arriba es{' '}
+          Esta página no se indexa y no llega a producción. El último resultado,
+          la franja y las goleadoras son <strong>los de verdad</strong>, leídos
+          de las doce crónicas del sitio viejo; la posición en la tabla es lo
+          único inventado. La barra de arriba es{' '}
           <code>&lt;BarraEstado /&gt;</code> en su lugar real: la primera franja
-          del documento, arriba de la cabecera.
+          del documento, arriba de la cabecera. No hay próximo partido porque el
+          sitio no publicó ninguno después de la fecha 12.
         </p>
 
         <FechaAFecha id="demo-fecha-a-fecha" partidos={fixtureDemo} temporada={temporadaDemo} />

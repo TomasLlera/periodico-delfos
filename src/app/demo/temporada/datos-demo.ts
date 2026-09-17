@@ -1,12 +1,31 @@
 /**
- * Datos falsos para ver las páginas deportivas sin Supabase.
+ * La Primera B 2026 de verdad, para ver las páginas deportivas sin Supabase.
  *
- * **Todo lo de este archivo es inventado** y por eso vive en `src/app/demo/`:
- * la regla no negociable 1 prohíbe que un número deportivo inventado aparezca
- * en una ruta pública. `/temporada/[slug]`, `/plantel/[temporadaSlug]` y
- * `/jugadora/[slug]` leen la base y no importan nada de acá.
+ * **Ya no es inventado.** Todo lo de este archivo sale del sitio viejo, leído
+ * con `scripts/migrate-wp.ts` en seco: el plantel es el de
+ * `/plantel-2026-de-las-tiburonas/` y el fixture, los resultados, las canchas,
+ * los horarios y los goles salen de la ficha y las incidencias de cada crónica.
+ * Sigue viviendo en `src/app/demo/` porque son datos de archivo cargados a
+ * mano, no la base: ninguna ruta pública importa de acá.
  *
- * Se borra cuando haya datos reales cargados (Step 6 del Build Order).
+ * **La única excepción es `tablaDemo`**, que está marcada abajo: la tabla de
+ * posiciones se carga a mano desde AFA y el sitio viejo nunca la publicó, así
+ * que no hay de dónde sacarla. La fila de Aldosivi sí lleva su campaña real.
+ *
+ * Tres cosas que el sitio viejo **no** registra, y por eso no están acá:
+ *
+ * - **La mitad de los goles no tienen minuto.** Las incidencias de las fechas
+ *   3, 4, 6, 7, 10 y 12 dicen quién convirtió pero no cuándo. `eventos` exige
+ *   `minuto`, así que esos goles no se pueden cargar sin que alguien los
+ *   complete: `goleadorasDemo` los cuenta igual porque la autoría sí está.
+ * - **No hay dorsales fijos.** El número cambia partido a partido y el propio
+ *   artículo del plantel lo dice ("la falta de dorsales fijos"). Van en `null`.
+ * - **Ninguna foto tiene texto alternativo**, así que ninguna jugadora tiene
+ *   `foto_url`: la regla no negociable 4 lo exige y no se inventa.
+ *
+ * Los nombres siguen la grafía del artículo del plantel. Las crónicas escriben
+ * algunos distinto —Veñardez/Velardez, Audicana/Audicana, Surban/Surbán,
+ * Mozquera/Mosquera— y eso lo tiene que unificar una persona, no un script.
  */
 
 import type {
@@ -25,7 +44,7 @@ import type {
 function sinAcentos(texto: string): string {
   return texto
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
@@ -41,11 +60,12 @@ export const temporadaDemo: Temporada = {
   slug: 'primera-b-2026',
   division: 'Primera B',
   anio: 2026,
-  zona: 'Zona A',
+  zona: 'Zona B',
   activa: true,
-  created_at: '2026-01-15T12:00:00.000Z',
+  created_at: '2026-03-01T12:00:00.000Z',
 }
 
+/** El torneo que ganaron: "Tiburonas Campeonas" en las crónicas de octubre. */
 const temporadaAnterior: Temporada = {
   id: 'tmp-primera-c-2024',
   nombre: 'Primera C 2024',
@@ -54,10 +74,11 @@ const temporadaAnterior: Temporada = {
   anio: 2024,
   zona: null,
   activa: false,
-  created_at: '2024-01-15T12:00:00.000Z',
+  created_at: '2024-03-01T12:00:00.000Z',
 }
 
-function equipo(nombre: string, corto: string, esAldosivi = false): Equipo {
+/** `ciudad` sólo donde la ficha de algún partido la dice. */
+function equipo(nombre: string, corto: string, ciudad: string | null, esAldosivi = false): Equipo {
   return {
     id: `eq-${sinAcentos(corto)}`,
     nombre,
@@ -65,160 +86,175 @@ function equipo(nombre: string, corto: string, esAldosivi = false): Equipo {
     apodo: esAldosivi ? 'Las Tiburonas' : null,
     slug: sinAcentos(corto),
     escudo_url: null,
-    ciudad: esAldosivi ? 'Mar del Plata' : null,
+    ciudad,
     es_aldosivi: esAldosivi,
   }
 }
 
-const ALDOSIVI = equipo('Club Atlético Aldosivi', 'Aldosivi', true)
-const ALL_BOYS = equipo('Club Atlético All Boys', 'All Boys')
-const ESTUDIANTES = equipo('Estudiantes de La Plata', 'Estudiantes')
-const ESPANOL = equipo('Deportivo Español', 'Dep. Español')
-const LAFERRERE = equipo('Club Social y Deportivo Laferrere', 'Laferrere')
-const MORON = equipo('Club Deportivo Morón', 'Morón')
-const BANFIELD = equipo('Club Atlético Banfield', 'Banfield')
-const LANUS = equipo('Club Atlético Lanús', 'Lanús')
-const TEMPERLEY = equipo('Club Atlético Temperley', 'Temperley')
-const ARGENTINO = equipo('Argentino de Quilmes', 'Argentino')
-const VILLA_SAN = equipo('Villa San Carlos', 'Villa San Carlos')
-const CAMBACERES = equipo('Defensores de Cambaceres', 'Cambaceres')
+const ALDOSIVI = equipo('Club Atlético Aldosivi', 'Aldosivi', 'Mar del Plata', true)
+const DEFENSORES = equipo('Defensores de Belgrano', 'Defensores', 'CABA')
+const ALL_BOYS = equipo('Club Atlético All Boys', 'All Boys', 'CABA')
+const DEFENSA = equipo('Defensa y Justicia', 'Defensa', null)
+const CLAYPOLE = equipo('Club Atlético Claypole', 'Claypole', null)
+const UAI = equipo('UAI Urquiza', 'UAI Urquiza', 'Villa Lynch')
+const MORON = equipo('Club Deportivo Morón', 'Dep. Morón', null)
+const COMUNICACIONES = equipo('Club Comunicaciones', 'Comunicaciones', 'CABA')
+const ESTRELLA = equipo('Estrella del Sur', 'Estrella del Sur', null)
+const CENTRAL = equipo('Rosario Central', 'Central', 'Rosario')
 
 // ============================================
-// Plantel
+// Plantel 2026
 // ============================================
 
-interface JugadoraDemo {
-  nombre: string
-  apellido: string
-  posicion: Posicion
-  dorsal?: number | null
-  capitana?: boolean
-  origen?: string
-  nacimiento?: string
-}
-
-function jugadora(demo: JugadoraDemo): JugadoraEnPlantel {
-  const slug = sinAcentos(`${demo.nombre}-${demo.apellido}`)
+/**
+ * Las 32 del artículo del plantel, más el DT que firman las fichas.
+ *
+ * `dorsal` va en `null` a propósito: el número cambia fecha a fecha y el
+ * artículo lo dice. Los dorsales que se ven en `/demo/partido` son los de
+ * **ese** partido, que es donde viven de verdad (`formaciones.dorsal`).
+ */
+function jugadora(nombre: string, apellido: string, posicion: Posicion): JugadoraEnPlantel {
+  const slug = sinAcentos(`${nombre}-${apellido}`)
   return {
     id: `jug-${slug}`,
-    nombre: demo.nombre,
-    apellido: demo.apellido,
+    nombre,
+    apellido,
     slug,
-    posicion: demo.posicion,
-    fecha_nacimiento: demo.nacimiento ?? null,
+    posicion,
+    fecha_nacimiento: null,
     foto_url: null,
-    lugar_origen: demo.origen ?? null,
+    lugar_origen: null,
     bio: null,
     activa: true,
-    dorsal: demo.dorsal ?? null,
-    posicion_temporada: demo.posicion,
-    capitana: demo.capitana ?? false,
+    dorsal: null,
+    posicion_temporada: posicion,
+    capitana: false,
   }
 }
 
 export const plantelDemo: JugadoraEnPlantel[] = [
-  jugadora({ nombre: 'Micaela', apellido: 'Díaz', posicion: 'arquera', dorsal: 1 }),
-  jugadora({ nombre: 'Valentina', apellido: 'Bustos', posicion: 'arquera', dorsal: 12 }),
-  jugadora({ nombre: 'Rocío', apellido: 'Cassarino', posicion: 'defensora', dorsal: 2 }),
-  jugadora({ nombre: 'Ayelén', apellido: 'Corona', posicion: 'defensora', dorsal: 3, capitana: true }),
-  jugadora({ nombre: 'Sofía', apellido: 'Ibarra', posicion: 'defensora', dorsal: 4 }),
-  jugadora({ nombre: 'Abril', apellido: 'Núñez', posicion: 'defensora', dorsal: 6 }),
-  jugadora({ nombre: 'Martina', apellido: 'Ojeda', posicion: 'defensora', dorsal: null }),
-  jugadora({ nombre: 'Julieta', apellido: 'Larea', posicion: 'mediocampista', dorsal: 5 }),
-  jugadora({ nombre: 'Camila', apellido: 'Peralta', posicion: 'mediocampista', dorsal: 8 }),
-  jugadora({ nombre: 'Brenda', apellido: 'Garro', posicion: 'mediocampista', dorsal: 10 }),
-  jugadora({ nombre: 'Delfina', apellido: 'Quiroga', posicion: 'mediocampista', dorsal: 14 }),
-  jugadora({ nombre: 'Priscila', apellido: 'Acosta', posicion: 'mediocampista', dorsal: 16 }),
-  jugadora({ nombre: 'Malena', apellido: 'Ferreyra', posicion: 'mediocampista', dorsal: null }),
-  jugadora({
-    nombre: 'Lucía',
-    apellido: 'Cortadi',
-    posicion: 'delantera',
-    dorsal: 9,
-    origen: 'Mar del Plata',
-    nacimiento: '2002-04-18',
-  }),
-  jugadora({ nombre: 'Agustina', apellido: 'Molina', posicion: 'delantera', dorsal: 7 }),
-  jugadora({ nombre: 'Milagros', apellido: 'Sosa', posicion: 'delantera', dorsal: 11 }),
-  jugadora({ nombre: 'Guadalupe', apellido: 'Ramos', posicion: 'delantera', dorsal: 17 }),
-  jugadora({ nombre: 'Carla', apellido: 'Rossi', posicion: 'dt', dorsal: null }),
-  jugadora({ nombre: 'Noelia', apellido: 'Vera', posicion: 'ayudante', dorsal: null }),
+  jugadora('Agustina', 'Díaz', 'arquera'),
+  jugadora('Katja', 'Veñardez', 'arquera'),
+  jugadora('Luna', 'Vera', 'arquera'),
+
+  jugadora('Sol', 'Cassarino', 'defensora'),
+  jugadora('Sol', 'Contrera', 'defensora'),
+  jugadora('Selene', 'Corona', 'defensora'),
+  jugadora('Agustina', 'Cuello', 'defensora'),
+  jugadora('Juana', 'García', 'defensora'),
+  jugadora('Laura', 'Ghiglione', 'defensora'),
+  jugadora('Delfina', 'González', 'defensora'),
+  jugadora('Julieta', 'Nielsen', 'defensora'),
+  jugadora('Rebeca', 'Raimman', 'defensora'),
+  jugadora('Luna', 'Sahakian', 'defensora'),
+
+  jugadora('Angelina', 'Audicana', 'mediocampista'),
+  jugadora('Nadia', 'Auzmendi', 'mediocampista'),
+  jugadora('Ailen', 'Camacho', 'mediocampista'),
+  jugadora('Mora', 'Camino', 'mediocampista'),
+  jugadora('Guadalupe', 'Contín', 'mediocampista'),
+  jugadora('Lorena', 'Cortadi', 'mediocampista'),
+  jugadora('Griselda', 'Garro', 'mediocampista'),
+  jugadora('Lara', 'González', 'mediocampista'),
+  jugadora('Daiana', 'González', 'mediocampista'),
+  jugadora('Rocío', 'Gutiérrez', 'mediocampista'),
+  jugadora('Delfina', 'Morán', 'mediocampista'),
+  jugadora('Johana', 'Surban', 'mediocampista'),
+
+  jugadora('Ludmila', 'Acosta', 'delantera'),
+  jugadora('Mylena', 'Corona', 'delantera'),
+  jugadora('Lucero', 'Giménez', 'delantera'),
+  jugadora('Morena', 'Larea', 'delantera'),
+  jugadora('Victoria', 'Mozquera', 'delantera'),
+  jugadora('Morena', 'Stancato', 'delantera'),
+  jugadora('Lucero', 'Aquino', 'delantera'),
+
+  jugadora('Marcelo', 'Rodríguez', 'dt'),
 ]
 
-/** La ficha que muestra `/demo/jugadora`: la 9, con goles y dos temporadas. */
-export const jugadoraDemo: Jugadora = {
-  ...plantelDemo.find((j) => j.apellido === 'Cortadi')!,
-  bio: 'Llegó del baby de Kimberley en 2023. Máxima goleadora del club en la Primera C 2024 y la primera en llegar a los 20 goles con la camiseta.',
+function del(apellido: string): JugadoraEnPlantel {
+  const encontrada = plantelDemo.find((j) => j.apellido === apellido)
+  if (!encontrada) throw new Error(`No está ${apellido} en el plantel 2026`)
+  return encontrada
 }
 
-export const filaPlantelDemo = plantelDemo.find((j) => j.apellido === 'Cortadi')!
+/** La ficha que muestra `/demo/jugadora`: la goleadora del torneo. */
+export const jugadoraDemo: Jugadora = del('Larea')
+
+export const filaPlantelDemo = del('Larea')
 
 // ============================================
-// Fixture
+// Fixture — las 12 fechas jugadas
 // ============================================
 
-interface PartidoDemo {
+interface PartidoReal {
   fecha: number
   rival: Equipo
   deLocal: boolean
+  /** Hora de Argentina, la que dice la ficha del partido. */
   cuando: string
-  golesAldosivi?: number
-  golesRival?: number
-  estado?: PartidoConEquipos['estado']
+  cancha: string
+  golesAldosivi: number
+  golesRival: number
 }
 
-function partido(demo: PartidoDemo): PartidoConEquipos {
-  const jugado = demo.golesAldosivi !== undefined && demo.golesRival !== undefined
-  const local = demo.deLocal ? ALDOSIVI : demo.rival
-  const visitante = demo.deLocal ? demo.rival : ALDOSIVI
+function partido(dato: PartidoReal): PartidoConEquipos {
+  const local = dato.deLocal ? ALDOSIVI : dato.rival
+  const visitante = dato.deLocal ? dato.rival : ALDOSIVI
 
   return {
-    id: `par-${demo.fecha}`,
+    id: `par-f${dato.fecha}`,
     temporada_id: temporadaDemo.id,
-    fecha_numero: demo.fecha,
-    fecha_hora: demo.cuando,
+    fecha_numero: dato.fecha,
+    fecha_hora: dato.cuando,
     equipo_local_id: local.id,
     equipo_visitante_id: visitante.id,
-    goles_local: jugado ? (demo.deLocal ? demo.golesAldosivi! : demo.golesRival!) : null,
-    goles_visitante: jugado ? (demo.deLocal ? demo.golesRival! : demo.golesAldosivi!) : null,
-    estado: demo.estado ?? (jugado ? 'finalizado' : 'programado'),
-    cancha: demo.deLocal ? 'Estadio José María Minella' : null,
+    goles_local: dato.deLocal ? dato.golesAldosivi : dato.golesRival,
+    goles_visitante: dato.deLocal ? dato.golesRival : dato.golesAldosivi,
+    estado: 'finalizado',
+    cancha: dato.cancha,
+    // Ninguna ficha del sitio viejo nombra a la árbitra.
     arbitra: null,
-    slug: `fecha-${demo.fecha}-${sinAcentos(local.nombre_corto)}-${sinAcentos(visitante.nombre_corto)}-2026`,
+    slug: `fecha-${dato.fecha}-${sinAcentos(local.nombre_corto)}-${sinAcentos(visitante.nombre_corto)}-2026`,
     observaciones: null,
-    created_at: demo.cuando,
+    created_at: dato.cuando,
     equipo_local: local,
     equipo_visitante: visitante,
     temporada: temporadaDemo,
   }
 }
 
+const PUNTA_MOGOTES = 'Predio Punta Mogotes, Mar del Plata'
+
 export const fixtureDemo: PartidoConEquipos[] = [
-  partido({ fecha: 1, rival: CAMBACERES, deLocal: true, cuando: '2026-03-07T15:30:00.000Z', golesAldosivi: 3, golesRival: 0 }),
-  partido({ fecha: 2, rival: LANUS, deLocal: false, cuando: '2026-03-14T11:00:00.000Z', golesAldosivi: 1, golesRival: 1 }),
-  partido({ fecha: 3, rival: BANFIELD, deLocal: true, cuando: '2026-03-21T15:30:00.000Z', golesAldosivi: 2, golesRival: 1 }),
-  partido({ fecha: 4, rival: VILLA_SAN, deLocal: false, cuando: '2026-04-04T11:00:00.000Z', golesAldosivi: 0, golesRival: 2 }),
-  partido({ fecha: 5, rival: TEMPERLEY, deLocal: true, cuando: '2026-04-11T15:30:00.000Z', golesAldosivi: 4, golesRival: 1 }),
-  partido({ fecha: 6, rival: ARGENTINO, deLocal: false, cuando: '2026-04-25T11:00:00.000Z', golesAldosivi: 2, golesRival: 2 }),
-  partido({ fecha: 7, rival: LAFERRERE, deLocal: true, cuando: '2026-05-09T15:30:00.000Z', golesAldosivi: 7, golesRival: 0 }),
-  partido({ fecha: 8, rival: MORON, deLocal: false, cuando: '2026-05-23T11:00:00.000Z', golesAldosivi: 1, golesRival: 0 }),
-  partido({ fecha: 9, rival: ESPANOL, deLocal: true, cuando: '2026-06-06T15:30:00.000Z', golesAldosivi: 1, golesRival: 1, estado: 'suspendido' }),
-  partido({ fecha: 10, rival: ESTUDIANTES, deLocal: false, cuando: '2026-07-26T11:00:00.000Z', golesAldosivi: 2, golesRival: 1 }),
-  partido({ fecha: 11, rival: ALL_BOYS, deLocal: true, cuando: '2026-08-02T15:30:00.000Z', golesAldosivi: 2, golesRival: 1 }),
-  partido({ fecha: 12, rival: ESPANOL, deLocal: true, cuando: '2026-09-20T15:00:00.000Z' }),
-  partido({ fecha: 13, rival: CAMBACERES, deLocal: false, cuando: '2026-09-27T11:00:00.000Z' }),
-  partido({ fecha: 14, rival: LANUS, deLocal: true, cuando: '2026-10-04T15:00:00.000Z', estado: 'postergado' }),
+  partido({ fecha: 1, rival: DEFENSORES, deLocal: true, cuando: '2026-04-11T18:00:00-03:00', cancha: PUNTA_MOGOTES, golesAldosivi: 2, golesRival: 1 }),
+  partido({ fecha: 2, rival: ALL_BOYS, deLocal: false, cuando: '2026-04-19T15:00:00-03:00', cancha: 'Estadio Islas Malvinas, CABA', golesAldosivi: 1, golesRival: 6 }),
+  partido({ fecha: 3, rival: DEFENSA, deLocal: true, cuando: '2026-04-25T18:30:00-03:00', cancha: PUNTA_MOGOTES, golesAldosivi: 1, golesRival: 4 }),
+  partido({ fecha: 4, rival: CLAYPOLE, deLocal: true, cuando: '2026-05-09T18:00:00-03:00', cancha: PUNTA_MOGOTES, golesAldosivi: 6, golesRival: 1 }),
+  partido({ fecha: 5, rival: UAI, deLocal: false, cuando: '2026-05-17T11:00:00-03:00', cancha: 'Estadio Monumental, Villa Lynch', golesAldosivi: 4, golesRival: 2 }),
+  partido({ fecha: 6, rival: MORON, deLocal: true, cuando: '2026-05-30T17:00:00-03:00', cancha: PUNTA_MOGOTES, golesAldosivi: 2, golesRival: 3 }),
+  partido({ fecha: 7, rival: COMUNICACIONES, deLocal: false, cuando: '2026-06-07T15:30:00-03:00', cancha: 'Predio Comunicaciones, CABA', golesAldosivi: 2, golesRival: 2 }),
+  partido({ fecha: 8, rival: ESTRELLA, deLocal: true, cuando: '2026-06-26T19:00:00-03:00', cancha: PUNTA_MOGOTES, golesAldosivi: 3, golesRival: 2 }),
+  partido({ fecha: 9, rival: CENTRAL, deLocal: false, cuando: '2026-07-04T14:00:00-03:00', cancha: 'Estadio Gigante de Arroyito, Rosario', golesAldosivi: 0, golesRival: 9 }),
+  partido({ fecha: 10, rival: DEFENSORES, deLocal: false, cuando: '2026-07-26T15:00:00-03:00', cancha: 'Estadio Juan Pascuale, CABA', golesAldosivi: 1, golesRival: 2 }),
+  partido({ fecha: 11, rival: ALL_BOYS, deLocal: true, cuando: '2026-08-02T11:00:00-03:00', cancha: PUNTA_MOGOTES, golesAldosivi: 0, golesRival: 1 }),
+  partido({ fecha: 12, rival: DEFENSA, deLocal: false, cuando: '2026-08-08T15:30:00-03:00', cancha: 'Predio Campeones del Mundo, Zeballos', golesAldosivi: 1, golesRival: 2 }),
 ]
 
 // ============================================
-// Tabla de posiciones
+// Tabla de posiciones — LO ÚNICO INVENTADO
 // ============================================
 
 /**
- * `puntos` y `jugados` se calculan, no se tipean: la tabla real tiene dos
- * CHECK que los exigen cuadrados (`partidos_cuadran` y `puntos_cuadran` en
- * `0004_tabla_posiciones.sql`), y unos datos de prueba que no los respetan
- * dibujan una tabla que la base nunca aceptaría.
+ * **Las nueve filas que no son Aldosivi son inventadas.**
+ *
+ * La tabla se carga a mano desde AFA (ver `0004_tabla_posiciones.sql`) y el
+ * sitio viejo nunca la publicó: no hay de dónde sacar los partidos que los
+ * rivales jugaron entre sí. Existe para poder mirar `<TablaPosiciones />` y
+ * `<BarraEstado />`, y **la posición de Aldosivi también es inventada**: lo
+ * único real de su fila es la campaña, contada desde el fixture de arriba —12
+ * jugados, 4 ganados, 1 empatado, 7 perdidos, 23 goles a favor y 35 en contra,
+ * 13 puntos—.
  */
 function fila(
   posicion: number,
@@ -232,7 +268,7 @@ function fila(
   return {
     id: `tab-${eq.id}`,
     temporada_id: temporadaDemo.id,
-    fecha_numero: 11,
+    fecha_numero: 12,
     equipo_id: eq.id,
     posicion,
     puntos: ganados * 3 + empatados,
@@ -246,29 +282,41 @@ function fila(
   }
 }
 
-export const FECHA_TABLA_DEMO = 11
+export const FECHA_TABLA_DEMO = 12
 
+/**
+ * Diez equipos y no doce: son los que las crónicas confirman que están en la
+ * zona. Inventar dos clubes más para llenar la tabla sería inventar clubes.
+ */
 export const tablaDemo: FilaTablaConEquipo[] = [
-  fila(1, VILLA_SAN, 8, 2, 1, 22, 8),
-  fila(2, MORON, 8, 1, 2, 19, 9),
-  fila(3, ALDOSIVI, 7, 3, 1, 25, 10),
-  fila(4, ESTUDIANTES, 6, 3, 2, 18, 11),
-  fila(5, BANFIELD, 5, 3, 3, 15, 12),
-  fila(6, LANUS, 4, 4, 3, 13, 12),
-  fila(7, ARGENTINO, 4, 2, 5, 12, 15),
-  fila(8, TEMPERLEY, 3, 3, 5, 11, 16),
-  fila(9, ESPANOL, 3, 2, 6, 10, 18),
-  fila(10, ALL_BOYS, 2, 3, 6, 9, 17),
-  fila(11, CAMBACERES, 2, 1, 8, 7, 21),
-  fila(12, LAFERRERE, 0, 3, 8, 5, 27),
+  fila(1, CENTRAL, 10, 1, 1, 34, 6),
+  fila(2, ALL_BOYS, 9, 2, 1, 28, 9),
+  fila(3, UAI, 8, 2, 2, 24, 12),
+  fila(4, DEFENSA, 7, 3, 2, 21, 13),
+  fila(5, MORON, 6, 3, 3, 18, 14),
+  fila(6, COMUNICACIONES, 5, 4, 3, 16, 15),
+  fila(7, DEFENSORES, 5, 2, 5, 15, 17),
+  fila(8, ALDOSIVI, 4, 1, 7, 23, 35),
+  fila(9, ESTRELLA, 3, 3, 6, 13, 20),
+  fila(10, CLAYPOLE, 2, 2, 8, 10, 26),
 ]
 
 // ============================================
-// Goleadoras
+// Goleadoras — las 23 de Aldosivi, contadas de las incidencias
 // ============================================
 
-function goleadora(apellido: string, goles: number, dePenal = 0): Goleadora {
-  const jug = plantelDemo.find((j) => j.apellido === apellido)!
+/**
+ * Sale de las incidencias de las doce crónicas, sumando por apellido.
+ *
+ * **Cuenta goles sin minuto**, que son la mitad: la autoría está escrita en
+ * todas las fechas aunque el minuto no. En producción esta lista es una vista
+ * sobre `eventos` (ver `0006_vistas.sql`), así que hasta que alguien complete
+ * los minutos que faltan, la vista va a contar menos goles que estos.
+ *
+ * Las 23 cuadran con el fixture: 2+1+1+6+4+2+2+3+0+1+0+1.
+ */
+function goleadora(apellido: string, goles: number): Goleadora {
+  const jug = del(apellido)
   return {
     temporada_id: temporadaDemo.id,
     jugadora_id: jug.id,
@@ -277,64 +325,63 @@ function goleadora(apellido: string, goles: number, dePenal = 0): Goleadora {
     slug: jug.slug,
     foto_url: null,
     goles,
-    de_penal: dePenal,
+    // Ninguna incidencia del sitio viejo marca si el gol fue de penal.
+    de_penal: 0,
   }
 }
 
 export const goleadorasDemo: Goleadora[] = [
-  goleadora('Cortadi', 9, 2),
-  goleadora('Molina', 5),
-  goleadora('Garro', 4, 3),
-  goleadora('Sosa', 3),
-  goleadora('Peralta', 2),
-  goleadora('Ramos', 1),
+  goleadora('Larea', 8),
+  goleadora('Nielsen', 4),
+  goleadora('Camacho', 3),
+  goleadora('Cortadi', 2),
+  goleadora('Stancato', 2),
+  goleadora('Contín', 1),
   goleadora('Corona', 1),
+  goleadora('Gutiérrez', 1),
+  goleadora('Morán', 1),
 ]
 
 // ============================================
-// Estadísticas y goles de la jugadora de la demo
+// La campaña de Larea
 // ============================================
 
+/**
+ * Contada de las doce crónicas: está en el once titular en todas menos la
+ * fecha 6. La amarilla y la roja son las de la fecha 5, las únicas dos
+ * incidencias disciplinarias suyas que el sitio viejo registra.
+ */
 export const estadisticasDemo: EstadisticasJugadora[] = [
   {
     jugadora_id: jugadoraDemo.id,
     temporada_id: temporadaDemo.id,
     partidos: 11,
-    titular: 10,
-    goles: 9,
-    amarillas: 2,
-    rojas: 0,
-  },
-  {
-    jugadora_id: jugadoraDemo.id,
-    temporada_id: temporadaAnterior.id,
-    partidos: 18,
-    titular: 15,
-    goles: 12,
-    amarillas: 3,
+    titular: 11,
+    goles: 8,
+    amarillas: 1,
     rojas: 1,
   },
 ]
 
 export const temporadasDemo: Temporada[] = [temporadaDemo, temporadaAnterior]
 
-interface GolDemo {
-  fechaPartido: number
-  minuto: number
-  adicionado?: number
-  penal?: boolean
-}
-
-/** Los goles salen del fixture de arriba: el rival y la fecha son los reales. */
-function gol(demo: GolDemo): GolDeJugadora {
-  const par = fixtureDemo.find((p) => p.fecha_numero === demo.fechaPartido)!
+/**
+ * **Sólo cuatro de los ocho goles de Larea.** Los otros cuatro —fechas 3, 4 y
+ * 7— están en las incidencias sin minuto, y `eventos.minuto` es obligatorio.
+ * Es el agujero que hay que completar a mano antes del Step 6, y se ve acá.
+ *
+ * Los minutos del segundo tiempo vienen sumados: "24′ ST" es el minuto 69.
+ */
+function gol(fechaPartido: number, minuto: number): GolDeJugadora {
+  const par = fixtureDemo.find((p) => p.fecha_numero === fechaPartido)
+  if (!par) throw new Error(`No está la fecha ${fechaPartido}`)
 
   return {
-    id: `gol-${demo.fechaPartido}-${demo.minuto}`,
+    id: `gol-f${fechaPartido}-${minuto}`,
     partido_id: par.id,
-    minuto: demo.minuto,
-    adicionado: demo.adicionado ?? 0,
-    tipo: demo.penal ? 'gol_penal' : 'gol',
+    minuto,
+    adicionado: 0,
+    tipo: 'gol',
     equipo_id: ALDOSIVI.id,
     jugadora_id: jugadoraDemo.id,
     jugadora_nombre: null,
@@ -366,13 +413,8 @@ function gol(demo: GolDemo): GolDeJugadora {
 }
 
 export const golesDemo: GolDeJugadora[] = [
-  gol({ fechaPartido: 1, minuto: 14 }),
-  gol({ fechaPartido: 1, minuto: 62, penal: true }),
-  gol({ fechaPartido: 3, minuto: 71 }),
-  gol({ fechaPartido: 5, minuto: 9 }),
-  gol({ fechaPartido: 5, minuto: 55 }),
-  gol({ fechaPartido: 7, minuto: 33 }),
-  gol({ fechaPartido: 7, minuto: 78, penal: true }),
-  gol({ fechaPartido: 10, minuto: 45, adicionado: 2 }),
-  gol({ fechaPartido: 11, minuto: 23 }),
+  gol(2, 48),
+  gol(5, 10),
+  gol(8, 69),
+  gol(8, 85),
 ]

@@ -38,14 +38,17 @@ export default function DemoPortada() {
       <Header temperatura={14} />
 
       <main className="mx-auto max-w-[1200px] px-4 py-10">
-        <p className="meta">Banco de pruebas · datos falsos</p>
+        <p className="meta">Banco de pruebas · notas reales</p>
         <h1 className="mt-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
           La portada
         </h1>
         <p className="prose-nota mt-4 text-gris">
-          Esta página no se indexa y no llega a producción. Los marcadores que
-          se nombran en los títulos son del boceto y sólo viven acá: la portada
-          real no muestra ningún dato deportivo hasta que esté la base.
+          Esta página no se indexa y no llega a producción. Las notas son{' '}
+          <strong>las de verdad</strong>, leídas del sitio viejo con el script de
+          migración: fijate que los títulos entran enteros, sin el
+          &laquo;…&raquo; que los cortaba en la home de WordPress —el migrador
+          les saca el sufijo con la fecha y el torneo—. La portada real sigue
+          leyendo la base, que hoy está vacía.
         </p>
 
         <NotaTapa nota={notaDeTapa} palabras={1180} />

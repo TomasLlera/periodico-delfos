@@ -24,14 +24,17 @@ export default function DemoPlantel() {
       <Header />
 
       <main className="mx-auto max-w-[1200px] px-4 py-10">
-        <p className="meta">Banco de pruebas · datos falsos</p>
+        <p className="meta">Banco de pruebas · plantel 2026 real</p>
         <h1 className="mt-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
           El plantel
         </h1>
         <p className="prose-nota mt-4 text-gris">
-          Esta página no se indexa y no llega a producción. Las jugadoras son
-          inventadas. En la página real cada tarjeta lleva a la ficha de la
-          jugadora, con sus estadísticas y sus goles.
+          Esta página no se indexa y no llega a producción, pero las jugadoras
+          son <strong>las de verdad</strong>: las 32 del plantel 2026 publicado
+          en el sitio viejo, más el DT. Ninguna tiene dorsal porque el número
+          cambia fecha a fecha —lo dice el propio artículo— y ninguna tiene foto
+          porque ninguna imagen del sitio tiene texto alternativo cargado. En la
+          página real cada tarjeta lleva a la ficha de la jugadora.
         </p>
 
         <div className="mt-12">

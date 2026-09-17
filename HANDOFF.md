@@ -1232,6 +1232,70 @@ con `next: { revalidate: 1800 }`.
 - Los grados van en amarillo sobre `verde-900` (7.56:1, ya medido) y el punto
   separador en `white/25`, el mismo de `<BarraEstado />`.
 
+### La migración corrida de verdad, y lo que mostró
+
+Se corrió `pnpm tsx scripts/migrate-wp.ts --sin-imagenes` **en seco** contra
+`periodicodelfos.com`. No escribe nada: deja todo en `.migracion-wp/`, que está
+en el `.gitignore`. Resultado:
+
+```
+70 notas · 8 categorías · 233 medios · 1 autor
+27 listas para escribir · 43 sin bajada · 70 con alt pendiente
+109 imágenes · 0 categorías sin mapear · 82 reglas de redirección
+```
+
+**El sitio tiene 70 notas, no once.** Todo este archivo venía asumiendo "~11
+notas publicadas" —sale del blueprint— y es falso: hay tres temporadas
+completas, 2023, 2024 y 2026, con crónica de cada fecha.
+
+Lo que la migración **hace bien**, comprobado con contenido real: limpia el
+sufijo del título (`Defensa y Justicia 2-1 Tiburonas`, sin
+`: Fecha N°12 – Aldosivi Femenino en la Primera B 2026`), saca la bajada del
+extracto cuando sirve, y detecta temporada y número de fecha. En
+`/demo/portada` se ve lo que eso arregla: los títulos entran enteros, sin el
+"…" que los cortaba en la home vieja.
+
+**Lo que el sitio viejo no tiene, y bloquea la carga de verdad:**
+
+- **Ninguna imagen tiene texto alternativo.** Las 70 notas quedan sin portada:
+  la regla no negociable 4 lo exige y `alt.json` las junta para completarlas a
+  mano. Son 109 imágenes.
+- **43 de 70 notas no tienen bajada usable** y esperan en `bajadas.json`.
+- **La mitad de los goles no tienen minuto.** Las incidencias de las fechas 3,
+  4, 6, 7, 10 y 12 dicen quién convirtió pero no cuándo, y `eventos.minuto` es
+  obligatorio. Se ve en `/demo/jugadora`: Larea hizo 8 goles y la ficha lista 4.
+- **No hay dorsales fijos.** El número cambia partido a partido; el propio
+  artículo del plantel lo dice. Van en `formaciones`, no en `plantel`.
+- **Los nombres no están unificados**: Veñardez/Velardez, Surban/Surbán,
+  Mozquera/Mosquera, Audicana/Audicana. Lo tiene que resolver una persona.
+
+**Y confirma para qué existe el proyecto:** el transformador marcó la crónica de
+la fecha 12 con `datos-deportivos-en-el-cuerpo`, y tiene razón — el cuerpo es
+`FICHA DEL PARTIDO`, `¿Cómo formó Aldosivi?` (los once con dorsal), `Suplentes`
+e `Incidencias`. Es la regla no negociable 2 escrita a mano, nota por nota, 70
+veces. El plantel es peor: era una tabla en WordPress y llega aplanada en un
+párrafo ilegible.
+
+### Los datos de las demos ya no son inventados
+
+`src/app/demo/temporada/datos-demo.ts` y `src/app/demo/portada/datos-demo.ts`
+se rehicieron con **la Primera B 2026 de verdad**, leída de las doce crónicas:
+el plantel de 32 jugadoras, el fixture con sus canchas y horarios, los
+resultados, las goleadoras (23 goles, Larea 8) y la campaña de Larea. Con eso,
+`/demo/portada`, `/demo/temporada`, `/demo/plantel`, `/demo/jugadora` y
+`/demo/widgets` muestran el torneo real.
+
+**Lo único inventado que queda es `tablaDemo`**, y está marcado en el archivo y
+en las dos páginas que la usan: la tabla de posiciones se carga a mano desde AFA
+y el sitio viejo nunca la publicó. La fila de Aldosivi lleva su campaña real
+—12 jugados, 4-1-7, 23:35, 13 puntos, contados del fixture—; la posición y las
+otras nueve filas no. Tiene diez equipos y no doce: son los que las crónicas
+confirman en la zona, y agregar dos más sería inventar clubes.
+
+`src/app/demo/planilla/datos-demo.ts` **no se tocó**: ese sigue siendo el banco
+de pruebas del renderer y existe para ejercitar los nueve tipos de evento
+—cambio, lesión, penal errado, doble amarilla—, que el sitio viejo no registra.
+
 ### Decisiones que el usuario todavía no tomó
 
 - **Lo que bloquea `/contacto` y `/privacidad`** (lo único que le falta al Step
@@ -1446,8 +1510,8 @@ Sin credenciales de Supabase se puede avanzar en:
 2. ~~`src/lib/tiptap/render.tsx`~~ ✅
 3. ~~`scripts/migrate-wp.ts`~~ ✅ (falta correrlo con `--escribir`)
 4. ~~`src/lib/social/compose.ts`~~ ✅
-5. ~~`scripts/generate-redirects.ts`~~ ✅ (falta correrlo contra el
-   `redirects.json` real y confirmar que salen 82 reglas)
+5. ~~`scripts/generate-redirects.ts`~~ ✅ (**confirmado: salen las 82 reglas**,
+   corriendo la migración en seco contra el sitio real)
 
 6. ~~`/nota/[slug]` + `<ArticuloNota />`~~ ✅ (mirala en `/demo/articulo`)
 
