@@ -18,7 +18,12 @@ Actualizar este archivo al terminar cada step.
 > la línea de tiempo horizontal, `.titular`/`.meta`/`.tarjeta`/`.franja` y la
 > decisión de no usar Barlow Condensed.
 
-**Lo último que se hizo: las tres páginas deportivas que cierran el Step 14** —
+**Lo último que se hizo: los tres widgets deportivos de la portada**
+—`<BarraEstado />`, `<FechaAFecha />` y `<Goleadoras />`—, como componentes
+puros y **sin enchufar a `/`**. Ver "Los widgets deportivos, en detalle" más
+abajo; se miran en `/demo/widgets`.
+
+**Antes de eso, las tres páginas deportivas que cierran el Step 14** —
 `/temporada/[slug]`, `/plantel/[temporadaSlug]` y `/jugadora/[slug]`—, que son
 las que completan las puertas `/plantel` y `/fixture`. Ver "Las páginas
 deportivas, en detalle" más abajo. Se pueden mirar con datos falsos en
@@ -53,11 +58,12 @@ ya salieron. Es el problema número uno de la home de WordPress —muestra las
 mismas seis notas cuatro veces— y la razón por la que `getUltimasNotas` tiene
 `excluirIds`.
 
-**Lo del boceto que quedó afuera, a propósito:** la barra de resultados de
-arriba del header, la planilla del último partido, el widget de próximo partido
-y la tabla de posiciones. Son `<BarraEstado />`, `<FechaAFecha />` y
-`<Goleadoras />`, que el Build Order excluye explícitamente de este step porque
-todavía no hay datos deportivos. El bloque de plantel acepta caras y
+**Lo del boceto que quedó afuera de `/`, a propósito:** la barra de resultados
+de arriba del header, la planilla del último partido, el widget de próximo
+partido y la tabla de posiciones. Son `<BarraEstado />`, `<FechaAFecha />` y
+`<Goleadoras />`: **los componentes ya existen** —se miran en `/demo/widgets`—
+pero el Build Order los excluye de la portada porque todavía no hay datos
+deportivos, y ahí siguen afuera. El bloque de plantel acepta caras y
 estadísticas como props opcionales y **`/` no se las pasa**: los "24 jugadoras ·
 19 goles · 3° en la tabla" del boceto son datos de base y sólo viven en la
 demo. El newsletter tampoco entró: no está en el Build Order y la decisión sigue
@@ -143,6 +149,7 @@ escuchando el puerto pero sin responder. Redirigir a un archivo.
 | **14** | **`/buscar`, y `/plantel` y `/fixture` como puertas a la temporada en curso** | `src/app/buscar/`, `plantel/`, `fixture/`, `src/lib/busqueda.ts` |
 | **15** | **`/partido/[slug]` con JSON-LD `SportsEvent`. Mirala en `/demo/partido`** | `src/app/partido/[slug]/`, `jsonLdPartido()` en `src/lib/seo.ts` |
 | **16** | **Lo que faltaba del Step 14: `/temporada/[slug]` (fixture, tabla y goleadoras), `/plantel/[temporadaSlug]` y `/jugadora/[slug]`. Miralas en `/demo/temporada`, `/demo/plantel` y `/demo/jugadora`** | `src/app/temporada/`, `plantel/[temporadaSlug]/`, `jugadora/[slug]/`, `src/components/` (temporada, plantel, jugadora), `src/lib/temporada.ts`, `plantel.ts`, `jugadora.ts` |
+| **17** | **Los tres widgets deportivos del Step 19, como componentes puros. NO están enchufados a `/`. Miralos en `/demo/widgets`** | `src/components/layout/BarraEstado.tsx`, `src/components/partido/FechaAFecha.tsx` y `ChipResultado.tsx`, `src/components/portada/Goleadoras.tsx`, `src/lib/temporada.ts` |
 
 ---
 
@@ -1128,6 +1135,72 @@ recorrido del DOM buscando elementos que se pasan del borde **y cuyos padres no
 los recortan** (sin ese segundo filtro salen falsos positivos: todo lo que está
 adentro de un `overflow-x-auto` se pasa a propósito).
 
+### Los widgets deportivos, en detalle
+
+```
+src/components/layout/BarraEstado.tsx      La tira de arriba de la cabecera
+src/components/partido/ChipResultado.tsx   Una ficha de la franja
+src/components/partido/FechaAFecha.tsx     La franja de la temporada
+src/components/portada/Goleadoras.tsx      El top 5 para la portada
+src/app/demo/widgets/page.tsx              Banco de pruebas, con estados vacíos
+```
+
+Son los tres widgets que el Build Order deja para el **Step 19**. Están hechos
+como componentes puros —reciben todo por props, no consultan nada— y **ninguna
+ruta pública los usa**: `/` sigue sin barra de estado y sin franja de
+resultados. Enchufarlos con datos de ejemplo rompería la regla no negociable 1,
+y un marcador inventado en el borde superior de todas las páginas es la peor
+forma posible de romperla. Los datos de `/demo/widgets` salen de
+`src/app/demo/temporada/datos-demo.ts`, el mismo archivo falso que ya usaban las
+páginas deportivas.
+
+Lo pendiente para cerrar el Step 19 es sólo el cableado: leer la temporada
+activa, sus partidos, la tabla y las goleadoras en `/`, y pasárselos. Las
+queries **ya existen**: `getPosicionAldosivi()` y `getGoleadoras()` (con límite
+5 por omisión) estaban escritas desde el Step 3b.
+
+**Decisiones que tomó este step:**
+
+- **La barra va estática arriba de todo, no `fixed`.** El blueprint la pide
+  "fija arriba, siempre visible" y los dos bocetos la dibujan como la primera
+  franja del documento. Pegada al viewport se come 40px de alto en 375px, que
+  es donde el titular de tapa ya entra justo.
+- **Adentro de la barra los colores no dependen del tema.** `negro-cancha` es
+  oscuro en los dos, así que manda el fondo: el marcador amarillo lleva texto
+  `negro-cancha` y no `tinta`, que en oscuro es casi blanco y sobre amarillo no
+  llega a AA. Medido: 8.02:1 en claro, 9.62:1 en oscuro.
+- **"Próximo" es el primer partido sin jugar, no el primero posterior a hoy**
+  (`estadoTemporada()`). Es la misma división que usa el fixture
+  (`dividirFixture`), así que la barra y `/temporada/[slug]` no se pueden
+  contradecir; y un partido con la fecha pasada y sin resultado cargado queda a
+  la vista, que es justo la señal de que falta cargarlo.
+- **La franja no muestra la temporada entera** (`ventanaFechaAFecha()`): los
+  últimos 5 jugados y los 2 que vienen. Con catorce fechas, una tira que arranca
+  en la 1 deja el próximo partido fuera de la pantalla, y sin JavaScript no hay
+  forma de abrirla ya scrolleada. El fixture completo está a un link.
+- **El corte en 5 de las goleadoras lo hace el bloque, no quien lo llama**, y
+  las filas son las mismas de `/temporada/[slug]`: `<ListaGoleadoras />` con
+  menos filas, no un segundo diseño.
+
+**El bug de scroll horizontal, tercera variante.** Los `sr-only` son
+`position:absolute`, y sin un ancestro posicionado se ubican contra el
+documento: adentro de un contenedor que scrollea horizontal **se escapan del
+recorte y estiran la página entera** —375px de viewport contra 939px de
+documento, medido—. La franja y la barra son los dos primeros scrollers del
+sitio que llevan `sr-only` adentro, por eso no había pasado antes. Se arregla
+con `relative` en el link que contiene cada uno. **Es invisible en una captura**:
+el ancho de más queda vacío. Se encontró con el mismo método de la sección de
+arriba (`documentElement.scrollWidth` contra `clientWidth`).
+
+**Un hallazgo que no se tocó:** el `:focus-visible` global pinta el contorno de
+`verde-600`, que sobre las superficies oscuras da **1.98:1** contra
+`negro-cancha` —prácticamente invisible, y WCAG 2.2 pide 3:1 para el indicador
+de foco—. No es de este step: le pasa igual a los links de la cabecera, el pie y
+la tapa desde que existen. El arreglo son tres líneas en `globals.css`
+(`.bg-verde-900 :focus-visible`, `.bg-negro-cancha :focus-visible` y
+`.franja :focus-visible` con `outline-color: var(--color-amarillo)`, que da
+8:1), pero cambia el foco en todo el sitio y **no se hizo sin preguntar**.
+
 ### Decisiones que el usuario todavía no tomó
 
 - **Lo que bloquea `/contacto` y `/privacidad`** (lo único que le falta al Step
@@ -1156,10 +1229,13 @@ adentro de un `overflow-x-auto` se pasa a propósito).
   —lista, doble opt-in, proveedor de envío—, no un `<form>`. Decidir si entra
   como step nuevo o si va como maqueta inerte.
 - **El ticker de resultados, el widget de próximo partido y la tabla de
-  posiciones son Step 19**, no Step 9. Necesitan Supabase con la temporada 2026
-  cargada. El Build Order excluye explícitamente `BarraEstado`, `FechaAFecha` y
-  `Goleadoras` de la portada "todavía no hay datos deportivos". **No inventar
-  datos deportivos para llenarlos**: regla no negociable 1.
+  posiciones son Step 19**, no Step 9. Los tres componentes **ya están escritos**
+  (`BarraEstado`, `FechaAFecha`, `Goleadoras`; miralos en `/demo/widgets`), pero
+  siguen fuera de `/` porque necesitan Supabase con la temporada 2026 cargada.
+  **No inventar datos deportivos para llenarlos**: regla no negociable 1.
+- **El contorno de foco sobre las superficies oscuras da 1.98:1** y no se ve.
+  El arreglo son tres líneas en `globals.css` y cambia el foco en todo el sitio;
+  está detallado en "Los widgets deportivos, en detalle".
 - La `.planilla` de los bocetos **no es** `<PlanillaPartido />`: es más parecida
   a `<PlanillaCompacta />`, que ya existe, más una ficha técnica. Y `.planilla`
   ya es una clase con reglas propias en `globals.css`. Cuidado con el choque de
@@ -1191,8 +1267,8 @@ el tema se invirtió dos veces en un día y hay partes viejas más abajo en ese
 mismo archivo. El blueprint y `CLAUDE.md` sí están al día.
 
 Proyecto en `periodico-delfos/`. Next 15.5 App Router + TypeScript strict +
-Tailwind v4 + Supabase + TipTap + Inngest. Hoy pasan `tsc --noEmit` y 333 tests,
-y `next build` da 26 rutas. Mantenelos verdes.
+Tailwind v4 + Supabase + TipTap + Inngest. Hoy pasan `tsc --noEmit` y 341 tests,
+y `next build` da 27 rutas. Mantenelos verdes.
 
 **Parar el server antes de buildear, y matar el proceso, no el shell.** En la
 sesión pasada un `next start` quedó vivo, el build no pudo reemplazar los
@@ -1207,32 +1283,29 @@ Sigue sin haber proyecto de Supabase ni `.env.local`, así que la tarea no puede
 depender de leer o escribir en la base.
 
 CONTEXTO: ya están la portada, los listados, el SEO técnico, el buscador,
-`/partido/[slug]` y —lo último— las tres páginas deportivas del Step 14:
-`/temporada/[slug]`, `/plantel/[temporadaSlug]` y `/jugadora/[slug]`. El patrón
-está establecido y conviene copiarlo: Server Components puros que reciben todo
-por props, la página lee y no dibuja, los datos inventados encerrados en
-`src/app/demo/`, y toda la lógica que se pueda sacar a `src/lib/` con tests.
+`/partido/[slug]`, las tres páginas deportivas del Step 14 y —lo último— los
+tres widgets deportivos del Step 19 como componentes puros, sin enchufar a `/`
+(`/demo/widgets`). El patrón está establecido y conviene copiarlo: Server
+Components puros que reciben todo por props, la página lee y no dibuja, los
+datos inventados encerrados en `src/app/demo/`, y toda la lógica que se pueda
+sacar a `src/lib/` con tests.
 
 TAREA, en este orden:
 
-1. **Los tres widgets deportivos de la portada**, que son lo último que le falta
-   a la portada para ser la del boceto: `<BarraEstado />` (último resultado +
-   próximo partido + posición en la tabla, arriba del header),
-   `<FechaAFecha />` (la franja horizontal de resultados de la temporada) y
-   `<Goleadoras />` (top 5). Las queries ya existen —`getUltimoPartido`,
-   `getProximoPartido`, `getPosicionAldosivi`, `getPartidosTemporada`,
-   `getGoleadoras`— y `<ListaGoleadoras />` de `src/components/temporada/` ya
-   resuelve el ranking: fijate si sirve tal cual o si conviene una variante
-   corta.
-
-   **Mismo trato que `<TarjetaPlantel />`: componentes puros, con la demo en
-   `/demo/portada`, y la portada real NO les pasa datos hasta que la base los
-   tenga.** No inventar marcadores en la ruta pública (regla no negociable 1).
-
-2. **Mirar `/demo/nota` y `/demo/planilla` en el navegador a 375 px en los dos
+1. **Mirar `/demo/nota` y `/demo/planilla` en el navegador a 375 px en los dos
    temas.** Es lo único del sitio que nunca se miró: ahí siguen sin revisarse el
    CSS de listas, `<code>` y `<hr>` del cuerpo, y los iconos de la planilla que
    pasaron a lucide.
+
+2. **Preguntar por las dos decisiones que están frenando cosas concretas**, y
+   hacer la que el usuario elija: los links a `/contacto` y `/privacidad` que
+   dan 404 desde el pie de todas las páginas, y el contorno de foco de 1.98:1
+   sobre las superficies oscuras. Las dos están en "Decisiones que el usuario
+   todavía no tomó" y las dos son de menos de media hora una vez decididas.
+
+Sin base no queda nada más del Build Order que se pueda hacer sin inventar datos
+deportivos. Lo que sigue —enchufar los widgets a `/`, que es lo único que falta
+para cerrar el Step 19— necesita Supabase con la temporada cargada.
 
 **Medí el scroll horizontal en cada página que toques.** Comparando
 `document.documentElement.scrollWidth` con `clientWidth` **y** mirando
@@ -1241,10 +1314,12 @@ de 111px que en la captura no se veía: una utilidad de ancho pasada por
 `className` que Tailwind ordenó antes que el `w-full` del componente. Está
 contado en "La trampa del ancho que casi se repite".
 
-Verificá en navegador antes de cerrar: hay chromium instalado y
-`@playwright/test` en el proyecto. Capturas a 1280 y 375 px en tema claro y
-oscuro, y chequeá que cada página tenga **un solo `<h1>`**. Si esperás
-hidratación, esperá a que el `<time>` del header tenga texto.
+Verificá en navegador antes de cerrar. `@playwright/test` está en el proyecto
+pero **los browsers de Playwright no están bajados**: usar
+`chromium.launch({ channel: 'msedge' })`, que toma el Edge del sistema y no
+descarga nada. Capturas a 1280 y 375 px en tema claro y oscuro, y chequeá que
+cada página tenga **un solo `<h1>`**. Si esperás hidratación, esperá a que el
+`<time>` del header tenga texto.
 
 Al terminar, actualizá `HANDOFF.md` y dejá un prompt para el siguiente step.
 
@@ -1359,13 +1434,17 @@ Sin credenciales de Supabase se puede avanzar en:
 **Con eso están cerrados los Steps 9 y 14, y casi todo el 10.** Todas las rutas
 públicas del blueprint existen menos `/contacto` y `/privacidad`.
 
+13. ~~**Los tres widgets deportivos de la portada** —`<BarraEstado />`,
+    `<FechaAFecha />` y `<Goleadoras />`—, como componentes puros con demo, sin
+    que `/` les pase datos~~ ✅ (miralos en `/demo/widgets`)
+
 Sin credenciales queda:
 
-13. **Los tres widgets deportivos de la portada** —`<BarraEstado />`,
-    `<FechaAFecha />` y `<Goleadoras />`—, como componentes puros con demo, sin
-    que `/` les pase datos hasta que la base los tenga. Es la próxima tarea.
 14. **Mirar `/demo/nota` y `/demo/planilla` a 375px en los dos temas**, que es
-    lo único del sitio que nunca se miró en un navegador.
+    lo único del sitio que nunca se miró en un navegador. Es la próxima tarea.
+15. **Las dos decisiones que están frenando cosas concretas**: los links a
+    `/contacto` y `/privacidad` que dan 404 desde el pie, y el contorno de foco
+    de 1.98:1 sobre las superficies oscuras.
 
 Ojo que lo único que le falta al Step 10 son `/contacto` y `/privacidad`, y
 están bloqueadas por datos que sólo tiene el autor: el mail del medio, los

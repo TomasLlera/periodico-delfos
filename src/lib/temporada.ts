@@ -7,7 +7,7 @@
  */
 
 import { resultadoParaAldosivi } from '@/lib/formato'
-import type { FilaTabla, PartidoConEquipos } from '@/types'
+import type { FilaTabla, FilaTablaConEquipo, PartidoConEquipos } from '@/types'
 
 // ============================================
 // Pestañas
@@ -81,6 +81,52 @@ export function dividirFixture(partidos: readonly PartidoConEquipos[]): Fixture 
   }
 }
 
+export interface EstadoTemporada {
+  ultimo: PartidoConEquipos | null
+  proximo: PartidoConEquipos | null
+}
+
+/**
+ * El último partido jugado y el que viene: los dos datos de `<BarraEstado />`.
+ *
+ * **"Próximo" es el primero sin jugar, no el primero posterior a hoy.** Sale de
+ * la misma división que el fixture (`dividirFixture`), así que la barra y la
+ * página de temporada no se pueden contradecir. Un partido con la fecha pasada
+ * y sin resultado cargado aparece como próximo: es exactamente la señal de que
+ * falta cargarlo, y esconderlo detrás de un filtro por fecha la taparía.
+ */
+export function estadoTemporada(
+  partidos: readonly PartidoConEquipos[],
+): EstadoTemporada {
+  const { jugados, porJugar } = dividirFixture(partidos)
+
+  return {
+    ultimo: jugados[jugados.length - 1] ?? null,
+    proximo: porJugar[0] ?? null,
+  }
+}
+
+/**
+ * Los partidos que entran en la franja `<FechaAFecha />` de la portada: los
+ * últimos jugados y los que vienen, en orden cronológico.
+ *
+ * **La franja no muestra la temporada entera.** Con catorce fechas, una tira
+ * que empieza en la 1 deja el próximo partido fuera de la pantalla, y sin
+ * JavaScript no hay forma de arrancarla scrolleada. La ventana la deja
+ * terminando donde está la temporada hoy; el fixture completo está a un link.
+ */
+export function ventanaFechaAFecha(
+  partidos: readonly PartidoConEquipos[],
+  { jugados = 5, porJugar = 2 }: { jugados?: number; porJugar?: number } = {},
+): PartidoConEquipos[] {
+  const fixture = dividirFixture(partidos)
+
+  return [
+    ...fixture.jugados.slice(-jugados),
+    ...fixture.porJugar.slice(0, porJugar),
+  ]
+}
+
 export interface BalanceTemporada {
   jugados: number
   ganados: number
@@ -132,6 +178,18 @@ export function balanceAldosivi(
 // ============================================
 // Tabla de posiciones
 // ============================================
+
+/**
+ * La fila de Aldosivi en la tabla, que es la única que mira la barra de estado.
+ *
+ * Se busca por `es_aldosivi` y no por la posición: la tabla se carga a mano y
+ * puede venir incompleta, así que el club no está en un índice fijo.
+ */
+export function filaDeAldosivi(
+  filas: readonly FilaTablaConEquipo[],
+): FilaTablaConEquipo | null {
+  return filas.find((fila) => fila.equipo.es_aldosivi) ?? null
+}
 
 export function diferenciaGol(fila: Pick<FilaTabla, 'goles_favor' | 'goles_contra'>): number {
   return fila.goles_favor - fila.goles_contra

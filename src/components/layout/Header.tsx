@@ -17,11 +17,12 @@ import { NavPrincipal } from './NavPrincipal'
  * el tema crema pintaba texto casi negro sobre verde oscuro: ilegible. Medido:
  * blanco 12.51:1 en claro, 15.32:1 en oscuro.
  *
- * **Falta la tira de resultados que los dos bocetos tienen arriba de la
- * cabecera** (marcador en curso, próximo partido, posición en la tabla). No es
- * un olvido: es el `<BarraEstado />` del Step 19 y necesita `partidos` cargado.
- * Rellenarla con marcadores de ejemplo viola la regla no negociable 1, y un
- * resultado inventado en el header del sitio real es peor que no tener la tira.
+ * **La tira de resultados que los dos bocetos tienen arriba no va acá adentro**:
+ * es `<BarraEstado />`, y la pone la página, arriba de este componente. No está
+ * en ninguna ruta pública todavía —necesita `partidos` cargado, Step 19— y se
+ * la puede mirar en `/demo/widgets`. Rellenarla con marcadores de ejemplo viola
+ * la regla no negociable 1: un resultado inventado en el borde superior del
+ * sitio real es peor que no tener la tira.
  */
 export function Header() {
   return (

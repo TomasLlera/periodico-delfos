@@ -1,4 +1,5 @@
 import { createClient, createStaticClient } from '@/lib/supabase/server'
+import { filaDeAldosivi } from '@/lib/temporada'
 import type { FilaTablaConEquipo, Goleadora, Temporada } from '@/types'
 
 /** La temporada en curso. Hay un índice único que garantiza que sea una sola. */
@@ -89,7 +90,7 @@ export async function getPosicionAldosivi(
   temporadaId: string,
 ): Promise<FilaTablaConEquipo | null> {
   const { filas } = await getTablaPosiciones(temporadaId)
-  return filas.find((f) => f.equipo.es_aldosivi) ?? null
+  return filaDeAldosivi(filas)
 }
 
 /** Desde la vista `goleadoras`. Cero mantenimiento: se calcula sola. */

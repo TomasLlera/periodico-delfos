@@ -24,10 +24,12 @@ import type { NotaResumen } from '@/types'
  * **Lo que el boceto trae y acá no está, a propósito:** la barra de resultados
  * de arriba del header, la planilla del último partido, el widget de próximo
  * partido y la tabla de posiciones. Son `<BarraEstado />`, `<FechaAFecha />` y
- * `<Goleadoras />`, que el Build Order excluye explícitamente de este step
- * porque todavía no hay datos deportivos. El bloque de plantel se dibuja sin
- * sus caras ni sus estadísticas por la misma razón. Y el newsletter no está en
- * el Build Order: no se decidió si es un step o una maqueta.
+ * `<Goleadoras />`: los componentes ya existen y se miran en `/demo/widgets`,
+ * pero el Build Order los excluye de este step porque todavía no hay datos
+ * deportivos, y no se enchufan acá hasta que la base los tenga (Step 19). El
+ * bloque de plantel se dibuja sin sus caras ni sus estadísticas por la misma
+ * razón. Y el newsletter no está en el Build Order: no se decidió si es un step
+ * o una maqueta.
  *
  * ISR 60s (blueprint 7.1). Al publicar, el Server Action además revalida `/`.
  */

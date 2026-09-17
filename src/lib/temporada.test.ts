@@ -3,11 +3,20 @@ import {
   balanceAldosivi,
   diferenciaGol,
   dividirFixture,
+  estadoTemporada,
   etiquetaDiferencia,
+  filaDeAldosivi,
   pestanaPedida,
+  ventanaFechaAFecha,
   yaSeJugo,
 } from '@/lib/temporada'
-import type { Equipo, EstadoPartido, PartidoConEquipos, Temporada } from '@/types'
+import type {
+  Equipo,
+  EstadoPartido,
+  FilaTablaConEquipo,
+  PartidoConEquipos,
+  Temporada,
+} from '@/types'
 
 const TEMPORADA: Temporada = {
   id: 't1',
@@ -174,6 +183,100 @@ describe('dividirFixture', () => {
     ]
     dividirFixture(original)
     expect(original[0].fecha_hora).toBe('2026-05-01T15:00:00.000Z')
+  })
+})
+
+describe('estadoTemporada', () => {
+  const jugado = (fecha: string) =>
+    partido({ fecha, estado: 'finalizado', golesLocal: 1, golesVisitante: 0 })
+
+  it('el último es el más reciente jugado y el próximo el primero sin jugar', () => {
+    const { ultimo, proximo } = estadoTemporada([
+      partido({ fecha: '2026-05-01T15:00:00.000Z' }),
+      jugado('2026-02-01T15:00:00.000Z'),
+      partido({ fecha: '2026-04-01T15:00:00.000Z' }),
+      jugado('2026-03-01T15:00:00.000Z'),
+    ])
+
+    expect(ultimo?.fecha_hora).toBe('2026-03-01T15:00:00.000Z')
+    expect(proximo?.fecha_hora).toBe('2026-04-01T15:00:00.000Z')
+  })
+
+  it('sin partidos los dos son null', () => {
+    expect(estadoTemporada([])).toEqual({ ultimo: null, proximo: null })
+  })
+
+  it('con la temporada terminada no hay próximo', () => {
+    const { ultimo, proximo } = estadoTemporada([jugado('2026-02-01T15:00:00.000Z')])
+    expect(ultimo?.fecha_hora).toBe('2026-02-01T15:00:00.000Z')
+    expect(proximo).toBeNull()
+  })
+
+  // Es la decisión de `estadoTemporada`: próximo es el primero SIN JUGAR, no el
+  // primero posterior a hoy. Un partido viejo sin resultado cargado queda a la
+  // vista en lugar de desaparecer.
+  it('un partido pasado sin resultado cargado sigue siendo el próximo', () => {
+    const { proximo } = estadoTemporada([
+      jugado('2026-02-01T15:00:00.000Z'),
+      partido({ fecha: '2026-02-15T15:00:00.000Z' }),
+    ])
+    expect(proximo?.fecha_hora).toBe('2026-02-15T15:00:00.000Z')
+  })
+})
+
+describe('ventanaFechaAFecha', () => {
+  const fixture = [
+    partido({ fecha: '2026-01-01T15:00:00.000Z', estado: 'finalizado', golesLocal: 1, golesVisitante: 0 }),
+    partido({ fecha: '2026-01-08T15:00:00.000Z', estado: 'finalizado', golesLocal: 2, golesVisitante: 0 }),
+    partido({ fecha: '2026-01-15T15:00:00.000Z', estado: 'finalizado', golesLocal: 3, golesVisitante: 0 }),
+    partido({ fecha: '2026-01-22T15:00:00.000Z' }),
+    partido({ fecha: '2026-01-29T15:00:00.000Z' }),
+    partido({ fecha: '2026-02-05T15:00:00.000Z' }),
+  ]
+
+  it('deja los últimos jugados y los que vienen, en orden cronológico', () => {
+    const visibles = ventanaFechaAFecha(fixture, { jugados: 2, porJugar: 1 })
+
+    expect(visibles.map((p) => p.fecha_hora)).toEqual([
+      '2026-01-08T15:00:00.000Z',
+      '2026-01-15T15:00:00.000Z',
+      '2026-01-22T15:00:00.000Z',
+    ])
+  })
+
+  it('con menos partidos que la ventana devuelve los que hay', () => {
+    expect(ventanaFechaAFecha(fixture.slice(0, 1), { jugados: 5, porJugar: 2 })).toHaveLength(1)
+    expect(ventanaFechaAFecha([])).toEqual([])
+  })
+})
+
+describe('filaDeAldosivi', () => {
+  function fila(posicion: number, equipo: Equipo): FilaTablaConEquipo {
+    return {
+      id: `t-${equipo.id}`,
+      temporada_id: TEMPORADA.id,
+      fecha_numero: 11,
+      equipo_id: equipo.id,
+      posicion,
+      puntos: 0,
+      jugados: 0,
+      ganados: 0,
+      empatados: 0,
+      perdidos: 0,
+      goles_favor: 0,
+      goles_contra: 0,
+      equipo,
+    }
+  }
+
+  it('la encuentra por es_aldosivi, esté en la posición que esté', () => {
+    const encontrada = filaDeAldosivi([fila(1, MORON), fila(2, ALL_BOYS), fila(3, ALDOSIVI)])
+    expect(encontrada?.posicion).toBe(3)
+  })
+
+  it('sin Aldosivi en la tabla devuelve null', () => {
+    expect(filaDeAldosivi([fila(1, MORON)])).toBeNull()
+    expect(filaDeAldosivi([])).toBeNull()
   })
 })
 
