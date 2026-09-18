@@ -33,14 +33,18 @@ export default function DemoTemporada() {
       <Header />
 
       <main className="mx-auto max-w-[1200px] px-4 py-10">
-        <p className="meta">Banco de pruebas · datos falsos</p>
+        <p className="meta">Banco de pruebas · Primera B 2026 real</p>
         <h1 className="mt-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
           La página de temporada
         </h1>
         <p className="prose-nota mt-4 text-gris">
-          Esta página no se indexa y no llega a producción. El fixture, la tabla
-          y las goleadoras son inventados. En la página real son tres pestañas
-          —fixture, tabla y goleadoras— y cada una carga sólo lo suyo.
+          Esta página no se indexa y no llega a producción. El fixture y las
+          goleadoras son <strong>los de verdad</strong>: salen de la ficha y las
+          incidencias de las doce crónicas del sitio viejo. La tabla de
+          posiciones es lo único inventado —se carga a mano desde AFA y el sitio
+          nunca la publicó—, salvo la campaña de Aldosivi, que está contada
+          desde el fixture. En la página real son tres pestañas y cada una carga
+          sólo lo suyo.
         </p>
 
         <section aria-labelledby="demo-fixture" className="mt-12">

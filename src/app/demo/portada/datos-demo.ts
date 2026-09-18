@@ -1,16 +1,21 @@
 import type { NotaResumen } from '@/types'
 
 /**
- * Datos falsos para mirar la portada sin proyecto de Supabase.
+ * Las notas de verdad del sitio viejo, para mirar la portada sin Supabase.
  *
- * **Viven acá y no en los componentes ni en `/`.** Es la misma separación que
- * estrenó la página de nota: los componentes no saben de dónde salen sus datos,
- * y lo inventado queda encerrado en una ruta que no se indexa. Este archivo se
- * borra —junto con la página de demo— cuando la migración cargue notas reales.
+ * **Ya no son inventadas.** Títulos, bajadas, slugs y fechas salen de
+ * `scripts/migrate-wp.ts` corrido en seco contra `periodicodelfos.com`. Los
+ * títulos vienen **limpios**: el migrador les saca el sufijo
+ * ": Fecha N°12 – Aldosivi Femenino en la Primera B 2026" que hacía que todos
+ * se truncaran con "…" en la home vieja (blueprint 7.3). El slug sí lo conserva,
+ * porque es la URL que hay que redirigir.
  *
- * Los resultados que se nombran en los títulos son los del boceto, y sólo
- * viven en esta ruta: la portada real no muestra ningún dato deportivo hasta
- * que esté la base (regla no negociable 1).
+ * **Viven acá y no en los componentes ni en `/`.** Los componentes no saben de
+ * dónde salen sus datos, y `/` sigue leyendo la base, que hoy está vacía. Este
+ * archivo se borra cuando la migración escriba de verdad.
+ *
+ * Ninguna nota tiene `imagen_portada`: el sitio viejo no tiene una sola imagen
+ * con texto alternativo cargado y la regla no negociable 4 lo exige.
  */
 
 const AUTOR = { nombre: 'Charlie Redondo', slug: 'charlie-redondo' }
@@ -31,110 +36,121 @@ function nota(
     destacada: false,
     auto_post: true,
     redes: [],
-    created_at: parcial.publicada_en ?? '2026-09-15T12:00:00Z',
-    updated_at: parcial.publicada_en ?? '2026-09-15T12:00:00Z',
+    created_at: parcial.publicada_en ?? '2026-08-08T18:30:00Z',
+    updated_at: parcial.publicada_en ?? '2026-08-08T18:30:00Z',
     autor: AUTOR,
     ...parcial,
   }
 }
 
 export const notaDeTapa = nota({
-  id: 'tapa',
-  titulo: 'Las Tiburonas lo dieron vuelta en diez minutos',
-  slug: 'tiburonas-lo-dieron-vuelta',
+  id: 'n-f12',
+  titulo: 'Defensa y Justicia 2-1 Tiburonas',
+  slug: 'defensa-y-justicia-2-1-tiburonas-fecha-n12-aldosivi-femenino-en-la-primera-b-2026',
   bajada:
-    'Perdían 0-1 desde el primer tiempo y parecía otra tarde amarga en la Cancha 2. Dos goles en el tramo final, uno de cabeza y otro de pelota parada, cambiaron el ánimo del equipo y la tabla.',
+    'Las Tiburonas profundizan su mal momento. Cayeron 2 a 1 frente a Defensa y Justicia, en su cuarta derrota consecutiva.',
   categoria: 'cronica',
-  publicada_en: '2026-09-15T09:00:00Z',
+  publicada_en: '2026-08-08T18:30:00Z',
   destacada: true,
 })
 
 export const cronicas: NotaResumen[] = [
   nota({
-    id: 'c1',
-    titulo: 'Empate con sabor a poco frente a Excursionistas',
-    slug: 'empate-excursionistas',
+    id: 'n-f11',
+    titulo: 'Tiburonas 0-1 All Boys',
+    slug: 'tiburonas-0-1-all-boys-fecha-n11-aldosivi-femenino-en-la-primera-b-2026',
     bajada:
-      'El equipo dominó la pelota pero le faltó puntería. Las claves de un 0-0 que dejó preguntas sobre la delantera.',
+      'Las Tiburonas siguen en caída libre y registraron su tercera caída consecutiva. Por la próxima fecha, visitarán a Defensa y Justicia.',
     categoria: 'cronica',
-    publicada_en: '2026-09-12T20:00:00Z',
+    publicada_en: '2026-08-02T14:00:00Z',
   }),
   nota({
-    id: 'c2',
-    titulo: 'Goleada en Rosario y liderazgo momentáneo',
-    slug: 'goleada-en-rosario',
-    bajada: 'Cuatro goles de visitante y una defensa que casi no sufrió.',
+    id: 'n-f10',
+    titulo: 'Defensores de Belgrano 2 – 1 Tiburonas',
+    slug: 'defensores-de-belgrano-2-1-tiburonas-fecha-n10-aldosivi-femenino-en-la-primera-b-2026',
+    bajada:
+      'Las Tiburonas sufrieron su segunda caída consecutiva. Perdieron 2-1 frente a Defensores de Belgrano por la décima fecha de la Primera B 2026.',
     categoria: 'cronica',
-    publicada_en: '2026-09-05T20:00:00Z',
+    publicada_en: '2026-07-26T18:00:00Z',
   }),
   nota({
-    id: 'c3',
-    titulo: 'Derrota ajustada en el clásico',
-    slug: 'derrota-en-el-clasico',
-    bajada: 'Un gol en contra decidió un partido parejo que se jugó con lluvia.',
+    id: 'n-f9',
+    titulo: 'Rosario Central 9 – 0 Tiburonas',
+    slug: 'rosario-central-9-0-tiburonas-fecha-n9-aldosivi-femenino-en-la-primera-b-2026',
+    bajada:
+      'En el cierre de la primera rueda de la Zona B de la Primera B 2026, las Tiburonas cayeron 9 a 0 en su visita a Rosario Central.',
     categoria: 'cronica',
-    publicada_en: '2026-08-29T20:00:00Z',
+    publicada_en: '2026-07-04T17:00:00Z',
   }),
   nota({
-    id: 'c4',
-    titulo: 'Debut de la arquera juvenil con valla invicta',
-    slug: 'debut-arquera-juvenil',
-    bajada: 'Diecisiete años y tres atajadas clave en su primer partido oficial.',
+    id: 'n-f8',
+    titulo: 'Tiburonas 3 – 2 Estrella del Sur',
+    slug: 'tiburonas-3-2-estrella-del-sur-fecha-n8-aldosivi-femenino-en-la-primera-b-2026',
+    bajada:
+      'Tras dos partidos sin ganar, las Tiburonas volvieron al triunfo frente a Estrella del Sur. Ganaron 3 a 2 en el predio de Punta Mogotes.',
     categoria: 'cronica',
-    publicada_en: '2026-08-22T20:00:00Z',
+    publicada_en: '2026-06-26T22:00:00Z',
   }),
   nota({
-    id: 'c5',
-    titulo: 'Victoria de local con dos goles de la capitana',
-    slug: 'victoria-de-local',
-    bajada: 'Una tarde de esas que se recuerdan: doblete y ovación.',
+    id: 'n-f7',
+    titulo: 'Comunicaciones 2 – 2 Tiburonas',
+    slug: 'comunicaciones-2-2-tiburonas-aldosivi-femenino-en-la-primera-b-2026',
+    bajada:
+      'Por la séptima fecha de la Primera B 2026, las Tiburonas empataron 2 a 2 en su visita a Comunicaciones. Así, suman 10 puntos en el campeonato.',
     categoria: 'cronica',
-    publicada_en: '2026-08-15T20:00:00Z',
+    publicada_en: '2026-06-07T18:30:00Z',
   }),
 ]
 
 export const analisis: NotaResumen[] = [
   nota({
-    id: 'a1',
-    titulo: 'Por qué Aldosivi convierte más en los últimos 15 minutos',
-    slug: 'goles-ultimos-quince',
+    id: 'n-a-central',
+    titulo: 'Desafío mayúsculo para las Tiburonas en el Gigante de Arroyito',
+    slug: 'desafio-mayusculo-para-las-tiburonas-en-el-gigante-de-arroyito',
     bajada:
-      'Siete de los diecinueve goles del torneo llegaron después del minuto 75. Los números del físico y del banco.',
+      'Tras derrotar a Estrella del Sur, las Tiburonas cierran la primera vuelta visitando al invicto y líder Rosario Central.',
     categoria: 'analisis',
-    publicada_en: '2026-09-10T12:00:00Z',
+    publicada_en: '2026-07-04T15:00:00Z',
   }),
   nota({
-    id: 'a2',
-    titulo: 'El cambio al 4-3-3 y lo que ganó el mediocampo',
-    slug: 'cambio-al-433',
-    bajada: 'Desde la fecha 6 el equipo presiona más alto y recupera antes.',
+    id: 'n-a-estrella',
+    titulo: 'Un clásico moderno del ascenso pone a prueba el temple de las Tiburonas',
+    slug: 'un-clasico-moderno-del-ascenso-pone-a-prueba-el-temple-de-las-tiburonas',
+    bajada:
+      'Las Tiburonas enfrentan a Estrella del Sur en el Predio de Punta Mogotes, por la octava fecha del campeonato de la Primera B 2026.',
     categoria: 'analisis',
-    publicada_en: '2026-09-03T12:00:00Z',
+    publicada_en: '2026-06-26T20:00:00Z',
   }),
   nota({
-    id: 'a3',
-    titulo: 'Qué necesita el equipo para meterse en el reducido',
-    slug: 'cuentas-del-reducido',
-    bajada: 'Faltan seis fechas y hay tres equipos en cuatro puntos.',
+    id: 'n-a-comunicaciones',
+    titulo: 'Las Tiburonas y la oportunidad de enderezar el rumbo ante Comunicaciones',
+    slug: 'las-tiburonas-y-la-oportunidad-perfecta-de-enderezar-el-rumbo-ante-comunicaciones',
+    bajada:
+      'Las dirigidas por Marcelo Rodríguez buscan explotar la severa crisis de localía que atraviesan las Carteras para sumar tres puntos vitales.',
     categoria: 'analisis',
-    publicada_en: '2026-08-27T12:00:00Z',
+    publicada_en: '2026-06-07T15:00:00Z',
   }),
 ]
 
-/** Sólo para la demo: en la portada real el bloque va sin números. */
+/**
+ * Las caras del bloque de plantel. Van con iniciales y no con dorsales: en el
+ * plantel 2026 el número cambia fecha a fecha, así que un "7" fijo sería
+ * inventado. En la portada real el bloque va sin caras hasta que haya fotos.
+ */
 export const carasDemo = [
-  { id: '1', fotoUrl: null, etiqueta: '1' },
-  { id: '4', fotoUrl: null, etiqueta: '4' },
-  { id: '7', fotoUrl: null, etiqueta: '7' },
-  { id: '9', fotoUrl: null, etiqueta: '9' },
-  { id: '10', fotoUrl: null, etiqueta: '10' },
-  { id: '11', fotoUrl: null, etiqueta: '11' },
-  { id: '14', fotoUrl: null, etiqueta: '14' },
-  { id: 'resto', fotoUrl: null, etiqueta: '+16' },
+  { id: 'larea', fotoUrl: null, etiqueta: 'ML' },
+  { id: 'nielsen', fotoUrl: null, etiqueta: 'JN' },
+  { id: 'camacho', fotoUrl: null, etiqueta: 'AC' },
+  { id: 'cortadi', fotoUrl: null, etiqueta: 'LC' },
+  { id: 'stancato', fotoUrl: null, etiqueta: 'MS' },
+  { id: 'corona', fotoUrl: null, etiqueta: 'MC' },
+  { id: 'diaz', fotoUrl: null, etiqueta: 'AD' },
+  { id: 'resto', fotoUrl: null, etiqueta: '+25' },
 ] as const
 
+/** Los tres números reales de la temporada: plantel, goles y fechas jugadas. */
 export const estadisticasDemo = [
-  { valor: '24', etiqueta: 'jugadoras' },
-  { valor: '19', etiqueta: 'goles' },
-  { valor: '3°', etiqueta: 'en la tabla' },
+  { valor: '32', etiqueta: 'jugadoras' },
+  { valor: '23', etiqueta: 'goles' },
+  { valor: '12', etiqueta: 'fechas' },
 ] as const

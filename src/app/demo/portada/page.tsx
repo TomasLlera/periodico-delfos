@@ -34,19 +34,12 @@ export const metadata: Metadata = {
 export default function DemoPortada() {
   return (
     <>
-      <Header />
+      {/* Fija, para ver la línea de fecha con clima sin depender de la red. */}
+      <Header temperatura={14} />
 
-      <main className="mx-auto max-w-[1200px] px-4 py-10">
-        <p className="meta">Banco de pruebas · datos falsos</p>
-        <h1 className="mt-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
-          La portada
-        </h1>
-        <p className="prose-nota mt-4 text-gris">
-          Esta página no se indexa y no llega a producción. Los marcadores que
-          se nombran en los títulos son del boceto y sólo viven acá: la portada
-          real no muestra ningún dato deportivo hasta que esté la base.
-        </p>
-
+      {/* Las mismas clases que `/`: sin padding arriba, porque la tapa abre la
+          página y trae su propio margen. */}
+      <main className="mx-auto max-w-[1200px] px-4 pb-4">
         <NotaTapa nota={notaDeTapa} palabras={1180} />
 
         <GrillaNotas
@@ -76,6 +69,15 @@ export default function DemoPortada() {
         </div>
 
         <BloqueArchivo />
+
+        {/* Abajo y en una línea: la advertencia tiene que estar —esta ruta no
+            se indexa y no llega a producción— pero no adelante de la tapa, que
+            es lo que la portada tiene que mostrar primero. */}
+        <p className="mt-10 border-t border-linea pt-4 font-display text-[0.8rem] text-gris">
+          Banco de pruebas · no se indexa y no llega a producción. Las notas son
+          las de verdad, leídas del sitio viejo con el script de migración; la
+          portada real sigue leyendo la base, que hoy está vacía.
+        </p>
       </main>
 
       <Footer />
