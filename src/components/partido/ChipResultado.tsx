@@ -23,6 +23,16 @@ interface Props {
   partido: PartidoConEquipos
   /** El próximo partido de la temporada va destacado en amarillo. */
   destacado?: boolean
+  /**
+   * De dónde cuelga el link del chip. Por omisión `/partido`, que es la ruta
+   * real y la que intercepta `src/app/@modal/(.)partido/[slug]/`.
+   *
+   * Lo único que lo cambia es el banco de pruebas de `/demo/fixture`, que
+   * necesita slugs que resuelvan sin base. **Sigue siendo un `<Link>` en los
+   * dos casos**: que la ventana se abra o no es cosa de la ruta interceptada,
+   * no de este componente, y por eso el chip anda igual sin JavaScript.
+   */
+  rutaBase?: string
 }
 
 const FILETE: Record<NonNullable<ResultadoAldosivi>, string> = {
@@ -31,7 +41,11 @@ const FILETE: Record<NonNullable<ResultadoAldosivi>, string> = {
   perdido: 'border-t-roja',
 }
 
-export function ChipResultado({ partido, destacado = false }: Props) {
+export function ChipResultado({
+  partido,
+  destacado = false,
+  rutaBase = '/partido',
+}: Props) {
   const otro = rival(partido)
   const lados = ladosDelPartido(partido)
   const resultado = resultadoParaAldosivi(partido)
@@ -49,7 +63,7 @@ export function ChipResultado({ partido, destacado = false }: Props) {
     // franja —que scrollea horizontal— eso estira el ancho de la página entera:
     // 375px de viewport contra 939px de documento, medido.
     <Link
-      href={`/partido/${partido.slug}`}
+      href={`${rutaBase}/${partido.slug}`}
       className={`tarjeta relative flex h-full w-[8.75rem] flex-col gap-1.5 border-t-[3px] p-2.5 transition-colors hover:bg-tarjeta-hover ${filete}`}
     >
       <span className="sr-only">{tituloAccesible(partido)}</span>

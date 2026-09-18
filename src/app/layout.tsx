@@ -64,7 +64,8 @@ export const metadata: Metadata = {
  */
 export default async function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+  modal,
+}: Readonly<{ children: React.ReactNode; modal: React.ReactNode }>) {
   const { temporada, ultimo, proximo, posicion } = await getEstadoDelSitio()
 
   return (
@@ -83,6 +84,12 @@ export default async function RootLayout({
           />
         )}
         {children}
+
+        {/* El slot de las ventanas. En casi todas las páginas esto es `null`
+            —lo pone `@modal/default.tsx`— y sólo se llena cuando se interceptó
+            la ruta de un partido, o sea cuando alguien apretó un chip de la
+            franja sin recargar la página. */}
+        {modal}
       </body>
     </html>
   )

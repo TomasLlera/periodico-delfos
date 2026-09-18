@@ -166,6 +166,7 @@ escuchando el puerto pero sin responder. Redirigir a un archivo.
 | **18** | **La temperatura de Mar del Plata en la línea de fecha de la cabecera (fuera del Build Order, lo pidió el usuario)** | `src/lib/clima.ts`, `src/components/layout/Header.tsx`, `src/app/page.tsx` |
 | **19** | **Los títulos del cuerpo (`h3` y `h4`) y la regla del `.sr-only`, rescatados de la versión del 15/09** | `src/app/globals.css`, `CLAUDE.md` |
 | **20** | **`<FechaAFecha />` y `<Goleadoras />` enchufadas a `/`: cierra el cableado del Step 19** | `src/app/page.tsx`, `src/lib/supabase/queries/estado.ts` |
+| **21** | **La ventana de la planilla: apretar un chip de la franja la abre encima de la página, con rutas interceptadas. Probala en `/demo/fixture`** | `src/app/@modal/`, `src/components/layout/Ventana.tsx`, `src/app/demo/fixture/`, `ChipResultado.tsx`, `FechaAFecha.tsx` |
 
 ---
 
@@ -1493,6 +1494,71 @@ alguna vez la cinta queda corta a fin de temporada, ahí está escrito cómo.
 
 **La rama es local**: si el repo se clona en otra máquina, no aparece. Para que
 sobreviva hay que pushearla.
+
+---
+
+## La ventana de la planilla, en detalle
+
+**Apretar un chip de la franja abre la planilla de ese partido como ventana,
+sin salir de la página.** Lo pidió el usuario mirando `/demo/widgets`: "si
+aprieto la de la fecha 11, se abre la planilla tipo ventana".
+
+Está hecho con **rutas interceptadas**, no con un modal de cliente, y la
+diferencia es toda la que importa:
+
+```
+src/app/@modal/(.)partido/[slug]/page.tsx   la ventana
+src/app/@modal/default.tsx                   null, que es casi siempre
+src/app/layout.tsx                           recibe {children, modal}
+src/components/layout/Ventana.tsx            el <dialog>, unico "use client" nuevo
+```
+
+El chip **sigue siendo un `<Link>` a `/partido/[slug]`**. Lo único que hace la
+carpeta `@modal` es que, cuando ese link se aprieta desde adentro del sitio, en
+vez de navegar se abra una ventana. De ahí salen cuatro propiedades que un
+modal de cliente no tiene:
+
+- **Sin JavaScript el chip navega** a la página entera, como cualquier link.
+- **Recargar con la ventana abierta** muestra la página del partido: la URL ya
+  es la de él, así que no hay dos URLs para la misma cosa.
+- **Compartir el link** desde la ventana manda a la página, que es la que tiene
+  la metadata y el JSON-LD `SportsEvent`.
+- **El botón de atrás** cierra la ventana. Por eso `<Ventana />` cierra con
+  `router.back()` y no escondiéndose: si se escondiera sola, la URL quedaría
+  mintiendo.
+
+> **`@modal/default.tsx` no es opcional.** Un slot paralelo sin `default.tsx`
+> no tiene qué renderizar en una navegación dura y Next devuelve 404 en rutas
+> que existen. Que devuelva `null` es el punto.
+
+**`<Ventana />` es `<dialog>` nativo con `showModal()`**, y esa es toda la
+razón por la que es corto: la trampa de foco, la tecla Escape, el foco que
+vuelve al chip que la abrió y el `inert` de lo que queda atrás los hace el
+navegador. Escritos a mano son doscientas líneas y tres bugs. Se abre en un
+efecto y **no** con el atributo `open`, que lo dibuja pero no como modal —sin
+trampa de foco y sin `::backdrop`—: es el error clásico con este elemento.
+
+**El banco de pruebas es `/demo/fixture`**, y existe por una razón concreta:
+sin base, los chips de `/` no se dibujan y `/partido/<slug>` da 404, así que la
+ventana de verdad no se puede abrir **ni una vez**. Esa carpeta repite el mismo
+mecanismo con slugs del fixture demo —su propio `layout.tsx` con slot, su
+`[slug]` y su `(.)[slug]`— y usa los mismos componentes. **Se borra el día que
+haya temporada cargada**: para entonces esto mismo se prueba en `/`.
+
+> En esa demo, **la línea de tiempo de adentro de la ventana es prestada**: es
+> siempre la misma planilla demo. El marcador, la fecha y los equipos son
+> reales; las incidencias por fecha no existen todavía y no se inventan (regla
+> no negociable 1). Está dicho en la página.
+
+**Verificado en navegador**, a 375 y 1280: el chip es un link, la ventana abre,
+la URL cambia, es modal y tiene nombre accesible, adentro está la planilla
+entera con su línea de tiempo, no hay scroll horizontal con la ventana abierta,
+Escape la cierra, el foco vuelve al chip, entrar directo a la URL da la página
+y no la ventana, y con el JavaScript apagado el chip navega. Y `next build`
+verde con `/` **todavía estática**: el slot paralelo no tocó el prerenderizado.
+
+**Lo que falta cuando haya base:** mirar la ventana de verdad en `/`, que es la
+que lee Supabase. Lo probado hoy es el mecanismo, no la query.
 
 ---
 

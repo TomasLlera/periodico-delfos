@@ -18,10 +18,18 @@ interface Props {
   id: string
   partidos: readonly PartidoConEquipos[]
   temporada: Temporada
+  /** Ver `<ChipResultado />`: sólo lo cambia el banco de pruebas. */
+  rutaBase?: string
+  /**
+   * Cuántos partidos entran a cada lado de hoy. Por omisión los cinco últimos
+   * jugados y los dos que vienen, que es lo que pide la portada; el banco de
+   * pruebas la abre entera para poder apretar cualquier fecha.
+   */
+  ventana?: { jugados?: number; porJugar?: number }
 }
 
-export function FechaAFecha({ id, partidos, temporada }: Props) {
-  const visibles = ventanaFechaAFecha(partidos)
+export function FechaAFecha({ id, partidos, temporada, rutaBase, ventana }: Props) {
+  const visibles = ventanaFechaAFecha(partidos, ventana)
   const { proximo } = estadoTemporada(partidos)
 
   return (
@@ -41,7 +49,11 @@ export function FechaAFecha({ id, partidos, temporada }: Props) {
         <ol className="flex items-stretch gap-3 overflow-x-auto pb-2">
           {visibles.map((partido) => (
             <li key={partido.id} className="shrink-0">
-              <ChipResultado partido={partido} destacado={partido.id === proximo?.id} />
+              <ChipResultado
+                partido={partido}
+                destacado={partido.id === proximo?.id}
+                rutaBase={rutaBase}
+              />
             </li>
           ))}
         </ol>

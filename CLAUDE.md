@@ -62,7 +62,9 @@ en el request.
 - Server Components por defecto. `"use client"` sólo en `BotonesCompartir`,
   `PlanillaPartido` (es plegable), `NavPrincipal` (necesita la ruta actual para
   `aria-current`) y `FechaDeHoy` (la portada se prerenderiza y la fecha se
-  congelaría en el build), más todo `/admin` cuando exista. **El buscador no es
+  congelaría en el build) y `Ventana` (`<dialog>` nativo: `showModal()` es lo
+  que da trampa de foco, Escape y foco restaurado sin escribirlos), más todo
+  `/admin` cuando exista. **El buscador no es
   cliente**: es un `<form method="get">` que anda sin JS.
 - Todas las queries en `lib/supabase/queries/*`. Nunca inline en un componente.
 - Todo posteo pasa por `lib/social/*` y se registra en `social_posts` (un row por red por nota).
