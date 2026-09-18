@@ -1432,6 +1432,40 @@ los goles y deja de escribirlos a mano adentro del texto.
 
 ---
 
+## La rama de rescate `wip/portada-15-sep`
+
+**Hay una segunda implementación de los tres widgets y no se tiró.** El 15/09
+quedó en el working tree de `main`, sin commitear, otra versión de
+`BarraEstado`, `ChipResultado`, `FechaAFecha` —en `components/portada/`, no en
+`components/partido/`— y `Goleadoras`, más un `lib/portada.ts` con 15 tests. No
+es el borrador del que salió esta rama: son dos implementaciones escritas por
+separado, el primer commit de acá escribió `BarraEstado` de cero. Está parqueada
+en la rama **local** `wip/portada-15-sep` (65cc375).
+
+**No se mergea.** Lo que valía ya se portó: la tipografía de los títulos del
+cuerpo en `globals.css` —el `h3` medía menos que el cuerpo en desktop— y la
+regla del `.sr-only` adentro de un contenedor con `overflow-x-auto`, que ahora
+es la regla 5 de `CLAUDE.md`. Las dos sesiones encontraron ese bug por separado:
+esta rama lo arregló en el código y la otra lo escribió en las reglas.
+
+**`lib/portada.ts` se descartó a propósito.** Esta rama cubre lo mismo en
+`temporada.ts` —`estadoTemporada()`, `ventanaFechaAFecha()` y `filaDeAldosivi()`,
+con tests— y resuelve mejor los dos detalles de accesibilidad que justificaban
+ese archivo: el `sr-only` de la posición dice "Aldosivi va 3 con 24 puntos" en
+lugar de dejar que se lea "24 pe te ese", y el resultado del chip no depende
+sólo del color porque el marcador ya va con Aldosivi primero, así que la letra
+G/E/P que tenía `LETRA_RESULTADO` no hace falta.
+
+La única diferencia que la rama vieja resolvía y ésta no: su ventana de la
+cinta se rellenaba para los dos lados, así que una temporada terminada mostraba
+ocho resultados en vez de cinco. Acá son cinco jugados y dos por venir fijos. Si
+alguna vez la cinta queda corta a fin de temporada, ahí está escrito cómo.
+
+**La rama es local**: si el repo se clona en otra máquina, no aparece. Para que
+sobreviva hay que pushearla.
+
+---
+
 ## Prompt para la próxima sesión
 
 ````

@@ -43,7 +43,9 @@ Next.js 15 (App Router) + TypeScript strict + Tailwind v4 + shadcn/ui + Supabase
 - `src/app/` — Rutas públicas + `/admin`
 - `src/components/` — layout, content, portada, listado, partido, temporada, plantel,
   jugadora, y más adelante admin y ui
-- `src/lib/` — supabase/, tiptap/, social/, inngest/, seo.ts, formato.ts
+- `src/lib/` — supabase/, tiptap/, social/, inngest/, seo.ts, formato.ts,
+  clima.ts, y la lógica pura de cada página con sus tests: partido.ts,
+  temporada.ts, plantel.ts, jugadora.ts, busqueda.ts, paginacion.ts
 - `src/actions/` — Server Actions (publicar, eventos)
 - `supabase/migrations/` — Schema completo, 0001–0009
 - `scripts/` — migrate-wp.ts, generate-redirects.ts
@@ -73,7 +75,13 @@ en el request.
 2. Path alias `@/` para `src/`.
 3. Sin barrel exports; importar del archivo fuente.
 4. Componentes específicos de una página, junto a su page.
-5. **Los iconos salen de `lucide-react`.** Nada de SVG dibujado a mano salvo que
+5. **Todo contenedor con `overflow-x-auto` que adentro tenga un `.sr-only` va
+   con `relative`.** `.sr-only` es `position: absolute` y sin ancestro
+   posicionado se mide contra el documento: el scroll no lo contiene y la
+   página entera se estira sin que se note en una captura. Es la tercera cara
+   del mismo bug de scroll horizontal; medirlo con
+   `documentElement.scrollWidth` **y** `body.scrollWidth`.
+6. **Los iconos salen de `lucide-react`.** Nada de SVG dibujado a mano salvo que
    lucide no tenga el glifo — hoy la única excepción es la pelota de fútbol, que
    no existe en la biblioteca (ver `IconoEvento.tsx`). Colorearlos con las
    utilidades del tema (`stroke-roja`, `fill-amarillo`), no con atributos SVG:
@@ -113,6 +121,9 @@ demostrado al invertir el tema sin tocar un solo componente.
 - Cuerpo 18/19px, line-height 1.7, **máx 68ch** (clase `.prose-nota`). **El
   rediseño no toca el cuerpo de la nota**: entra en chrome, portada, listados y
   componentes.
+- **Los títulos del cuerpo siempre miden más que el cuerpo**: `h2` 22/28px con
+  filete verde, `h3` 20/22px, y `h4` como volanta (caja alta, 0.95rem). El `h3`
+  medía 18px —menos que el cuerpo en desktop— hasta que se miró `/demo/nota`.
 - Radius 2–4px (tarjetas 8px). Espaciado base 4px. Mobile-first a 375px. Áreas
   táctiles 44px (clase `.tactil`)
 - **Todo color nuevo se verifica a AA antes de entrar**, con la fórmula de WCAG
