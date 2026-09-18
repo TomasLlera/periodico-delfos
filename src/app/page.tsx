@@ -1,14 +1,33 @@
 import type { Metadata } from 'next'
+import { BarraEstado } from '@/components/layout/BarraEstado'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { BloqueArchivo } from '@/components/portada/BloqueArchivo'
+import { FechaAFecha } from '@/components/portada/FechaAFecha'
+import { Goleadoras } from '@/components/portada/Goleadoras'
 import { GrillaNotas } from '@/components/portada/GrillaNotas'
 import { ListaAnalisis } from '@/components/portada/ListaAnalisis'
 import { NotaTapa } from '@/components/portada/NotaTapa'
 import { TarjetaPlantel } from '@/components/portada/TarjetaPlantel'
 import { getNotaPrincipal, getUltimasNotas } from '@/lib/supabase/queries/notas'
+import {
+  getPartidosTemporada,
+  getProximoPartido,
+  getUltimoPartido,
+} from '@/lib/supabase/queries/partidos'
+import {
+  getGoleadoras,
+  getPosicionAldosivi,
+  getTemporadaActiva,
+} from '@/lib/supabase/queries/temporadas'
 import { haySupabase } from '@/lib/supabase/server'
-import type { NotaResumen } from '@/types'
+import type {
+  FilaTablaConEquipo,
+  Goleadora,
+  NotaResumen,
+  PartidoConEquipos,
+  Temporada,
+} from '@/types'
 
 /**
  * La portada. Step 9 del Build Order, dibujada según `boceto-portada.html`.
@@ -21,13 +40,16 @@ import type { NotaResumen } from '@/types'
  * home de WordPress: muestra las mismas seis notas cuatro veces (blueprint
  * 7.2). Cada query excluye los ids que ya salieron.
  *
- * **Lo que el boceto trae y acá no está, a propósito:** la barra de resultados
- * de arriba del header, la planilla del último partido, el widget de próximo
- * partido y la tabla de posiciones. Son `<BarraEstado />`, `<FechaAFecha />` y
- * `<Goleadoras />`, que el Build Order excluye explícitamente de este step
- * porque todavía no hay datos deportivos. El bloque de plantel se dibuja sin
- * sus caras ni sus estadísticas por la misma razón. Y el newsletter no está en
- * el Build Order: no se decidió si es un step o una maqueta.
+ * **Los tres widgets deportivos ya están puestos** —`<BarraEstado />`,
+ * `<FechaAFecha />` y `<Goleadoras />`, los puntos 1, 4 y 5 del blueprint 7.2—
+ * y los tres se dibujan sólo si la base tiene con qué. Hoy no hay proyecto de
+ * Supabase, así que `leerDeportivo()` devuelve todo vacío y los tres se
+ * borran solos: en la ruta pública no aparece ni un marcador inventado (regla
+ * no negociable 1). Para verlos dibujados hay que ir a `/demo/portada`.
+ *
+ * El bloque de plantel sigue sin sus caras ni sus estadísticas por la misma
+ * razón. Y el newsletter no está en el Build Order: no se decidió si es un
+ * step o una maqueta.
  *
  * ISR 60s (blueprint 7.1). Al publicar, el Server Action además revalida `/`.
  */
@@ -76,21 +98,83 @@ async function leerContenido(): Promise<Contenido> {
   return { tapa, cronicas, analisis }
 }
 
+interface Deportivo {
+  temporada: Temporada | null
+  ultimo: PartidoConEquipos | null
+  proximo: PartidoConEquipos | null
+  posicion: FilaTablaConEquipo | null
+  fixture: PartidoConEquipos[]
+  goleadoras: Goleadora[]
+}
+
+const SIN_DATOS_DEPORTIVOS: Deportivo = {
+  temporada: null,
+  ultimo: null,
+  proximo: null,
+  posicion: null,
+  fixture: [],
+  goleadoras: [],
+}
+
+/**
+ * Lo que alimenta a los tres widgets deportivos.
+ *
+ * Las cinco consultas van en paralelo: a diferencia de las notas, ninguna
+ * depende del resultado de otra, y en serie serían cinco viajes a la base
+ * encadenados en el render de la portada. Lo único que va antes es la
+ * temporada activa, porque tres de las cinco necesitan su id.
+ *
+ * Sin temporada activa quedan el último resultado y el próximo partido, que no
+ * dependen de ninguna: la barra se dibuja con lo que haya.
+ */
+async function leerDeportivo(): Promise<Deportivo> {
+  if (!haySupabase()) return SIN_DATOS_DEPORTIVOS
+
+  const temporada = await getTemporadaActiva()
+
+  const [ultimo, proximo, posicion, fixture, goleadoras] = await Promise.all([
+    getUltimoPartido(),
+    getProximoPartido(),
+    temporada ? getPosicionAldosivi(temporada.id) : null,
+    temporada ? getPartidosTemporada(temporada.id) : [],
+    temporada ? getGoleadoras(temporada.id, 5) : [],
+  ])
+
+  return { temporada, ultimo, proximo, posicion, fixture, goleadoras }
+}
+
 export default async function Portada() {
-  const { tapa, cronicas, analisis } = await leerContenido()
+  const [{ tapa, cronicas, analisis }, deportivo] = await Promise.all([
+    leerContenido(),
+    leerDeportivo(),
+  ])
 
   return (
     <>
+      <BarraEstado
+        ultimo={deportivo.ultimo}
+        proximo={deportivo.proximo}
+        posicion={deportivo.posicion}
+        temporada={deportivo.temporada}
+      />
+
       <Header />
 
       <main className="mx-auto max-w-[1200px] px-4 pb-4">
+        {/* El `<h1>` de la portada es el titular de la nota de tapa. Sin base no
+            hay tapa, y la página se quedaba sin ningún `<h1>`: para un lector
+            de pantalla, una página sin título. El estado vacío pone el suyo,
+            así que la portada tiene exactamente uno en los dos casos. */}
         {tapa ? (
           <NotaTapa nota={tapa} />
         ) : (
-          <p className="mt-8 border-l-4 border-verde-600 bg-papel-alt py-6 pl-5 font-body text-gris">
-            Todavía no hay ninguna nota publicada. La primera que se publique
-            abre la portada.
-          </p>
+          <div className="mt-8 border-l-4 border-verde-600 bg-papel-alt py-6 pl-5">
+            <h1 className="marca text-[1.6rem] uppercase">Periódico Delfos</h1>
+            <p className="mt-2 max-w-medida font-body text-gris">
+              Todavía no hay ninguna nota publicada. La primera que se publique
+              abre la portada.
+            </p>
+          </div>
         )}
 
         <GrillaNotas
@@ -101,6 +185,8 @@ export default async function Portada() {
           vacio="Todavía no hay crónicas publicadas. Las de cada fecha aparecen acá apenas salen."
         />
 
+        <FechaAFecha partidos={deportivo.fixture} temporada={deportivo.temporada} />
+
         <div className="mt-14 grid gap-12 lg:grid-cols-[2fr_1fr]">
           <ListaAnalisis
             id="analisis"
@@ -110,11 +196,18 @@ export default async function Portada() {
             vacio="Todavía no hay análisis publicados."
           />
 
-          <TarjetaPlantel
-            titulo="El plantel"
-            descripcion="Fichas, estadísticas y trayectoria de cada una de las jugadoras de Aldosivi."
-            enlace={{ href: '/plantel', texto: 'Ver el plantel completo' }}
-          />
+          <div>
+            <TarjetaPlantel
+              titulo="El plantel"
+              descripcion="Fichas, estadísticas y trayectoria de cada una de las jugadoras de Aldosivi."
+              enlace={{ href: '/plantel', texto: 'Ver el plantel completo' }}
+            />
+
+            <Goleadoras
+              goleadoras={deportivo.goleadoras}
+              temporada={deportivo.temporada}
+            />
+          </div>
         </div>
 
         <BloqueArchivo />

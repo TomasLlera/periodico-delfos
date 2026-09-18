@@ -158,11 +158,36 @@ body {
   }
 }
 
+/* 20px y no 18: el h3 medía lo mismo que el cuerpo en mobile y menos que el
+   cuerpo en desktop, donde la medida sube a 19px. Un subtítulo más chico que
+   el texto que encabeza no se lee como subtítulo; se lee como una línea en
+   negrita. Se vio recién al mirar /demo/nota, que es la única página que
+   dibuja h3 del cuerpo. */
 .prose-nota h3 {
   font-family: var(--font-display);
-  font-size: 1.125rem;
+  font-size: 1.25rem; /* 20px */
   font-weight: 600;
+  line-height: 1.3;
   margin-top: 1.75em;
+}
+
+@media (min-width: 768px) {
+  .prose-nota h3 {
+    font-size: 1.375rem; /* 22px, abajo de los 28 del h2 */
+  }
+}
+
+/* El renderer puede emitir h4: un título de nivel 3 adentro de una nota que
+   ya empieza en h3 —la demo del cuerpo— baja un escalón más. Sin esta regla
+   sale con el peso y el tamaño de un párrafo, o sea invisible. Va como
+   volanta: más chico que el cuerpo pero en caja alta y en la display. */
+.prose-nota h4 {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 1.5em;
 }
 
 /* Subrayado obligatorio: el color solo no llega a AA. */

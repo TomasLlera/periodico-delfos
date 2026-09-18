@@ -7,7 +7,7 @@ Actualizar este archivo al terminar cada step.
 
 ---
 
-## Estado al cierre del Step 14 (páginas deportivas)
+## Estado al cierre de los widgets deportivos de la portada
 
 > **LEER PRIMERO.** El tema se invirtió **dos veces** en un mismo día: primero a
 > oscuro (rediseño "portal deportivo"), después de vuelta a **claro/crema**, que
@@ -18,16 +18,20 @@ Actualizar este archivo al terminar cada step.
 > la línea de tiempo horizontal, `.titular`/`.meta`/`.tarjeta`/`.franja` y la
 > decisión de no usar Barlow Condensed.
 
-**Lo último que se hizo: las tres páginas deportivas que cierran el Step 14** —
-`/temporada/[slug]`, `/plantel/[temporadaSlug]` y `/jugadora/[slug]`—, que son
-las que completan las puertas `/plantel` y `/fixture`. Ver "Las páginas
-deportivas, en detalle" más abajo. Se pueden mirar con datos falsos en
-`/demo/temporada`, `/demo/plantel` y `/demo/jugadora`.
+**Lo último que se hizo: los tres widgets deportivos que le faltaban a la
+portada** —`<BarraEstado />`, `<FechaAFecha />` y `<Goleadoras />`—, y la
+primera mirada en navegador a `/demo/nota` y `/demo/planilla`, que era lo único
+del sitio que nunca se había visto dibujado. Ver "Los widgets deportivos de la
+portada, en detalle" más abajo. Se miran con datos falsos en `/demo/portada`.
 
-Antes de eso, en sesiones anteriores: la portada del Step 9 según
-`referencia/boceto-portada.html`, la puesta al día de la documentación con la
-paleta crema y el chrome portado (`Header` y `Footer`); todo detallado más
-abajo.
+**Con eso la portada ya es la del boceto entero**, salvo el newsletter, que
+sigue sin decidirse.
+
+Antes de eso, en sesiones anteriores: las tres páginas deportivas que cerraron
+el Step 14 —`/temporada/[slug]`, `/plantel/[temporadaSlug]` y
+`/jugadora/[slug]`—, la portada del Step 9 según `referencia/boceto-portada.html`,
+la puesta al día de la documentación con la paleta crema y el chrome portado
+(`Header` y `Footer`); todo detallado más abajo.
 
 La portada tiene la nota de tapa en bloque verde a dos columnas, la grilla de
 crónicas con la primera ocupando dos columnas, el listado de análisis con el
@@ -53,15 +57,19 @@ ya salieron. Es el problema número uno de la home de WordPress —muestra las
 mismas seis notas cuatro veces— y la razón por la que `getUltimasNotas` tiene
 `excluirIds`.
 
-**Lo del boceto que quedó afuera, a propósito:** la barra de resultados de
-arriba del header, la planilla del último partido, el widget de próximo partido
-y la tabla de posiciones. Son `<BarraEstado />`, `<FechaAFecha />` y
-`<Goleadoras />`, que el Build Order excluye explícitamente de este step porque
-todavía no hay datos deportivos. El bloque de plantel acepta caras y
-estadísticas como props opcionales y **`/` no se las pasa**: los "24 jugadoras ·
-19 goles · 3° en la tabla" del boceto son datos de base y sólo viven en la
-demo. El newsletter tampoco entró: no está en el Build Order y la decisión sigue
-sin tomarse.
+**Los tres widgets deportivos ya están escritos y enchufados a `/`, y hoy no
+se ven.** `<BarraEstado />` (la tira de arriba del header), `<FechaAFecha />`
+(la cinta de resultados) y `<Goleadoras />` (el top 5) se dibujan **sólo si la
+base tiene con qué**: sin proyecto de Supabase las consultas no corren, los tres
+reciben vacío y se borran solos —`return null`—, así que en la ruta pública no
+aparece ni un marcador inventado (regla no negociable 1). El día que haya datos
+aparecen sin tocar una línea. Para verlos dibujados está `/demo/portada`.
+
+El bloque de plantel sigue igual: acepta caras y estadísticas como props
+opcionales y **`/` no se las pasa**, porque esos números —"24 jugadoras · 19
+goles · 3° en la tabla"— salen de `plantel` y `estadisticas_jugadora`, que
+todavía no se consultan desde la portada. El newsletter tampoco entró: no está
+en el Build Order y la decisión sigue sin tomarse.
 
 **Un token cambió de valor** al portar el chrome: `--color-verde-900` en oscuro
 era `#007A41`. El token está documentado como **superficie** —la cabecera, la
@@ -69,21 +77,18 @@ tapa, el aside— y un verde de acento con texto blanco encima parece un
 resaltador. Pasó a `#102A1E` (blanco 15.32:1, amarillo 7.56:1). Es el único
 valor de la paleta oscura que se tocó.
 
-**Verificado en esta sesión:** `tsc --noEmit` limpio, **333 tests** (los 286 de
-antes más 47 nuevos: `plantel.ts`, `temporada.ts`, `jugadora.ts` y el caso del
-partido sin eventos en `partido.ts`), y `next build` verde con **26 rutas**.
-`/temporada/[slug]` sale **dinámica** —lee `searchParams`, que es lo que saca a
-una página del prerender—; `/plantel/[temporadaSlug]` y `/jugadora/[slug]` salen
-SSG como `/nota/[slug]`, sin prerenderizar ninguna porque no hay base.
+**Verificado en esta sesión:** `tsc --noEmit` limpio, **348 tests** (los 333 de
+antes más 15 nuevos de `portada.ts`), y `next build` verde con **26 rutas** —las
+mismas: los widgets no agregan rutas—. **`/` sigue saliendo estática** (`○`),
+que es lo que había que cuidar al enchufarle cinco consultas más: sin base no se
+llama a `cookies()` y el prerender se mantiene.
 
-Y se miró en un navegador de verdad: `/demo/temporada`, `/demo/plantel`,
-`/demo/jugadora`, `/plantel`, `/fixture` y `/buscar`, a **1280 y 375 px**, en
+Y se miró en un navegador de verdad: `/`, `/demo/portada`, `/demo/nota`,
+`/demo/planilla`, `/demo/articulo` y `/demo/temporada`, a **1280 y 375 px**, en
 **tema claro y oscuro** —24 combinaciones—. Todas: **sin scroll horizontal**
 (`documentElement.scrollWidth === clientWidth` **y** `body.scrollWidth` igual),
 **un solo `<h1>` por página**, sin warnings de hidratación y sin errores de
-consola propios. `/temporada/no-existe`, `/jugadora/no-existe` y
-`/plantel/no-existe` devuelven **404**, y `?ver=chirimbolo` no rompe: cae en el
-fixture.
+consola propios.
 
 **Lo único que sigue apareciendo en la consola** son prefetch de Next (`?_rsc=`)
 a rutas que hoy no existen: `/jugadora/<slug>` y `/partido/<slug>` desde las
@@ -94,9 +99,10 @@ páginas o sacar los dos links del pie hasta que estén. Está bloqueado por dat
 del autor (ver "Decisiones que el usuario todavía no tomó").
 
 **No verificado:** nada de la escritura a Supabase (`--escribir`), no hay
-proyecto todavía. Y sigue sin mirarse en el navegador `/demo/nota` y
-`/demo/planilla` a 375 px en los dos temas: ahí siguen sin revisarse el CSS de
-listas, `<code>` y `<hr>`, y los iconos de la planilla que pasaron a lucide.
+proyecto todavía. Y **ningún widget deportivo se vio nunca con datos reales**:
+lo que está probado es que con la base vacía no se dibujan, y que con datos
+falsos se dibujan bien. El día que haya temporada cargada hay que mirar los tres
+otra vez.
 
 **Una trampa para el día que haya credenciales:** `/nota/[slug]`,
 `/partido/[slug]`, `/plantel/[temporadaSlug]` y `/jugadora/[slug]` declaran
@@ -142,6 +148,7 @@ escuchando el puerto pero sin responder. Redirigir a un archivo.
 | **13** | **SEO técnico del Step 10: robots, sitemap, RSS, imagen OG, canonicals, y `/quienes-somos`** | `src/app/robots.ts`, `sitemap.ts`, `rss.xml/`, `api/og/`, `quienes-somos/`, `src/lib/rss.ts` |
 | **14** | **`/buscar`, y `/plantel` y `/fixture` como puertas a la temporada en curso** | `src/app/buscar/`, `plantel/`, `fixture/`, `src/lib/busqueda.ts` |
 | **15** | **`/partido/[slug]` con JSON-LD `SportsEvent`. Mirala en `/demo/partido`** | `src/app/partido/[slug]/`, `jsonLdPartido()` en `src/lib/seo.ts` |
+| **17** | **Los tres widgets deportivos de la portada: `<BarraEstado />`, `<FechaAFecha />` (con `<ChipResultado />`) y `<Goleadoras />`. Miralos en `/demo/portada`** | `src/components/layout/BarraEstado.tsx`, `src/components/portada/FechaAFecha.tsx`, `Goleadoras.tsx`, `src/components/partido/ChipResultado.tsx`, `src/lib/portada.ts` |
 | **16** | **Lo que faltaba del Step 14: `/temporada/[slug]` (fixture, tabla y goleadoras), `/plantel/[temporadaSlug]` y `/jugadora/[slug]`. Miralas en `/demo/temporada`, `/demo/plantel` y `/demo/jugadora`** | `src/app/temporada/`, `plantel/[temporadaSlug]/`, `jugadora/[slug]/`, `src/components/` (temporada, plantel, jugadora), `src/lib/temporada.ts`, `plantel.ts`, `jugadora.ts` |
 
 ---
@@ -1128,7 +1135,175 @@ recorrido del DOM buscando elementos que se pasan del borde **y cuyos padres no
 los recortan** (sin ese segundo filtro salen falsos positivos: todo lo que está
 adentro de un `overflow-x-auto` se pasa a propósito).
 
-### Decisiones que el usuario todavía no tomó
+## Los widgets deportivos de la portada, en detalle
+
+Son los puntos 1, 4 y 5 de la portada del blueprint (7.2), lo último que le
+faltaba a `/` para ser el boceto entero.
+
+| Widget | Dónde | Qué muestra |
+|---|---|---|
+| `<BarraEstado />` | `src/components/layout/` | La tira de arriba del header: último resultado, próximo partido y posición en la tabla |
+| `<FechaAFecha />` | `src/components/portada/` | La cinta de resultados de la temporada, con el próximo destacado |
+| `<ChipResultado />` | `src/components/partido/` | Cada ficha de esa cinta. Va aparte porque no sabe nada de la portada |
+| `<Goleadoras />` | `src/components/portada/` | El top 5, reusando `<ListaGoleadoras />` |
+
+La lógica que decide **qué** se muestra está en `src/lib/portada.ts`, con 15
+tests: `cintaTemporada()` (qué partidos entran en la cinta y cuál es el
+próximo), `textoPosicion()` y `ordinalPosicion()`. Los componentes sólo dibujan.
+
+### El contrato de los tres: sin datos no se dibujan
+
+Los tres empiezan con un `return null` cuando lo que reciben está vacío, y **la
+portada real ya les pasa lo que haya en la base**: `leerDeportivo()` en
+`src/app/page.tsx` pregunta `haySupabase()` primero, así que hoy los tres
+reciben `null`/`[]` y `/` sale exactamente igual que antes. El día que exista el
+proyecto, los widgets aparecen sin tocar una línea.
+
+Es distinto de lo que pedía el prompt de la sesión pasada —"la portada real no
+les pasa datos"— y es lo mismo en efecto: lo que la regla no negociable 1
+prohíbe es **inventar** marcadores, no leer los que estén cargados. Dejarlos
+desconectados hubiera sido dejar el step a medias, con tres componentes que no
+usa nadie.
+
+Dos cosas que hubo que cuidar al enchufarlos:
+
+- **`/` sigue prerenderizada.** Las consultas usan `createClient()`, que pide
+  `cookies()` y saca a la página del prerender; hoy no se llaman nunca porque
+  `haySupabase()` es falso. **Con base, `/` se va a volver dinámica** —igual que
+  `/nota/[slug]` y las otras, ver "Una trampa para el día que haya
+  credenciales"—. El arreglo es el mismo de siempre: `createStaticClient()`.
+- **Las cinco consultas van en paralelo** (`Promise.all`), después de la
+  temporada activa, que es la única de la que dependen las otras tres. En serie
+  eran cinco viajes encadenados en el render de la portada.
+
+### La cinta no muestra la temporada entera
+
+`cintaTemporada()` devuelve una **ventana de ocho**: los últimos cuatro jugados
+y los próximos cuatro. No es una decisión estética. Un contenedor con scroll
+horizontal arranca siempre en `scrollLeft: 0`, o sea en la fecha 1, que es el
+dato menos interesante de la temporada, y **sin JavaScript no hay forma de
+posicionarlo en el medio**. Con la ventana, lo primero que se ve es lo último
+que pasó. El fixture completo está a un link.
+
+La ventana se rellena para los dos lados: temporada terminada → ocho
+resultados; temporada sin empezar → ocho fechas por venir. Nunca queda a la
+mitad. Ojo con `slice(-0)`, que devuelve el array **entero** y no ninguno: hay
+un test que lo cubre.
+
+### Por qué el resultado no va en color
+
+El filete de color del chip (verde / gris / rojo / amarillo para el próximo) es
+**un refuerzo, no el dato**: lo que manda es la palabra —"Ganó", "Empató",
+"Perdió"— y el marcador. No es sólo por WCAG 1.4.1; es que **no hay ningún par
+texto/fondo que aguante AA en los dos temas** con estos tokens. Medido:
+
+- Blanco sobre `verde-600`: 8.14:1 en claro, **3.11:1 en oscuro** (el token se
+  aclara a #00A859). Falla.
+- `negro-cancha` sobre `verde-600`: 6.26:1 en oscuro, **1.98:1 en claro**. Falla
+  al revés.
+- `text-roja` sobre `tarjeta`: 5.27:1 en claro, **4.24:1 en oscuro**. Queda a un
+  pelo de AA. **Esto ya pasa en el chip de resultado de `<PlanillaPartido />`**,
+  que es anterior a este step y usa `border-roja text-roja`: sobre `papel` da
+  4.91 y pasa, sobre `tarjeta` no. Anotado, sin tocar.
+
+Un borde no es texto, así que el filete puede llevar el color sin pedirle
+contraste a nadie.
+
+### El bug de scroll horizontal, otra vez y con otra cara
+
+Los dos widgets con scroll horizontal dejaron el documento en **1180px con un
+viewport de 375**, sin que se viera nada raro en las capturas. Es la tercera
+versión del mismo bug.
+
+La causa: **`.sr-only` es `position: absolute`**, y un absoluto se mide contra
+su ancestro posicionado más cercano. Los chips y los links de la barra llevan su
+`sr-only` adentro de un `overflow-x-auto` que **no estaba posicionado**, así que
+el ancestro terminaba siendo el documento y el `overflow` no los contenía: cada
+uno estiraba la página entera.
+
+> **Regla:** todo contenedor con `overflow-x-auto` que adentro tenga un
+> `.sr-only` (o cualquier absoluto) va con `relative`. Sin eso, el scroll no
+> contiene nada.
+
+Se encontró midiendo, no mirando, y con un detalle nuevo del método: el
+recorrido del DOM buscando "quién se pasa" **no lo encuentra**, porque los
+culpables están adentro de un contenedor con scroll y ahí se pasan a propósito.
+Lo que sí lo encuentra es probar hipótesis sobre la página viva: poner los
+`.sr-only` en `static` y volver a medir (375), o poner `relative` en los
+contenedores y volver a medir (375).
+
+Un segundo detalle de la cinta: con `snap-x` y `px-1` el navegador arranca con
+`scrollLeft: 4` —el snap alinea el primer chip con el borde del *scrollport*,
+que el padding corrió 4px— y el filete de color del primer chip nacía tapado. Se
+arregla con `scroll-px-1`, que hace que el snap cuente ese padding.
+
+### `<ListaGoleadoras />` sirvió tal cual
+
+El prompt preguntaba si convenía una variante corta para la portada. No: la
+lista ya es una `<ol>` —el orden *es* el dato—, ya resuelve la foto que falta y
+ya dice cuántos goles fueron de penal. Lo único que cambia entre la portada y la
+pestaña de la temporada es **cuántas filas entran**, y eso lo decide quien
+consulta (5 contra 25). Una variante corta habría sido el mismo componente con
+otro nombre.
+
+### Dos páginas que no tenían `<h1>`, y una que tenía dos
+
+Salió de medir "un solo `<h1>` por página" en las páginas de este step:
+
+- **`/demo/portada` tenía dos**: el suyo ("La portada") y el de la nota de tapa,
+  que lo dibuja `<NotaTapa />`. El título de la demo pasó a ser un `<p>` con el
+  mismo aspecto, así que la demo tiene la misma estructura de encabezados que la
+  portada real, que es justamente para lo que existe.
+- **`/` vacía no tenía ninguno**: sin base no hay nota de tapa, y el `<h1>` de la
+  portada *es* el titular de la tapa. Ahora el estado vacío pone el suyo
+  ("Periódico Delfos"), así que la portada tiene exactamente uno en los dos
+  casos.
+
+### Lo que apareció al mirar `/demo/nota` por primera vez
+
+Era la única página del sitio que nunca se había visto dibujada. Las listas, el
+`<code>`, el `<hr>` y el `<blockquote>` del cuerpo están **bien** en los dos
+temas a 375: viñetas y números en verde, filete amarillo en la cita, el `hr`
+corto y centrado, el `code` con su caja. Lo que estaba mal era la escala de
+títulos, y hacía falta verlo para darse cuenta:
+
+- **El `h3` del cuerpo medía 18px**: lo mismo que el cuerpo en mobile y **menos
+  que el cuerpo en desktop**, donde la medida sube a 19px. Un subtítulo más chico
+  que el texto que encabeza no se lee como subtítulo. Pasó a 20px / 22px, abajo
+  del `h2` (22/28) y arriba del cuerpo.
+- **El `h4` no tenía ninguna regla**: salía con el peso y el tamaño de un
+  párrafo, o sea invisible. El renderer lo emite —un título de nivel 3 adentro de
+  una nota que ya empieza en `h3`, que es lo que hace `/demo/nota` con
+  `nivelBase={3}`—. Ahora va como volanta: display, 700, caja alta, 0.95rem.
+
+Los dos arreglos están en `globals.css` y se ven en `/demo/articulo`, que es la
+página que dibuja el cuerpo con `nivelBase={2}`, o sea con `h2` de verdad.
+
+**`/demo/planilla` está bien**: los iconos que pasaron a lucide se leen en los
+dos temas a 375 —la tarjeta amarilla, la roja, las flechas del cambio— y la
+pelota dibujada a mano (la excepción documentada) se distingue igual. Sin
+desbordes y con un solo `<h1>`.
+
+### Decisiones de los widgets que no hay que volver a discutir
+
+- **La barra va en `/` y no en el layout.** "Fija arriba, siempre visible" del
+  blueprint es sobre la portada: en el resto de las páginas nadie fue a buscar el
+  resultado de la fecha, y ponerla en el layout obliga a consultar la base en
+  cada ruta del sitio.
+- **El chip nombra sólo al rival.** El otro equipo es siempre Aldosivi —es un
+  medio de un solo club— y repetirlo ocho veces gasta el ancho que necesita el
+  nombre que sí cambia. La condición de local o visitante va abajo del marcador,
+  y el marcador se lee siempre desde Aldosivi (`ladosDelPartido()`).
+- **`<Goleadoras />` en la columna del aside**, abajo del bloque de plantel. En
+  el DOM queda después de la cinta y antes del archivo, que es el orden del
+  blueprint; en pantalla queda en la columna angosta, que es donde un ranking de
+  cinco filas se lee mejor.
+- **La cancha del próximo partido se omite cuando no está cargada**, en lugar de
+  escribir "a confirmar". La base guarda `null`, no una promesa.
+
+---
+
+## Decisiones que el usuario todavía no tomó
 
 - **Lo que bloquea `/contacto` y `/privacidad`** (lo único que le falta al Step
   10). Hacen falta cuatro cosas y ninguna se puede deducir del repo: el **mail
@@ -1155,11 +1330,12 @@ adentro de un `overflow-x-auto` se pasa a propósito).
   la portada como sección, en la crónica como widget del aside). Es un backend
   —lista, doble opt-in, proveedor de envío—, no un `<form>`. Decidir si entra
   como step nuevo o si va como maqueta inerte.
-- **El ticker de resultados, el widget de próximo partido y la tabla de
-  posiciones son Step 19**, no Step 9. Necesitan Supabase con la temporada 2026
-  cargada. El Build Order excluye explícitamente `BarraEstado`, `FechaAFecha` y
-  `Goleadoras` de la portada "todavía no hay datos deportivos". **No inventar
-  datos deportivos para llenarlos**: regla no negociable 1.
+- **Los tres widgets deportivos ya están escritos** —`BarraEstado`,
+  `FechaAFecha` y `Goleadoras`, que el Build Order ponía en el Step 19— y **se
+  dibujan solos el día que la base tenga la temporada 2026 cargada**. Hasta
+  entonces reciben vacío y no se muestran. Lo que sigue en pie es la regla: **no
+  inventar datos deportivos para llenarlos** (regla no negociable 1); los
+  números del boceto viven en `/demo/portada` y en ningún otro lado.
 - La `.planilla` de los bocetos **no es** `<PlanillaPartido />`: es más parecida
   a `<PlanillaCompacta />`, que ya existe, más una ficha técnica. Y `.planilla`
   ya es una clase con reglas propias en `globals.css`. Cuidado con el choque de
@@ -1179,6 +1355,108 @@ adentro de un `overflow-x-auto` se pasa a propósito).
 ---
 
 ## Prompt para la próxima sesión
+
+````
+Estoy construyendo Periódico Delfos, un medio digital de Mar del Plata dedicado
+al fútbol femenino de Aldosivi (las "Tiburonas"). Lo escribe una sola persona.
+Es una migración desde WordPress.
+
+El plan está en `periodico-delfos-blueprint-v2.md` y el estado real en
+`HANDOFF.md`. **Leé la sección "Estado al cierre de los widgets deportivos de la
+portada" antes que nada**: el tema se invirtió dos veces en un día y hay partes
+viejas más abajo en ese mismo archivo. El blueprint y `CLAUDE.md` sí están al
+día.
+
+Proyecto en `periodico-delfos/`. Next 15.5 App Router + TypeScript strict +
+Tailwind v4 + Supabase + TipTap + Inngest. Hoy pasan `tsc --noEmit` y 348 tests,
+y `next build` da 26 rutas con `/` estática. Mantenelos verdes.
+
+**Parar el server antes de buildear, y matar el proceso, no el shell.** Van dos
+sesiones seguidas encontrando un `next start` vivo de la sesión anterior: el
+build no puede reemplazar los archivos tomados y el server sigue sirviendo el
+build viejo, así que una tanda entera de verificación dice cosas falsas. En
+Windows: `Get-NetTCPConnection -LocalPort 3100` → `Stop-Process -Force`. Ante la
+duda, borrar `.next` y buildear limpio. Y no arranques el server con `| head`:
+cuando head cierra el pipe queda colgado escuchando pero sin responder;
+redirigilo a un archivo.
+
+Sigue sin haber proyecto de Supabase ni `.env.local`, así que la tarea no puede
+depender de leer o escribir en la base.
+
+CONTEXTO: **todas las rutas públicas del blueprint existen menos `/contacto` y
+`/privacidad`**, y la portada ya es el boceto entero: la tapa, las crónicas, la
+cinta de fecha a fecha, el análisis con el bloque de plantel, las goleadoras y
+el archivo, más la barra de estado arriba del header. Los tres widgets
+deportivos se dibujan solos el día que haya base y hoy no se ven. El patrón está
+establecido y conviene copiarlo: Server Components puros que reciben todo por
+props, la página lee y no dibuja, los datos inventados encerrados en
+`src/app/demo/`, y toda la lógica que se pueda sacar a `src/lib/` con tests.
+
+TAREA, en este orden:
+
+1. **Convertir la verificación en navegador en una suite de Playwright
+   commiteada.** Es la parte del Step 20 que no necesita base, y es lo que más
+   rinde ahora: hace cinco sesiones que cada una escribe el mismo script a mano
+   en un temporal, lo corre y lo tira. Va en `e2e/`, con `playwright.config.ts`
+   (`webServer` que levante `next start` en un puerto propio, `projects` para
+   1280 y 375 px, `colorScheme` claro y oscuro) y un script `test:e2e` en
+   `package.json`. **No mezclarla con vitest**: `vitest.config.mts` tiene que
+   seguir sin ver `e2e/`, porque `@playwright/test` y vitest se pisan.
+
+   Los chequeos, que son exactamente los que se vienen haciendo a mano y están
+   contados en el HANDOFF:
+   - **Sin scroll horizontal**: `documentElement.scrollWidth === clientWidth`
+     **y** `body.scrollWidth` igual. Los dos, no uno: si el body mide bien y el
+     documento no, hay un absoluto escapándose de un contenedor con scroll.
+   - **Un solo `<h1>` por página.**
+   - **Sin errores de consola propios**. Los 404 de prefetch (`?_rsc=`) a rutas
+     que sin base no existen son ruido conocido: filtralos por URL, no por el
+     texto del mensaje, que no la trae.
+   - Las rutas que tienen que dar 404 lo dan: `/temporada/no-existe`,
+     `/jugadora/no-existe`, `/plantel/no-existe`.
+   - Que `?ver=chirimbolo` en la temporada caiga en el fixture y no rompa.
+
+   Las páginas: `/`, `/cronicas`, `/analisis`, `/buscar`, `/plantel`,
+   `/fixture`, `/quienes-somos` y las nueve de `/demo/`. Si esperás hidratación,
+   esperá a que el `<time>` del header tenga texto.
+
+2. **Los dos links del pie que dan 404 en todas las páginas.** `/contacto` y
+   `/privacidad` están bloqueadas por datos que sólo tiene el autor (ver
+   "Decisiones que el usuario todavía no tomó"). **Preguntale los datos primero.
+   Si no los tiene a mano, sacá los dos links del pie** —una constante en
+   `Footer.tsx`, reversible en una línea— y dejá anotado en el HANDOFF que
+   vuelven cuando existan las páginas. Un 404 en el pie de todas las páginas es
+   peor que un pie con una sección menos.
+
+3. **Si sobra tiempo**, confirmá que el OG de `/partido/[slug]` sale con el
+   resultado: `urlOg({ titulo: titulo(partido), ... })` ya manda el marcador en
+   el título, así que puede estar hecho desde el Step 15. Mirá la imagen de
+   verdad en `/api/og?titulo=...&volanta=...` antes de darlo por cerrado o por
+   pendiente.
+
+**Medí el scroll horizontal en cada página que toques**, aunque ahora lo haga la
+suite. Y una regla nueva que salió de esta sesión: **todo contenedor con
+`overflow-x-auto` que adentro tenga un `.sr-only` va con `relative`**. `.sr-only`
+es `position: absolute` y sin ancestro posicionado se mide contra el documento:
+el scroll no lo contiene y la página termina midiendo 1180px en un viewport de
+375 sin que se note en la captura.
+
+Al terminar, actualizá `HANDOFF.md` y dejá un prompt para el siguiente step.
+
+Ojo con las decisiones que el usuario NO tomó: la fuente mono, el newsletter,
+los handles de las redes y los datos de `/contacto` y `/privacidad`. Están en
+"Decisiones que el usuario todavía no tomó" y no se inventan.
+
+Si en el medio aparecen las credenciales de Supabase, esto pasa a segundo plano:
+con base, el orden es Step 5 (auth + shell del admin), Step 6 (correr la
+migración con `--escribir`) y Step 7 (editor de notas). Y hay que mirar los tres
+widgets deportivos con datos reales, que es lo único de ellos que no está
+probado.
+````
+
+---
+
+## Prompt anterior, ya cumplido
 
 ````
 Estoy construyendo Periódico Delfos, un medio digital de Mar del Plata dedicado
@@ -1260,78 +1538,7 @@ migración con `--escribir`) y Step 7 (editor de notas).
 
 ---
 
-## Prompt anterior, ya cumplido
-
-````
-Estoy construyendo Periódico Delfos, un medio digital de Mar del Plata dedicado
-al fútbol femenino de Aldosivi (las "Tiburonas"). Lo escribe una sola persona.
-Es una migración desde WordPress.
-
-El plan está en `periodico-delfos-blueprint-v2.md` y el estado real en
-`HANDOFF.md`. **Leé la sección "Estado al cierre de las rutas públicas" antes
-que nada**: el tema se invirtió dos veces en un día y hay partes viejas más
-abajo en ese mismo archivo. El blueprint y `CLAUDE.md` sí están al día.
-
-Proyecto en `periodico-delfos/`. Next 15.5 App Router + TypeScript strict +
-Tailwind v4 + Supabase + TipTap + Inngest. Hoy pasan `tsc --noEmit` y 286 tests,
-y `pnpm build` da 20 rutas. Mantenelos verdes. **Parar el dev server antes de
-buildear**: `next build` reescribe `.next/` y rompe el `next dev` que esté
-corriendo. Y no lo arranques con `| head`: cuando head cierra el pipe el server
-queda colgado escuchando el puerto pero sin responder; redirigilo a un archivo.
-
-Sigue sin haber proyecto de Supabase ni `.env.local`, así que la tarea no puede
-depender de leer o escribir en la base.
-
-CONTEXTO: ya están la portada, los listados, el SEO técnico, el buscador y
-`/partido/[slug]`. El patrón de trabajo está establecido y conviene copiarlo:
-Server Components puros que reciben todo por props, la página lee y no dibuja,
-los datos inventados encerrados en `src/app/demo/`, y toda la lógica que se
-pueda sacar a `src/lib/` con tests.
-
-TAREA: lo que falta del Step 14, las páginas deportivas públicas. En orden:
-
-1. **`/temporada/[slug]`** — fixture + tabla de posiciones + goleadoras. El
-   blueprint (7.5) lo describe como tres pestañas. Las queries ya existen:
-   `getPartidosTemporada`, `getTablaPosiciones`, `getPosicionAldosivi` y
-   `getGoleadoras` en `src/lib/supabase/queries/temporadas.ts` y
-   `partidos.ts`. Hacen falta componentes nuevos para la tabla y las
-   goleadoras; `<PlanillaCompacta />` ya sirve para el fixture.
-2. **`/plantel/[temporadaSlug]`** — el plantel agrupado por puesto.
-   `getPlantel(temporadaId)` ya existe.
-3. **`/jugadora/[slug]`** — ficha con estadísticas. `getJugadoraPorSlug`,
-   `getEstadisticasJugadora`, `getGolesDeJugadora` y `getNotasDeJugadora` ya
-   existen.
-
-Las tres son las que completan `/plantel` y `/fixture`, que hoy redirigen ahí
-cuando hay temporada activa y muestran un estado vacío cuando no.
-
-**Sin inventar datos deportivos** en las páginas reales (regla no negociable 1).
-Los números van en `/demo/`, nunca en la ruta pública.
-
-**Medí el scroll horizontal en cada página nueva.** En esta sesión apareció un
-bug que estuvo tres sesiones sin verse: el documento medía 1117 px en un
-viewport de 375 y no se notaba en las capturas. Se detecta comparando
-`document.documentElement.scrollWidth` con `document.documentElement.clientWidth`
-—y mirando también `document.body.scrollWidth`, porque si el body mide bien y el
-documento no, hay un `position: absolute` escapándose de un contenedor con
-scroll. Está contado en "El bug de scroll horizontal" de HANDOFF.md.
-
-Verificá en navegador antes de cerrar: hay chromium instalado y
-`@playwright/test` en el proyecto. Capturas a 1280 y 375 px en tema claro y
-oscuro. Si esperás hidratación, esperá a que el `<time>` del header tenga texto.
-
-Al terminar, actualizá `HANDOFF.md` y dejá un prompt para el siguiente step.
-
-Ojo con las decisiones que el usuario NO tomó: la fuente mono, el newsletter,
-los handles de las redes, y los datos que bloquean `/contacto` y `/privacidad`
-—que es lo único que le falta al Step 10—. Están en "Decisiones que el usuario
-todavía no tomó".
-````
-
 ---
-
----
-
 ## Orden sugerido de los próximos steps
 
 Sin credenciales de Supabase se puede avanzar en:
@@ -1359,19 +1566,30 @@ Sin credenciales de Supabase se puede avanzar en:
 **Con eso están cerrados los Steps 9 y 14, y casi todo el 10.** Todas las rutas
 públicas del blueprint existen menos `/contacto` y `/privacidad`.
 
+13. ~~Los tres widgets deportivos de la portada~~ ✅ (miralos en
+    `/demo/portada`; en `/` se dibujan solos cuando haya base)
+14. ~~Mirar `/demo/nota` y `/demo/planilla` a 375px en los dos temas~~ ✅
+    (salieron dos arreglos de la escala de títulos del cuerpo)
+
+**Con eso está cerrado todo lo que el Build Order pone antes del admin.**
+
 Sin credenciales queda:
 
-13. **Los tres widgets deportivos de la portada** —`<BarraEstado />`,
-    `<FechaAFecha />` y `<Goleadoras />`—, como componentes puros con demo, sin
-    que `/` les pase datos hasta que la base los tenga. Es la próxima tarea.
-14. **Mirar `/demo/nota` y `/demo/planilla` a 375px en los dos temas**, que es
-    lo único del sitio que nunca se miró en un navegador.
+15. **La suite de Playwright** (`e2e/`), que es la parte del Step 20 que no
+    necesita base: sin scroll horizontal, un solo `<h1>`, sin errores de
+    consola y los 404 que tienen que dar 404. Hace cinco sesiones que ese
+    script se escribe a mano en un temporal y se tira. Es la próxima tarea.
+16. **Los dos links rotos del pie**, que es una decisión tuya: pasás los datos
+    de `/contacto` y `/privacidad`, o se sacan los links hasta que existan.
+17. Confirmar que el OG de `/partido/[slug]` ya sale con el resultado —el
+    título que le manda a `/api/og` incluye el marcador— o hacerlo.
 
 Ojo que lo único que le falta al Step 10 son `/contacto` y `/privacidad`, y
 están bloqueadas por datos que sólo tiene el autor: el mail del medio, los
 handles de las redes, el responsable de datos y si el sitio va a usar analítica.
 **Hoy el pie linkea a las dos desde todas las páginas y los dos links dan 404**:
-o se escriben, o se sacan los links del pie hasta que existan.
+o se escriben, o se sacan los links del pie hasta que existan. Ya son tres
+sesiones anotándolo sin resolverlo.
 
 Con credenciales se desbloquean, en orden: Step 5 (auth + shell del admin),
 Step 6 (correr la migración con `--escribir`), Step 7 (editor de notas) y el
