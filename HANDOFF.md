@@ -1564,83 +1564,94 @@ que lee Supabase. Lo probado hoy es el mecanismo, no la query.
 
 ## Prompt para la próxima sesión
 
+> Este bloque se reescribe cada vez que cambia la próxima tarea. **Está al día
+> al 18/09/2026**, después de cerrar el cableado del Step 19 y repartir tres
+> ramas entre los tres que trabajamos en el proyecto. Si estás leyendo esto
+> como compañero de equipo, tu encargo **no** es éste: está en
+> `docs/encargos/README.md`.
+
 ````
-Estoy construyendo Periódico Delfos, un medio digital de Mar del Plata dedicado
-al fútbol femenino de Aldosivi (las "Tiburonas"). Lo escribe una sola persona.
-Es una migración desde WordPress.
+Estoy construyendo Periódico Delfos, un medio digital de Mar del Plata dedicado al
+fútbol femenino de Aldosivi (las "Tiburonas"). Lo escribe una sola persona, Charlie
+Redondo. Es una migración desde WordPress.
 
-El plan está en `periodico-delfos-blueprint-v2.md` y el estado real en
-`HANDOFF.md`. **Leé la sección "Estado al cierre del Step 14" antes que nada**:
-el tema se invirtió dos veces en un día y hay partes viejas más abajo en ese
-mismo archivo. El blueprint y `CLAUDE.md` sí están al día.
+El proyecto está en `periodico-delfos/`. Next 15 App Router + TypeScript strict +
+Tailwind v4 + Supabase + TipTap + Inngest.
 
-Proyecto en `periodico-delfos/`. Next 15.5 App Router + TypeScript strict +
-Tailwind v4 + Supabase + TipTap + Inngest. Hoy pasan `tsc --noEmit` y 347 tests,
-y `next build` da 27 rutas. Mantenelos verdes.
+El plan está en `periodico-delfos-blueprint-v2.md` —el Build Order es la sección 10— y
+el estado real en `HANDOFF.md`. **Leé `HANDOFF.md` antes que nada**, empezando por la
+sección de arriba de todo: más abajo en ese mismo archivo hay partes viejas. `CLAUDE.md`
+tiene las reglas no negociables y el sistema de diseño, y está al día.
 
-**Parar el server antes de buildear, y matar el proceso, no el shell.** En la
-sesión pasada un `next start` quedó vivo, el build no pudo reemplazar los
-archivos tomados y el server siguió sirviendo el build viejo: una tanda entera
-de verificación dijo cosas falsas. En Windows:
-`Get-NetTCPConnection -LocalPort 3100` → `Stop-Process -Force`. Ante la duda,
-borrar `.next` y buildear limpio. Y no arranques el dev server con `| head`:
-cuando head cierra el pipe el server queda colgado escuchando pero sin
-responder; redirigilo a un archivo.
+ENTORNO:
+- Sigue sin haber proyecto de Supabase ni `.env.local`. Ninguna tarea puede depender de
+  leer o escribir en la base.
+- `pnpm lint` falla de fábrica: `eslint.config.mjs` quedó de un scaffolding de Next 16.
+  No afecta al build. No lo arregles sin leer "Pendiente manual" en el HANDOFF.
+- Parar el server antes de buildear, y matar el proceso, no la terminal:
+  `Get-NetTCPConnection -LocalPort 3100` → `Stop-Process -Force`. No arranques el server
+  con `| head`: cuando head cierra el pipe queda colgado. Redirigilo a un archivo.
+- Hoy pasan `npx tsc --noEmit` y 347 tests, y `next build` sale verde con `/` estática.
+  Mantenelos verdes.
 
-Sigue sin haber proyecto de Supabase ni `.env.local`, así que la tarea no puede
-depender de leer o escribir en la base.
+EQUIPO: somos tres trabajando en paralelo. Hay tres ramas abiertas que NO hay que tocar:
+`fase/13-planilla-de-carga` (todo `src/app/admin/` y `src/components/admin/`),
+`fase/20-e2e` (todo `e2e/` y `playwright.config.ts`) y `fix/accesibilidad-y-pie`
+(`/quienes-somos`, `Footer.tsx` y el contorno de foco en `globals.css`). El reparto está
+en `docs/encargos/README.md`. Y hay archivos reservados para la tarea 2:
+`src/lib/supabase/types.ts`, `vercel.json`, `supabase/migrations/` y los scripts de
+migración.
 
-CONTEXTO: ya están la portada, los listados, el SEO técnico, el buscador,
-`/partido/[slug]`, las tres páginas deportivas del Step 14 y —lo último— los
-tres widgets deportivos del Step 19, enchufados y dibujándose solos el día que
-haya base (se miran en `/demo/widgets`). El patrón está
-establecido y conviene copiarlo: Server
-Components puros que reciben todo por props, la página lee y no dibuja, los
-datos inventados encerrados en `src/app/demo/`, y toda la lógica que se pueda
-sacar a `src/lib/` con tests.
+TAREA 1 — cerrar el Step 19. Rama nueva `fase/19-planilla-embebida`.
 
-TAREA, en este orden:
+Del Step 19 ya están hechos los tres widgets deportivos, el buscador y la ventana que
+abre la planilla desde la franja de fecha a fecha. Quedan dos cosas:
 
-1. **Mirar `/demo/nota` y `/demo/planilla` en el navegador a 375 px en los dos
-   temas.** Es lo único del sitio que nunca se miró: ahí siguen sin revisarse el
-   CSS de listas, `<code>` y `<hr>` del cuerpo, y los iconos de la planilla que
-   pasaron a lucide.
+1a. EL NODO DE TIPTAP QUE EMBEBE UNA PLANILLA EN EL CUERPO DE UNA NOTA.
+    El esquema ya lo contempla: `idsDePlanillas()`, en `src/lib/tiptap/esquema.ts`,
+    junta los `partidoId` de los nodos `{ type: 'planilla', attrs: { partidoId } }`, con
+    5 tests que cubren los anidados y los que no traen id usable.
+    **Lo que falta es el renderer**: `src/lib/tiptap/render.tsx` no dibuja ese nodo. Hay
+    que hacer que lo renderice con `<PlanillaPartido variante="embebida" />`, que ya
+    existe y está testeada. Antes de decidir la forma de la API, mirá cómo `/nota/[slug]`
+    usa hoy `idsDePlanillas()` y cómo le llegan los partidos al renderer.
+    El botón para insertarlo desde el editor es Step 7 y está bloqueado, porque el editor
+    no existe todavía. **Esta tarea es sólo renderer + tests + una demo**, siguiendo el
+    patrón del proyecto: lógica pura en `src/lib/` con tests de vitest, componentes puros
+    que reciben todo por props, y los datos falsos encerrados en `src/app/demo/`.
 
-2. **Preguntar por las dos decisiones que están frenando cosas concretas**, y
-   hacer la que el usuario elija: los links a `/contacto` y `/privacidad` que
-   dan 404 desde el pie de todas las páginas, y el contorno de foco de 1.98:1
-   sobre las superficies oscuras. Las dos están en "Decisiones que el usuario
-   todavía no tomó" y las dos son de menos de media hora una vez decididas.
+1b. CONFIRMAR EL OG DE `/partido/[slug]`.
+    `urlOg({ titulo: titulo(partido) })` ya manda el marcador adentro del título, así que
+    puede estar hecho desde el Step 15. **Mirá la imagen de verdad** en
+    `/api/og?titulo=Aldosivi%202-1%20Moron&volanta=Fecha%2012` antes de darlo por cerrado
+    o por pendiente, y decidí si el marcador adentro del título alcanza o si un partido
+    merece su propia composición. `/api/og/route.tsx` sólo entiende `titulo` y `volanta`.
 
-Sin base no queda nada más del Build Order que se pueda hacer sin inventar datos
-deportivos. **El próximo paso del proyecto es levantar Supabase, y está escrito
-paso por paso en "Arrancar el backend" más arriba.**
+TAREA 2 — Supabase, cuando yo te avise que hice mi parte.
 
-**Medí el scroll horizontal en cada página que toques.** Comparando
-`document.documentElement.scrollWidth` con `clientWidth` **y** mirando
-`document.body.scrollWidth`. En la sesión pasada volvió a aparecer un desborde
-de 111px que en la captura no se veía: una utilidad de ancho pasada por
-`className` que Tailwind ordenó antes que el `w-full` del componente. Está
-contado en "La trampa del ancho que casi se repite".
+Los once pasos están en `HANDOFF.md`, sección "Arrancar el backend". Los primeros cuatro
+son míos: crear el proyecto, poner las tres claves en `.env.local` y crear el usuario de
+Charlie en Auth. De ahí seguís vos: migraciones, catálogos, migración en seco, regenerar
+los tipos y las 82 redirecciones.
 
-Verificá en navegador antes de cerrar. `@playwright/test` está en el proyecto
-pero **los browsers de Playwright no están bajados**: usar
-`chromium.launch({ channel: 'msedge' })`, que toma el Edge del sistema y no
-descarga nada. Capturas a 1280 y 375 px en tema claro y oscuro, y chequeá que
-cada página tenga **un solo `<h1>`**. Si esperás hidratación, esperá a que el
-`<time>` del header tenga texto.
+Hay una trampa anotada para ese día: `/nota/[slug]`, `/partido/[slug]`,
+`/plantel/[temporadaSlug]` y `/jugadora/[slug]` declaran `generateStaticParams` pero sus
+queries piden cookies. Con el proyecto arriba, el build puede cortar con "Dynamic server
+usage". El arreglo ya existe —`createStaticClient()`, el mismo que usa la barra de
+estado— pero hay que probarlo, no darlo por sentado.
 
-Al terminar, actualizá `HANDOFF.md` y dejá un prompt para el siguiente step.
+CÓMO VERIFICAR, siempre:
+    npx tsc --noEmit
+    npx vitest run
+    npx next build
+Y medir el scroll horizontal en cada pantalla que toques, a 375px:
+`document.documentElement.scrollWidth` contra `clientWidth` **y**
+`document.body.scrollWidth`. Los dos, no uno.
 
-Ojo con las decisiones que el usuario NO tomó: la fuente mono, el newsletter,
-los handles de las redes, y los datos que bloquean `/contacto` y `/privacidad`
-—que hoy son **dos links del pie que dan 404 en todas las páginas**—. Están en
-"Decisiones que el usuario todavía no tomó".
-
-Si en el medio aparecen las credenciales de Supabase, esto pasa a segundo plano:
-con base, el orden es Step 5 (auth + shell del admin), Step 6 (correr la
-migración con `--escribir`) y Step 7 (editor de notas).
+Actualizá `HANDOFF.md` al terminar, escribiendo en una sección nueva al final: ese
+archivo lo tocan las tres ramas y no hay que editar las secciones de otro.
 ````
+
 
 ---
 
