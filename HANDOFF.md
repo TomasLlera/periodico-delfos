@@ -23,9 +23,10 @@ Actualizar este archivo al terminar cada step.
 cierra el Step 19**. La barra va en el layout raíz y los otros dos en `/`. Los
 tres se dibujan **sólo si la base tiene con qué**: sin temporada activa reciben
 vacío y se borran solos, así que hoy no se ve ninguno en la ruta pública. Para
-verlos dibujados están `/demo/portada` —la portada entera— y `/demo/widgets`
-—los tres sueltos, con sus estados vacíos—. Ver "Los widgets deportivos, en
-detalle" más abajo.
+verlos dibujados está `/demo/widgets`, con sus estados vacíos; **`/demo/portada`
+no los muestra a propósito** —lo decidió el usuario mirándolo—: esa demo es la
+de las notas, y los widgets ya tienen banco propio. Ver "Los widgets deportivos,
+en detalle" más abajo.
 
 **Antes de eso, las tres páginas deportivas que cierran el Step 14** —
 `/temporada/[slug]`, `/plantel/[temporadaSlug]` y `/jugadora/[slug]`—, que son
@@ -164,7 +165,7 @@ escuchando el puerto pero sin responder. Redirigir a un archivo.
 | **17** | **Los tres widgets deportivos del Step 19 como componentes puros. Miralos en `/demo/widgets`** | `src/components/layout/BarraEstado.tsx`, `src/components/partido/FechaAFecha.tsx` y `ChipResultado.tsx`, `src/components/portada/Goleadoras.tsx`, `src/lib/temporada.ts` |
 | **18** | **La temperatura de Mar del Plata en la línea de fecha de la cabecera (fuera del Build Order, lo pidió el usuario)** | `src/lib/clima.ts`, `src/components/layout/Header.tsx`, `src/app/page.tsx` |
 | **19** | **Los títulos del cuerpo (`h3` y `h4`) y la regla del `.sr-only`, rescatados de la versión del 15/09** | `src/app/globals.css`, `CLAUDE.md` |
-| **20** | **`<FechaAFecha />` y `<Goleadoras />` enchufadas a `/` y a `/demo/portada`: cierra el cableado del Step 19** | `src/app/page.tsx`, `src/app/demo/portada/page.tsx`, `src/lib/supabase/queries/estado.ts` |
+| **20** | **`<FechaAFecha />` y `<Goleadoras />` enchufadas a `/`: cierra el cableado del Step 19** | `src/app/page.tsx`, `src/lib/supabase/queries/estado.ts` |
 
 ---
 
@@ -1167,9 +1168,9 @@ están enchufados**: la barra en el layout raíz, la franja y las goleadoras en
 datos: leen la base y nunca `src/app/demo/`, así que sin temporada activa
 reciben vacío y se borran solos. Hoy, sin Supabase, no se dibuja ninguno en la
 ruta pública —ni un marcador inventado, que es la regla no negociable 1— y el
-día que haya datos aparecen sin tocar una línea. Los datos de `/demo/widgets` y
-`/demo/portada` salen de `src/app/demo/temporada/datos-demo.ts`, el mismo
-archivo falso que ya usaban las páginas deportivas.
+día que haya datos aparecen sin tocar una línea. Los datos de `/demo/widgets`
+salen de `src/app/demo/temporada/datos-demo.ts`, el mismo archivo falso que ya
+usaban las páginas deportivas.
 
 **`<BarraEstado />` ya está cableada y va en todas las páginas.** Vive en el
 layout raíz (`src/app/layout.tsx`) y se alimenta de `getEstadoDelSitio()`, en
@@ -1194,9 +1195,14 @@ renderizan en el mismo request— comparten una sola lectura del fixture en luga
 de pedirlo dos veces por visita.
 
 La franja va entre las crónicas y el análisis, y las goleadoras abajo del bloque
-de plantel, en la columna angosta: es el orden del boceto, y es el mismo en `/`
-y en `/demo/portada`. Comprobado después del cableado: `/` **sigue saliendo
-estática** con revalidate de 1m y el build da las mismas 27 rutas.
+de plantel, en la columna angosta: es el orden del boceto. Comprobado después
+del cableado: `/` **sigue saliendo estática** con revalidate de 1m y el build da
+las mismas 27 rutas.
+
+**`/demo/portada` no los dibuja**, aunque por un rato los tuvo. La decisión es
+del usuario, mirando la página: la demo de la portada es la de las notas —la
+tapa, las crónicas, el análisis, el archivo— y los dos widgets la cargaban de
+cosas que ya se miran en `/demo/widgets`.
 
 Lo que le falta al Step 19 ya no es cableado: es el nodo de TipTap para embeber
 la planilla a mano, que depende del editor (Step 7), y confirmar el OG de
@@ -1521,7 +1527,7 @@ depender de leer o escribir en la base.
 CONTEXTO: ya están la portada, los listados, el SEO técnico, el buscador,
 `/partido/[slug]`, las tres páginas deportivas del Step 14 y —lo último— los
 tres widgets deportivos del Step 19, enchufados y dibujándose solos el día que
-haya base (se miran en `/demo/portada` y `/demo/widgets`). El patrón está
+haya base (se miran en `/demo/widgets`). El patrón está
 establecido y conviene copiarlo: Server
 Components puros que reciben todo por props, la página lee y no dibuja, los
 datos inventados encerrados en `src/app/demo/`, y toda la lógica que se pueda

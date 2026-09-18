@@ -30,8 +30,10 @@ import type { NotaResumen } from '@/types'
  * —aparece en todas las páginas, no sólo acá—; `<FechaAFecha />` y
  * `<Goleadoras />` salen de `getEstadoDelSitio()`, que sin temporada activa
  * devuelve todo vacío y los borra solos. En la ruta pública no aparece nunca un
- * marcador inventado (regla no negociable 1); para verlos dibujados están
- * `/demo/portada` y `/demo/widgets`.
+ * marcador inventado (regla no negociable 1); para verlos dibujados está
+ * `/demo/widgets`, que es su único banco de pruebas: `/demo/portada` no los
+ * muestra a propósito, para que la demo de la portada siga siendo la de las
+ * notas.
  *
  * El bloque de plantel sigue dibujándose sin sus caras ni sus estadísticas:
  * salen de `plantel` y `estadisticas_jugadora`, que la portada todavía no

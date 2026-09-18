@@ -19,8 +19,9 @@ import {
  * **La portada real ya los tiene a los tres**, pero hoy no se ven: sin temporada
  * activa en la base reciben vacío y se borran solos, que es lo que exige la
  * regla no negociable 1. Esta página existe para verlos dibujados sin esperar a
- * que haya datos, y no se indexa ni llega a producción. Para ver la portada
- * entera con ellos adentro está `/demo/portada`.
+ * que haya datos, y no se indexa ni llega a producción. **Es el único lugar
+ * donde se miran**: `/demo/portada` no los dibuja, para que la demo de la
+ * portada siga mostrando las notas y no los widgets, que ya tienen esta página.
  *
  * La barra va arriba de la cabecera, que es su lugar en los dos bocetos. Los
  * otros dos van donde irían en la portada: la franja debajo de las últimas
