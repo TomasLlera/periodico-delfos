@@ -1,12 +1,15 @@
 import type { Metadata } from 'next'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
+import { FechaAFecha } from '@/components/partido/FechaAFecha'
 import { BloqueArchivo } from '@/components/portada/BloqueArchivo'
+import { Goleadoras } from '@/components/portada/Goleadoras'
 import { GrillaNotas } from '@/components/portada/GrillaNotas'
 import { ListaAnalisis } from '@/components/portada/ListaAnalisis'
 import { NotaTapa } from '@/components/portada/NotaTapa'
 import { TarjetaPlantel } from '@/components/portada/TarjetaPlantel'
 import { getTemperatura } from '@/lib/clima'
+import { getEstadoDelSitio } from '@/lib/supabase/queries/estado'
 import { getNotaPrincipal, getUltimasNotas } from '@/lib/supabase/queries/notas'
 import { haySupabase } from '@/lib/supabase/server'
 import type { NotaResumen } from '@/types'
@@ -22,15 +25,18 @@ import type { NotaResumen } from '@/types'
  * home de WordPress: muestra las mismas seis notas cuatro veces (blueprint
  * 7.2). Cada query excluye los ids que ya salieron.
  *
- * **Lo que el boceto trae y acá no está, a propósito:** la barra de resultados
- * de arriba del header, la planilla del último partido, el widget de próximo
- * partido y la tabla de posiciones. Son `<BarraEstado />`, `<FechaAFecha />` y
- * `<Goleadoras />`: los componentes ya existen y se miran en `/demo/widgets`,
- * pero el Build Order los excluye de este step porque todavía no hay datos
- * deportivos, y no se enchufan acá hasta que la base los tenga (Step 19). El
- * bloque de plantel se dibuja sin sus caras ni sus estadísticas por la misma
- * razón. Y el newsletter no está en el Build Order: no se decidió si es un step
- * o una maqueta.
+ * **Los tres widgets deportivos del Step 19 ya están enchufados** y los tres se
+ * dibujan sólo si la base tiene con qué. `<BarraEstado />` va en el layout raíz
+ * —aparece en todas las páginas, no sólo acá—; `<FechaAFecha />` y
+ * `<Goleadoras />` salen de `getEstadoDelSitio()`, que sin temporada activa
+ * devuelve todo vacío y los borra solos. En la ruta pública no aparece nunca un
+ * marcador inventado (regla no negociable 1); para verlos dibujados están
+ * `/demo/portada` y `/demo/widgets`.
+ *
+ * El bloque de plantel sigue dibujándose sin sus caras ni sus estadísticas:
+ * salen de `plantel` y `estadisticas_jugadora`, que la portada todavía no
+ * consulta. Y el newsletter no está en el Build Order: no se decidió si es un
+ * step o una maqueta.
  *
  * ISR 60s (blueprint 7.1). Al publicar, el Server Action además revalida `/`.
  */
@@ -80,10 +86,13 @@ async function leerContenido(): Promise<Contenido> {
 }
 
 export default async function Portada() {
-  // Las dos lecturas son independientes: el clima no espera a la base.
-  const [{ tapa, cronicas, analisis }, temperatura] = await Promise.all([
+  // Las tres lecturas son independientes: el clima no espera a la base, y lo
+  // deportivo no espera a las notas. `getEstadoDelSitio()` está memoizada, así
+  // que ésta es la misma lectura que ya hizo el layout para la barra.
+  const [{ tapa, cronicas, analisis }, temperatura, deportivo] = await Promise.all([
     leerContenido(),
     getTemperatura(),
+    getEstadoDelSitio(),
   ])
 
   return (
@@ -108,6 +117,17 @@ export default async function Portada() {
           vacio="Todavía no hay crónicas publicadas. Las de cada fecha aparecen acá apenas salen."
         />
 
+        {/* La franja va entre las crónicas y el análisis, como en el boceto: es
+            el resumen de la temporada, y lo que sigue abajo son las notas que
+            la cuentan. Sin temporada activa no hay nada que resumir. */}
+        {deportivo.temporada && (
+          <FechaAFecha
+            id="fecha-a-fecha"
+            partidos={deportivo.fixture}
+            temporada={deportivo.temporada}
+          />
+        )}
+
         <div className="mt-14 grid gap-12 lg:grid-cols-[2fr_1fr]">
           <ListaAnalisis
             id="analisis"
@@ -117,11 +137,21 @@ export default async function Portada() {
             vacio="Todavía no hay análisis publicados."
           />
 
-          <TarjetaPlantel
-            titulo="El plantel"
-            descripcion="Fichas, estadísticas y trayectoria de cada una de las jugadoras de Aldosivi."
-            enlace={{ href: '/plantel', texto: 'Ver el plantel completo' }}
-          />
+          <div>
+            <TarjetaPlantel
+              titulo="El plantel"
+              descripcion="Fichas, estadísticas y trayectoria de cada una de las jugadoras de Aldosivi."
+              enlace={{ href: '/plantel', texto: 'Ver el plantel completo' }}
+            />
+
+            {deportivo.temporada && (
+              <Goleadoras
+                id="goleadoras"
+                goleadoras={deportivo.goleadoras}
+                temporada={deportivo.temporada}
+              />
+            )}
+          </div>
         </div>
 
         <BloqueArchivo />

@@ -16,10 +16,11 @@ import {
  * Los tres widgets deportivos de la portada, con datos falsos.
  *
  * Son `<BarraEstado />`, `<FechaAFecha />` y `<Goleadoras />` (blueprint 7.2).
- * **La portada real no los muestra**: el Build Order los deja para el Step 19,
- * cuando haya partidos cargados, y rellenarlos con marcadores de ejemplo en `/`
- * viola la regla no negociable 1. Acá se pueden mirar porque esta página no se
- * indexa y no llega a producción.
+ * **La portada real ya los tiene a los tres**, pero hoy no se ven: sin temporada
+ * activa en la base reciben vacío y se borran solos, que es lo que exige la
+ * regla no negociable 1. Esta página existe para verlos dibujados sin esperar a
+ * que haya datos, y no se indexa ni llega a producción. Para ver la portada
+ * entera con ellos adentro está `/demo/portada`.
  *
  * La barra va arriba de la cabecera, que es su lugar en los dos bocetos. Los
  * otros dos van donde irían en la portada: la franja debajo de las últimas

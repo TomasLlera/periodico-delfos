@@ -19,9 +19,13 @@ Actualizar este archivo al terminar cada step.
 > decisión de no usar Barlow Condensed.
 
 **Lo último que se hizo: los tres widgets deportivos de la portada**
-—`<BarraEstado />`, `<FechaAFecha />` y `<Goleadoras />`—, como componentes
-puros y **sin enchufar a `/`**. Ver "Los widgets deportivos, en detalle" más
-abajo; se miran en `/demo/widgets`.
+—`<BarraEstado />`, `<FechaAFecha />` y `<Goleadoras />`—, **y su cableado, que
+cierra el Step 19**. La barra va en el layout raíz y los otros dos en `/`. Los
+tres se dibujan **sólo si la base tiene con qué**: sin temporada activa reciben
+vacío y se borran solos, así que hoy no se ve ninguno en la ruta pública. Para
+verlos dibujados están `/demo/portada` —la portada entera— y `/demo/widgets`
+—los tres sueltos, con sus estados vacíos—. Ver "Los widgets deportivos, en
+detalle" más abajo.
 
 **Antes de eso, las tres páginas deportivas que cierran el Step 14** —
 `/temporada/[slug]`, `/plantel/[temporadaSlug]` y `/jugadora/[slug]`—, que son
@@ -157,8 +161,10 @@ escuchando el puerto pero sin responder. Redirigir a un archivo.
 | **14** | **`/buscar`, y `/plantel` y `/fixture` como puertas a la temporada en curso** | `src/app/buscar/`, `plantel/`, `fixture/`, `src/lib/busqueda.ts` |
 | **15** | **`/partido/[slug]` con JSON-LD `SportsEvent`. Mirala en `/demo/partido`** | `src/app/partido/[slug]/`, `jsonLdPartido()` en `src/lib/seo.ts` |
 | **16** | **Lo que faltaba del Step 14: `/temporada/[slug]` (fixture, tabla y goleadoras), `/plantel/[temporadaSlug]` y `/jugadora/[slug]`. Miralas en `/demo/temporada`, `/demo/plantel` y `/demo/jugadora`** | `src/app/temporada/`, `plantel/[temporadaSlug]/`, `jugadora/[slug]/`, `src/components/` (temporada, plantel, jugadora), `src/lib/temporada.ts`, `plantel.ts`, `jugadora.ts` |
-| **17** | **Los tres widgets deportivos del Step 19, como componentes puros. NO están enchufados a `/`. Miralos en `/demo/widgets`** | `src/components/layout/BarraEstado.tsx`, `src/components/partido/FechaAFecha.tsx` y `ChipResultado.tsx`, `src/components/portada/Goleadoras.tsx`, `src/lib/temporada.ts` |
+| **17** | **Los tres widgets deportivos del Step 19 como componentes puros. Miralos en `/demo/widgets`** | `src/components/layout/BarraEstado.tsx`, `src/components/partido/FechaAFecha.tsx` y `ChipResultado.tsx`, `src/components/portada/Goleadoras.tsx`, `src/lib/temporada.ts` |
 | **18** | **La temperatura de Mar del Plata en la línea de fecha de la cabecera (fuera del Build Order, lo pidió el usuario)** | `src/lib/clima.ts`, `src/components/layout/Header.tsx`, `src/app/page.tsx` |
+| **19** | **Los títulos del cuerpo (`h3` y `h4`) y la regla del `.sr-only`, rescatados de la versión del 15/09** | `src/app/globals.css`, `CLAUDE.md` |
+| **20** | **`<FechaAFecha />` y `<Goleadoras />` enchufadas a `/` y a `/demo/portada`: cierra el cableado del Step 19** | `src/app/page.tsx`, `src/app/demo/portada/page.tsx`, `src/lib/supabase/queries/estado.ts` |
 
 ---
 
@@ -1155,13 +1161,15 @@ src/app/demo/widgets/page.tsx              Banco de pruebas, con estados vacíos
 ```
 
 Son los tres widgets que el Build Order deja para el **Step 19**. Están hechos
-como componentes puros —reciben todo por props, no consultan nada— y **ninguna
-ruta pública los usa**: `/` sigue sin barra de estado y sin franja de
-resultados. Enchufarlos con datos de ejemplo rompería la regla no negociable 1,
-y un marcador inventado en el borde superior de todas las páginas es la peor
-forma posible de romperla. Los datos de `/demo/widgets` salen de
-`src/app/demo/temporada/datos-demo.ts`, el mismo archivo falso que ya usaban las
-páginas deportivas.
+como componentes puros —reciben todo por props, no consultan nada— y **los tres
+están enchufados**: la barra en el layout raíz, la franja y las goleadoras en
+`/`. Lo que los mantiene honestos no es dejarlos afuera sino de dónde sacan los
+datos: leen la base y nunca `src/app/demo/`, así que sin temporada activa
+reciben vacío y se borran solos. Hoy, sin Supabase, no se dibuja ninguno en la
+ruta pública —ni un marcador inventado, que es la regla no negociable 1— y el
+día que haya datos aparecen sin tocar una línea. Los datos de `/demo/widgets` y
+`/demo/portada` salen de `src/app/demo/temporada/datos-demo.ts`, el mismo
+archivo falso que ya usaban las páginas deportivas.
 
 **`<BarraEstado />` ya está cableada y va en todas las páginas.** Vive en el
 layout raíz (`src/app/layout.tsx`) y se alimenta de `getEstadoDelSitio()`, en
@@ -1176,9 +1184,23 @@ El día que haya datos aparece sola, sin tocar una línea.
 > las diez rutas estáticas intactas. Si alguien la cambia por `createClient()`,
 > el sitio entero deja de prerenderizarse y no lo va a avisar ningún test.
 
-Para cerrar el Step 19 falta el cableado de los otros dos —`<FechaAFecha />` y
-`<Goleadoras />` en `/`—. Las queries **ya existen**: `getPartidosTemporada()`
-y `getGoleadoras()` (con límite 5 por omisión) estaban escritas desde el Step 3b.
+**`<FechaAFecha />` y `<Goleadoras />` también están cableadas**, y salen de la
+misma `getEstadoDelSitio()` que la barra, no de `getPartidosTemporada()` ni de
+`getGoleadoras()`. Esas dos existen desde el Step 3b pero leen con
+`createClient()`, o sea con cookies: usarlas desde `/` volvería dinámica la
+portada, que es exactamente la trampa que la barra ya esquivaba. La query quedó
+**memoizada con `cache()` de React**, así que el layout y la portada —que se
+renderizan en el mismo request— comparten una sola lectura del fixture en lugar
+de pedirlo dos veces por visita.
+
+La franja va entre las crónicas y el análisis, y las goleadoras abajo del bloque
+de plantel, en la columna angosta: es el orden del boceto, y es el mismo en `/`
+y en `/demo/portada`. Comprobado después del cableado: `/` **sigue saliendo
+estática** con revalidate de 1m y el build da las mismas 27 rutas.
+
+Lo que le falta al Step 19 ya no es cableado: es el nodo de TipTap para embeber
+la planilla a mano, que depende del editor (Step 7), y confirmar el OG de
+`/partido/[slug]` con el resultado.
 
 **Decisiones que tomó este step:**
 
@@ -1336,10 +1358,12 @@ de pruebas del renderer y existe para ejercitar los nueve tipos de evento
   —lista, doble opt-in, proveedor de envío—, no un `<form>`. Decidir si entra
   como step nuevo o si va como maqueta inerte.
 - **El ticker de resultados, el widget de próximo partido y la tabla de
-  posiciones son Step 19**, no Step 9. Los tres componentes **ya están escritos**
-  (`BarraEstado`, `FechaAFecha`, `Goleadoras`; miralos en `/demo/widgets`), pero
-  siguen fuera de `/` porque necesitan Supabase con la temporada 2026 cargada.
-  **No inventar datos deportivos para llenarlos**: regla no negociable 1.
+  posiciones son Step 19**, no Step 9. Los tres componentes ya están escritos y
+  **ya están enchufados** (`BarraEstado` en el layout raíz, `FechaAFecha` y
+  `Goleadoras` en `/`), y se dibujan solos el día que la base tenga la temporada
+  2026 cargada. Hasta entonces reciben vacío y no se muestran. Lo que sigue en
+  pie es la regla: **no inventar datos deportivos para llenarlos** (regla no
+  negociable 1); los números viven en `/demo/` y en ningún otro lado.
 - **El contorno de foco sobre las superficies oscuras da 1.98:1** y no se ve.
   El arreglo son tres líneas en `globals.css` y cambia el foco en todo el sitio;
   está detallado en "Los widgets deportivos, en detalle".
@@ -1496,8 +1520,9 @@ depender de leer o escribir en la base.
 
 CONTEXTO: ya están la portada, los listados, el SEO técnico, el buscador,
 `/partido/[slug]`, las tres páginas deportivas del Step 14 y —lo último— los
-tres widgets deportivos del Step 19 como componentes puros, sin enchufar a `/`
-(`/demo/widgets`). El patrón está establecido y conviene copiarlo: Server
+tres widgets deportivos del Step 19, enchufados y dibujándose solos el día que
+haya base (se miran en `/demo/portada` y `/demo/widgets`). El patrón está
+establecido y conviene copiarlo: Server
 Components puros que reciben todo por props, la página lee y no dibuja, los
 datos inventados encerrados en `src/app/demo/`, y toda la lógica que se pueda
 sacar a `src/lib/` con tests.

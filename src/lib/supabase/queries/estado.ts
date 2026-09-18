@@ -1,10 +1,18 @@
+import { cache } from 'react'
 import { createStaticClient, haySupabase } from '@/lib/supabase/server'
 import { estadoTemporada, filaDeAldosivi } from '@/lib/temporada'
-import type { FilaTablaConEquipo, PartidoConEquipos, Temporada } from '@/types'
+import type {
+  FilaTablaConEquipo,
+  Goleadora,
+  PartidoConEquipos,
+  Temporada,
+} from '@/types'
 
 /**
- * Lo que `<BarraEstado />` necesita, para el layout raíz: la barra va en todas
- * las páginas del sitio (blueprint 7.2, "fija arriba, siempre visible").
+ * El estado deportivo de la temporada activa: lo que `<BarraEstado />` necesita
+ * en el layout raíz —la barra va en todas las páginas del sitio (blueprint 7.2,
+ * "fija arriba, siempre visible")— y lo que la portada usa para `<FechaAFecha />`
+ * y `<Goleadoras />`, que son los puntos 4 y 5 del mismo 7.2.
  *
  * **Lee con `createStaticClient()` y no con `createClient()`.** No es un
  * detalle: `createClient()` pide las cookies, y una sola lectura con cookies
@@ -21,6 +29,9 @@ export interface EstadoDelSitio {
   ultimo: PartidoConEquipos | null
   proximo: PartidoConEquipos | null
   posicion: FilaTablaConEquipo | null
+  /** El fixture entero: la franja de la portada se queda con una ventana. */
+  fixture: PartidoConEquipos[]
+  goleadoras: Goleadora[]
 }
 
 const VACIO: EstadoDelSitio = {
@@ -28,7 +39,16 @@ const VACIO: EstadoDelSitio = {
   ultimo: null,
   proximo: null,
   posicion: null,
+  fixture: [],
+  goleadoras: [],
 }
+
+/**
+ * El widget de la portada es "top 5" (blueprint 7.2, punto 5). El corte lo
+ * repite `<Goleadoras />`, que es lo que lo define; acá es para no traer una
+ * tabla de treinta filas por una lista de cinco.
+ */
+const TOP_GOLEADORAS = 5
 
 /**
  * `partidos` tiene dos foreign keys a `equipos`: PostgREST necesita el nombre
@@ -41,7 +61,7 @@ const CAMPOS_PARTIDO = `
   temporada:temporadas(*)
 `
 
-export async function getEstadoDelSitio(): Promise<EstadoDelSitio> {
+async function leerEstadoDelSitio(): Promise<EstadoDelSitio> {
   if (!haySupabase()) return VACIO
 
   try {
@@ -59,24 +79,45 @@ export async function getEstadoDelSitio(): Promise<EstadoDelSitio> {
     // docena de filas, y así el último y el próximo salen de `estadoTemporada()`
     // —la misma función que usa `/temporada/[slug]`, con sus tests—. Con dos
     // queries aparte, la barra y el fixture podrían contradecirse.
-    const [partidos, tabla] = await Promise.all([
+    const [partidos, tabla, goleadoras] = await Promise.all([
       supabase
         .from('partidos')
         .select(CAMPOS_PARTIDO)
         .eq('temporada_id', temporada.id)
         .order('fecha_hora', { ascending: true }),
       ultimaTabla(supabase, temporada.id),
+      supabase
+        .from('goleadoras')
+        .select('*')
+        .eq('temporada_id', temporada.id)
+        .order('goles', { ascending: false })
+        .limit(TOP_GOLEADORAS),
     ])
 
-    const { ultimo, proximo } = estadoTemporada(
-      (partidos.data ?? []) as unknown as PartidoConEquipos[],
-    )
+    const fixture = (partidos.data ?? []) as unknown as PartidoConEquipos[]
+    const { ultimo, proximo } = estadoTemporada(fixture)
 
-    return { temporada, ultimo, proximo, posicion: filaDeAldosivi(tabla) }
+    return {
+      temporada,
+      ultimo,
+      proximo,
+      posicion: filaDeAldosivi(tabla),
+      fixture,
+      goleadoras: goleadoras.data ?? [],
+    }
   } catch {
     return VACIO
   }
 }
+
+/**
+ * **Memoizada por request con `cache()` de React.** El layout raíz la llama
+ * para `<BarraEstado />` y la portada para la franja y las goleadoras, y las
+ * dos cosas pasan en el mismo render: sin esto, cada visita a `/` leería el
+ * fixture dos veces. Cualquier otra página paga una sola lectura, la del
+ * layout, como antes.
+ */
+export const getEstadoDelSitio = cache(leerEstadoDelSitio)
 
 /** La fila de cada equipo en la última fecha cargada de la tabla. */
 async function ultimaTabla(
