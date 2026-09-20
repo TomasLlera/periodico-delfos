@@ -2304,3 +2304,48 @@ en cero, y sin eso el paso 9 sube 27 de 70 notas y todas en borrador. El paso 9
 además escribe en la base y sube 109 imágenes al bucket, así que el clasificador
 lo va a frenar igual que al seed: preverlo, no descubrirlo a mitad de camino.
 ````
+
+### La `service_role` expuesta: confirmada, y reemplazada
+
+El pendiente de seguridad que venía arrastrándose —"confirmar que la
+`service_role` y la contraseña de la base en uso son las rotadas"— tuvo
+respuesta el 20/09, y era la mala: **la que estaba en uso era la original**.
+
+Cómo se comprobó, sin exponer la clave. Las claves legacy de Supabase son JWT
+y su payload se lee sin secreto: trae `role`, `ref`, `iat` y `exp`. El `iat`
+daba `2026-09-20T02:56:47` y `supabase projects list` da
+`created_at: 2026-09-20T02:56:47.880705Z`. **El mismo segundo.** Supabase emite
+las claves legacy al crear el proyecto, así que un `iat` igual al `created_at`
+prueba que esa clave nunca se rotó.
+
+Es la maniobra de verificación para la próxima vez, y sirve para cualquier JWT
+de Supabase:
+
+```
+node -e 'const p=JSON.parse(Buffer.from(process.env.CLAVE.split(".")[1],
+  "base64url").toString()); console.log(p.role, new Date(p.iat*1000))'
+```
+
+**Reemplazada el mismo día.** Hoy `SUPABASE_SERVICE_ROLE_KEY` es una secret key
+del formato nuevo (`sb_secret_…`, 41 chars), no un JWT. Probada contra la API:
+`206` sobre `equipos` —las 10 filas— y `200` sobre `social_posts`, que no tiene
+política de lectura pública. **El bypass de RLS no se pudo demostrar** porque
+con las tablas vacías una tabla sin filas devuelve `200 []` también con la
+anon; lo que sí quedó probado es que PostgREST la acepta como clave del
+proyecto. Cuando haya notas en borrador, eso se verifica de verdad.
+
+El cambio no toca código: `src/lib/supabase/admin.ts` lee la misma variable y
+le da igual el formato. La `anon` ya era del sistema nuevo
+(`sb_publishable_…`), así que el proyecto tiene las API keys nuevas activadas.
+
+### Lo que sigue abierto, y es del usuario
+
+- **Deshabilitar las legacy JWT keys** en Settings → API Keys. Mientras estén
+  habilitadas, la clave original —la que se pegó en un chat durante el setup—
+  sigue sirviendo hasta 2036. Ya no está en `.env.local`, así que desde el repo
+  no hay forma de probar si sigue viva: hay que mirarlo en la consola.
+- **La contraseña de la base**, que sigue sin confirmarse. Se resetea en
+  Settings → Database. El CLI no la usa —`db query --linked` va con el token de
+  `supabase login`—, así que resetearla no rompe nada de lo que hoy anda.
+- Si Vercel tiene la clave vieja cargada como variable de entorno, cambiarla
+  ahí también.
