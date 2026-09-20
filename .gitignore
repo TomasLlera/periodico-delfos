@@ -45,3 +45,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# CLI de Supabase: estado del link, puede traer la URL del pooler con credenciales
+supabase/.temp/
