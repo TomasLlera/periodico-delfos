@@ -3,6 +3,7 @@ import {
   chequearPublicacion,
   cuerpoVacio,
   documentoVacio,
+  entradaDesdeNota,
   esquemaNota,
   redesAPostear,
   slugDesdeTitulo,
@@ -141,5 +142,43 @@ describe('redesAPostear', () => {
 
   it('con auto_post prendido devuelve las elegidas', () => {
     expect(redesAPostear({ auto_post: true, redes: ['x'] })).toEqual(['x'])
+  })
+})
+
+describe('entradaDesdeNota', () => {
+  it('una nota nueva arranca en crónica y con las tres redes', () => {
+    const e = entradaDesdeNota(null)
+
+    expect(e.categoria).toBe('cronica')
+    expect(e.redes).toEqual(['facebook', 'instagram', 'x'])
+    expect(e.auto_post).toBe(true)
+    expect(e.destacada).toBe(false)
+  })
+
+  it('una nota nueva abre con el cuerpo vacío, no sin cuerpo', () => {
+    expect(entradaDesdeNota(null).cuerpo).toEqual(documentoVacio())
+  })
+
+  it('no pierde ninguno de los trece campos al abrir una guardada', () => {
+    const guardada = {
+      titulo: 'Tiburonas 5-1 El Frontón',
+      slug: 'tiburonas-5-1-el-fronton',
+      bajada: 'Goleada en el Minella.',
+      cuerpo: { type: 'doc' as const, content: [{ type: 'paragraph' }] },
+      imagen_portada: 'https://x.supabase.co/storage/v1/object/public/media/f.jpg',
+      imagen_alt: 'El plantel festeja',
+      imagen_credito: 'Charlie Redondo',
+      categoria: 'cronica' as const,
+      temporada_id: 'c0ffee00-0000-4000-8000-000000000002',
+      partido_id: 'c0ffee00-0000-4000-8000-000000000003',
+      destacada: true,
+      auto_post: false,
+      redes: ['x'] as const,
+    }
+
+    expect(entradaDesdeNota({ ...guardada, redes: [...guardada.redes] })).toEqual({
+      ...guardada,
+      redes: ['x'],
+    })
   })
 })

@@ -1,13 +1,19 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
-import { Save, Send } from 'lucide-react'
+import { useEffect, useState, useTransition } from 'react'
+import { Eye, Save } from 'lucide-react'
+import { subirImagen } from '@/actions/imagenes'
 import { guardarNota, publicarNota } from '@/actions/notas'
-import { documentoVacio, esquemaNota, slugDesdeTitulo, type EntradaNota } from '@/lib/nota'
-import { EditorCuerpo } from '@/components/admin/EditorCuerpo'
+import { chequearImagen } from '@/lib/imagen'
+import { entradaDesdeNota, esquemaNota, slugDesdeTitulo, type EntradaNota } from '@/lib/nota'
+import { esSobrePublicada, notaDePrevisualizacion } from '@/lib/vista-previa'
+import { CampoImagen } from '@/components/admin/CampoImagen'
+import { CamposClasificacion } from '@/components/admin/CamposClasificacion'
 import { CampoTexto } from '@/components/admin/CampoTexto'
-import type { NotaConRelaciones, Temporada } from '@/types'
+import { EditorCuerpo } from '@/components/admin/EditorCuerpo'
+import { VistaPrevia } from '@/components/admin/VistaPrevia'
+import type { Autor, NotaConRelaciones, Temporada } from '@/types'
 
 /**
  * El formulario de nota, crear y editar con el mismo componente.
@@ -27,63 +33,85 @@ interface Props {
   /** La nota guardada, si se está editando. `null` al crear. */
   nota: NotaConRelaciones | null
   temporadas: readonly Temporada[]
+  /** El de la sesión. La vista previa lo necesita para firmar la nota. */
+  autor: Autor
 }
 
-const CATEGORIAS = [
-  ['cronica', 'Crónica'],
-  ['analisis', 'Análisis'],
-  ['temporada', 'Temporada'],
-  ['plantel', 'Plantel'],
-  ['institucional', 'Institucional'],
-] as const
-
-function entradaInicial(nota: NotaConRelaciones | null): EntradaNota {
-  if (!nota) {
-    return {
-      titulo: '',
-      slug: '',
-      bajada: '',
-      cuerpo: documentoVacio(),
-      imagen_portada: null,
-      imagen_alt: '',
-      imagen_credito: null,
-      categoria: 'cronica',
-      temporada_id: null,
-      partido_id: null,
-      destacada: false,
-      auto_post: true,
-      redes: ['facebook', 'instagram', 'x'],
-    }
-  }
-
-  const { titulo, slug, bajada, cuerpo, imagen_portada, imagen_alt, imagen_credito } = nota
-  const { categoria, temporada_id, partido_id, destacada, auto_post, redes } = nota
-
-  return {
-    titulo,
-    slug,
-    bajada,
-    cuerpo,
-    imagen_portada,
-    imagen_alt,
-    imagen_credito,
-    categoria,
-    temporada_id,
-    partido_id,
-    destacada,
-    auto_post,
-    redes,
-  }
-}
-
-export function FormularioNota({ nota, temporadas }: Props) {
+export function FormularioNota({ nota, temporadas, autor }: Props) {
   const router = useRouter()
-  const [entrada, setEntrada] = useState<EntradaNota>(() => entradaInicial(nota))
+  const [entrada, setEntrada] = useState<EntradaNota>(() => entradaDesdeNota(nota))
   const [errores, setErrores] = useState<Record<string, string>>({})
   const [aviso, setAviso] = useState<string | null>(null)
   const [guardando, empezar] = useTransition()
 
+  // La imagen elegida y todavía sin subir. Va separada de `entrada` a
+  // propósito: en `entrada.imagen_portada` sólo puede vivir una URL del bucket,
+  // porque es lo que se guarda en la base, y un `blob:` no lo ve nadie más que
+  // este navegador (regla no negociable 6).
+  const [archivo, setArchivo] = useState<File | null>(null)
+  const [urlLocal, setUrlLocal] = useState<string | null>(null)
+  const [previa, setPrevia] = useState(false)
+
   const esNueva = nota === null
+
+  // El `blob:` se libera al cambiar de archivo y al desmontar. Sin esto, cada
+  // foto probada queda retenida hasta que se recarga la página.
+  useEffect(() => {
+    if (!archivo) {
+      setUrlLocal(null)
+      return
+    }
+
+    const url = URL.createObjectURL(archivo)
+    setUrlLocal(url)
+    return () => URL.revokeObjectURL(url)
+  }, [archivo])
+
+  /**
+   * La entrada como se va a ver, con la imagen elegida en el lugar de la
+   * guardada. Es lo que validan Zod y la vista previa: así el alt se exige
+   * desde que se elige la foto y no recién después de subirla.
+   */
+  const entradaEfectiva: EntradaNota = {
+    ...entrada,
+    imagen_portada: urlLocal ?? entrada.imagen_portada,
+  }
+
+  function elegirArchivo(nuevo: File | null) {
+    if (!nuevo) {
+      setArchivo(null)
+      cambiar('imagen_portada', null)
+      return
+    }
+
+    const chequeo = chequearImagen(nuevo.type, nuevo.size)
+    if (!chequeo.ok) {
+      setAviso(chequeo.motivo ?? 'Esa imagen no se puede usar')
+      return
+    }
+
+    setAviso(null)
+    setArchivo(nuevo)
+  }
+
+  /**
+   * Sube la imagen pendiente, si hay, y devuelve la entrada lista para la base.
+   * `null` si la subida falló: el llamador corta ahí y no guarda a medias.
+   */
+  async function conImagenSubida(): Promise<EntradaNota | null> {
+    if (!archivo) return entrada
+
+    const formData = new FormData()
+    formData.set('archivo', archivo)
+    const r = await subirImagen(formData)
+
+    if (r.error || !r.url) {
+      setAviso(r.error ?? 'No se pudo subir la imagen')
+      return null
+    }
+
+    return { ...entrada, imagen_portada: r.url }
+  }
 
   function cambiar<C extends keyof EntradaNota>(campo: C, valor: EntradaNota[C]) {
     setEntrada((previa) => ({ ...previa, [campo]: valor }))
@@ -100,7 +128,7 @@ export function FormularioNota({ nota, temporadas }: Props) {
 
   /** Corre Zod y deja los errores al lado de cada campo. `true` si pasa. */
   function validar(): boolean {
-    const parseo = esquemaNota.safeParse(entrada)
+    const parseo = esquemaNota.safeParse(entradaEfectiva)
     if (parseo.success) {
       setErrores({})
       return true
@@ -119,12 +147,16 @@ export function FormularioNota({ nota, temporadas }: Props) {
     if (!validar()) return
 
     empezar(async () => {
-      const r = await guardarNota(entrada, nota?.id ?? null)
+      const lista = await conImagenSubida()
+      if (!lista) return
+
+      const r = await guardarNota(lista, nota?.id ?? null)
       if (r.error) {
         setAviso(r.error)
         return
       }
       setAviso('Guardado')
+      setArchivo(null)
       // Al crear, la URL pasa a ser la de la nota: recargar el editor no
       // vuelve a crear una segunda.
       if (esNueva && r.id) router.replace(`/admin/notas/${r.id}`)
@@ -132,12 +164,34 @@ export function FormularioNota({ nota, temporadas }: Props) {
     })
   }
 
-  function alPublicar() {
-    if (!validar()) return
+  /**
+   * Abrir la vista previa es el paso obligado antes de publicar.
+   *
+   * No hay botón que publique derecho: publicar dispara el auto-posteo a las
+   * redes, que no tiene vuelta atrás, y mirar cómo quedó cuesta un click. La
+   * validación corre antes de abrirla — no tiene sentido previsualizar una nota
+   * a la que le falta la bajada.
+   *
+   * Es una garantía de interfaz y no del servidor: `publicarNota` no tiene
+   * forma de saber si alguien miró la preview, y con un solo autor no vale la
+   * pena inventar un token firmado para demostrarlo. Lo que el servidor sí
+   * vuelve a chequear es que la nota esté completa.
+   */
+  function abrirPrevia() {
+    if (validar()) setPrevia(true)
+  }
 
+  function alPublicar() {
     empezar(async () => {
-      const r = await publicarNota(entrada, nota?.id ?? null)
+      const lista = await conImagenSubida()
+      if (!lista) {
+        setPrevia(false)
+        return
+      }
+
+      const r = await publicarNota(lista, nota?.id ?? null)
       if (r.error) {
+        setPrevia(false)
         setAviso([r.error, ...(r.motivos ?? [])].join(' · '))
         return
       }
@@ -184,77 +238,18 @@ export function FormularioNota({ nota, temporadas }: Props) {
         <EditorCuerpo valor={entrada.cuerpo} onCambio={(d) => cambiar('cuerpo', d)} />
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="categoria" className="meta text-gris">
-            Categoría
-          </label>
-          <select
-            id="categoria"
-            value={entrada.categoria}
-            onChange={(e) => cambiar('categoria', e.target.value as EntradaNota['categoria'])}
-            className="tactil border border-linea-fuerte bg-tarjeta px-3 font-display text-[0.95rem]"
-          >
-            {CATEGORIAS.map(([valor, nombre]) => (
-              <option key={valor} value={valor}>
-                {nombre}
-              </option>
-            ))}
-          </select>
-        </div>
+      <CamposClasificacion entrada={entrada} temporadas={temporadas} onCambio={cambiar} />
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="temporada" className="meta text-gris">
-            Temporada
-          </label>
-          <select
-            id="temporada"
-            value={entrada.temporada_id ?? ''}
-            onChange={(e) => cambiar('temporada_id', e.target.value || null)}
-            className="tactil border border-linea-fuerte bg-tarjeta px-3 font-display text-[0.95rem]"
-          >
-            <option value="">Ninguna</option>
-            {temporadas.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <CampoTexto
-        id="imagen_portada"
-        etiqueta="Imagen de portada"
-        valor={entrada.imagen_portada ?? ''}
-        onCambio={(v) => cambiar('imagen_portada', v || null)}
-        error={errores.imagen_portada}
-        ayuda="Por ahora, la URL pública del bucket. La subida desde el editor entra con la vista previa."
+      <CampoImagen
+        urlGuardada={entrada.imagen_portada}
+        urlLocal={urlLocal}
+        alt={entrada.imagen_alt}
+        credito={entrada.imagen_credito}
+        errorAlt={errores.imagen_alt}
+        onArchivo={elegirArchivo}
+        onAlt={(v) => cambiar('imagen_alt', v)}
+        onCredito={(v) => cambiar('imagen_credito', v)}
       />
-
-      <CampoTexto
-        id="imagen_alt"
-        etiqueta="Texto alternativo"
-        valor={entrada.imagen_alt}
-        onCambio={(v) => cambiar('imagen_alt', v)}
-        error={errores.imagen_alt}
-        ayuda="Obligatorio si hay imagen. Describí lo que se ve, para quien no la ve."
-      />
-
-      <div className="flex flex-wrap gap-5">
-        <Casilla
-          id="destacada"
-          etiqueta="Destacada en la portada"
-          valor={entrada.destacada}
-          onCambio={(v) => cambiar('destacada', v)}
-        />
-        <Casilla
-          id="auto_post"
-          etiqueta="Postear a las redes al publicar"
-          valor={entrada.auto_post}
-          onCambio={(v) => cambiar('auto_post', v)}
-        />
-      </div>
 
       {aviso && (
         <p role="status" className="border-l-2 border-verde-600 bg-papel-alt px-3 py-2 text-[0.9rem]">
@@ -275,39 +270,31 @@ export function FormularioNota({ nota, temporadas }: Props) {
 
         <button
           type="button"
-          onClick={alPublicar}
+          onClick={abrirPrevia}
           disabled={guardando}
           className="tactil flex items-center gap-2 bg-verde-900 px-5 font-display text-[0.9rem] font-extrabold text-white hover:bg-verde-600 disabled:opacity-60"
         >
-          <Send size={16} aria-hidden="true" />
-          Publicar
+          <Eye size={16} aria-hidden="true" />
+          Vista previa y publicar
         </button>
       </div>
+
+      {previa && (
+        <VistaPrevia
+          nota={notaDePrevisualizacion({
+            entrada: entradaEfectiva,
+            autor,
+            temporada: temporadas.find((t) => t.id === entrada.temporada_id) ?? null,
+            partido: nota?.partido ?? null,
+            existente: nota,
+          })}
+          sobrePublicada={esSobrePublicada(nota)}
+          onVolver={() => setPrevia(false)}
+          onPublicar={alPublicar}
+          publicando={guardando}
+        />
+      )}
     </div>
   )
 }
 
-function Casilla({
-  id,
-  etiqueta,
-  valor,
-  onCambio,
-}: {
-  id: string
-  etiqueta: string
-  valor: boolean
-  onCambio: (v: boolean) => void
-}) {
-  return (
-    <label htmlFor={id} className="tactil flex items-center gap-2 text-[0.9rem]">
-      <input
-        id={id}
-        type="checkbox"
-        checked={valor}
-        onChange={(e) => onCambio(e.target.checked)}
-        className="size-4 accent-verde-900"
-      />
-      {etiqueta}
-    </label>
-  )
-}

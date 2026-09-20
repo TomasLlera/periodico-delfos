@@ -13,7 +13,7 @@
  */
 
 import { z } from 'zod'
-import type { Categoria, DocumentoTipTap, Red } from '@/types'
+import type { Categoria, DocumentoTipTap, Nota, Red } from '@/types'
 
 // ============================================
 // Slug
@@ -166,3 +166,71 @@ export function chequearPublicacion(nota: EntradaNota): ChequeoPublicacion {
 export function redesAPostear(nota: Pick<EntradaNota, 'auto_post' | 'redes'>): Red[] {
   return nota.auto_post ? nota.redes : []
 }
+
+/**
+ * Lo que el formulario muestra al abrirse: los campos de la nota guardada, o
+ * una nota en blanco lista para escribir.
+ *
+ * Vive acá y no en el componente porque es traducción de datos y no interfaz:
+ * pasa de `NotaConRelaciones` —que trae autor, temporada y partido resueltos y
+ * los campos que pone el servidor— a los trece campos que se editan. Que sea
+ * puro deja probar que no se pierde ninguno.
+ *
+ * Los valores de una nota nueva no son neutros: la categoría arranca en
+ * `cronica` porque es lo que más se escribe, y las tres redes vienen prendidas
+ * porque el auto-posteo es el motivo por el que existe el pipeline. Apagar es
+ * la excepción.
+ */
+export function entradaDesdeNota(nota: NotaParaEditar | null): EntradaNota {
+  if (!nota) {
+    return {
+      titulo: '',
+      slug: '',
+      bajada: '',
+      cuerpo: documentoVacio(),
+      imagen_portada: null,
+      imagen_alt: '',
+      imagen_credito: null,
+      categoria: 'cronica',
+      temporada_id: null,
+      partido_id: null,
+      destacada: false,
+      auto_post: true,
+      redes: ['facebook', 'instagram', 'x'],
+    }
+  }
+
+  return {
+    titulo: nota.titulo,
+    slug: nota.slug,
+    bajada: nota.bajada,
+    cuerpo: nota.cuerpo,
+    imagen_portada: nota.imagen_portada,
+    imagen_alt: nota.imagen_alt,
+    imagen_credito: nota.imagen_credito,
+    categoria: nota.categoria,
+    temporada_id: nota.temporada_id,
+    partido_id: nota.partido_id,
+    destacada: nota.destacada,
+    auto_post: nota.auto_post,
+    redes: nota.redes,
+  }
+}
+
+/** Los campos de una nota guardada que el editor sabe abrir. */
+export type NotaParaEditar = Pick<
+  Nota,
+  | 'titulo'
+  | 'slug'
+  | 'bajada'
+  | 'cuerpo'
+  | 'imagen_portada'
+  | 'imagen_alt'
+  | 'imagen_credito'
+  | 'categoria'
+  | 'temporada_id'
+  | 'partido_id'
+  | 'destacada'
+  | 'auto_post'
+  | 'redes'
+>
