@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { FormularioNota } from '@/components/admin/FormularioNota'
-import { getNotaPorId } from '@/lib/supabase/queries/notas'
 import { getAutorDeLaSesion } from '@/lib/supabase/queries/autores'
+import { getNotaPorId, getNotasParaEnlazar } from '@/lib/supabase/queries/notas'
 import { getPartidosParaEditor } from '@/lib/supabase/queries/partidos'
 import { getTemporadas } from '@/lib/supabase/queries/temporadas'
 
@@ -28,11 +28,12 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function EditarNota({ params }: Params) {
   const { id } = await params
-  const [nota, temporadas, autor, partidos] = await Promise.all([
+  const [nota, temporadas, autor, partidos, enlazables] = await Promise.all([
     getNotaPorId(id),
     getTemporadas(),
     getAutorDeLaSesion(),
     getPartidosParaEditor(),
+    getNotasParaEnlazar(),
   ])
 
   if (!nota) notFound()
@@ -43,7 +44,7 @@ export default async function EditarNota({ params }: Params) {
   return (
     <main className="mx-auto max-w-[900px] px-4 py-8">
       <h1 className="titular mb-6 text-[1.6rem]">Editar nota</h1>
-      <FormularioNota nota={nota} temporadas={temporadas} partidos={partidos} autor={autor} />
+      <FormularioNota nota={nota} temporadas={temporadas} partidos={partidos} enlazables={enlazables} autor={autor} />
     </main>
   )
 }

@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import { Bold, Italic, List, ListOrdered, Quote, Redo2, Undo2 } from 'lucide-react'
+import { Bold, Italic, Link2, List, ListOrdered, Quote, Redo2, Undo2, Unlink } from 'lucide-react'
+import { EnlazarNota, type NotaEnlazable } from '@/components/admin/EnlazarNota'
 import type { DocumentoTipTap } from '@/types'
 
 /**
@@ -29,9 +31,14 @@ import type { DocumentoTipTap } from '@/types'
 interface Props {
   valor: DocumentoTipTap
   onCambio: (documento: DocumentoTipTap) => void
+  /** Para el botón de anclar: las publicadas, ya leídas por la página. */
+  notas: readonly NotaEnlazable[]
+  /** La que se está editando, para no ofrecerse a sí misma. */
+  idActual: string | null
 }
 
-export function EditorCuerpo({ valor, onCambio }: Props) {
+export function EditorCuerpo({ valor, onCambio, notas, idActual }: Props) {
+  const [enlazando, setEnlazando] = useState(false)
   const editor = useEditor({
     extensions: [StarterKit],
     content: valor,
@@ -90,7 +97,49 @@ export function EditorCuerpo({ valor, onCambio }: Props) {
         <Boton editor={editor} accion="rehacer" etiqueta="Rehacer">
           <Redo2 size={16} aria-hidden="true" />
         </Boton>
+
+        <span className="mx-1 h-5 w-px bg-linea" />
+
+        {/* Anclar una nota. El texto seleccionado se vuelve el link; si no hay
+            nada seleccionado, TipTap no tiene qué enlazar y el botón no abre
+            el panel: enlazar el vacío deja un link invisible en el cuerpo. */}
+        <button
+          type="button"
+          onClick={() => setEnlazando((v) => !v)}
+          disabled={editor.state.selection.empty && !editor.isActive('link')}
+          title="Anclar una nota o un link"
+          aria-label="Anclar una nota o un link"
+          aria-pressed={enlazando}
+          className={`tactil flex min-w-11 items-center justify-center px-2 disabled:opacity-40 ${
+            enlazando || editor.isActive('link') ? 'bg-verde-900 text-white' : 'hover:bg-papel-alt'
+          }`}
+        >
+          <Link2 size={16} aria-hidden="true" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().unsetLink().run()}
+          disabled={!editor.isActive('link')}
+          title="Sacar el link"
+          aria-label="Sacar el link"
+          className="tactil flex min-w-11 items-center justify-center px-2 hover:bg-papel-alt disabled:opacity-40"
+        >
+          <Unlink size={16} aria-hidden="true" />
+        </button>
       </div>
+
+      {enlazando && (
+        <EnlazarNota
+          notas={notas}
+          idActual={idActual}
+          onCerrar={() => setEnlazando(false)}
+          onElegir={(href) => {
+            editor.chain().focus().extendMarkRange('link').setLink({ href }).run()
+            setEnlazando(false)
+          }}
+        />
+      )}
 
       <EditorContent editor={editor} />
     </div>

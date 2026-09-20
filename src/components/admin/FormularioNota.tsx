@@ -9,6 +9,7 @@ import { entradaDesdeNota, esquemaNota, slugDesdeTitulo, type EntradaNota } from
 import { esSobrePublicada, notaDePrevisualizacion } from '@/lib/vista-previa'
 import { BarraAcciones } from '@/components/admin/BarraAcciones'
 import { CampoImagen } from '@/components/admin/CampoImagen'
+import type { NotaEnlazable } from '@/components/admin/EnlazarNota'
 import { CamposClasificacion } from '@/components/admin/CamposClasificacion'
 import { CampoTexto } from '@/components/admin/CampoTexto'
 import { EditorCuerpo } from '@/components/admin/EditorCuerpo'
@@ -34,11 +35,13 @@ interface Props {
   nota: NotaConRelaciones | null
   temporadas: readonly Temporada[]
   partidos: readonly PartidoConEquipos[]
+  /** Las publicadas, para el botón de anclar del editor. */
+  enlazables: readonly NotaEnlazable[]
   /** El de la sesión. La vista previa lo necesita para firmar la nota. */
   autor: Autor
 }
 
-export function FormularioNota({ nota, temporadas, partidos, autor }: Props) {
+export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }: Props) {
   const router = useRouter()
   const [entrada, setEntrada] = useState<EntradaNota>(() => entradaDesdeNota(nota))
   const [errores, setErrores] = useState<Record<string, string>>({})
@@ -236,7 +239,12 @@ export function FormularioNota({ nota, temporadas, partidos, autor }: Props) {
 
       <div className="flex flex-col gap-1">
         <span className="meta text-gris">Cuerpo</span>
-        <EditorCuerpo valor={entrada.cuerpo} onCambio={(d) => cambiar('cuerpo', d)} />
+        <EditorCuerpo
+          valor={entrada.cuerpo}
+          onCambio={(d) => cambiar('cuerpo', d)}
+          notas={enlazables}
+          idActual={nota?.id ?? null}
+        />
       </div>
 
       <CamposClasificacion

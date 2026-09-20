@@ -289,3 +289,28 @@ export async function getNotaPorId(id: string): Promise<NotaConRelaciones | null
 
   return data as unknown as NotaConRelaciones | null
 }
+
+/**
+ * Las notas que se pueden anclar desde el cuerpo de otra.
+ *
+ * **Sólo publicadas.** Anclar un borrador dejaría en el texto un link a una URL
+ * que para el lector es un 404: RLS no le muestra borradores a nadie que no sea
+ * el autor. El día que ese borrador se publique el link empieza a andar, pero
+ * mientras tanto rompe la nota que lo cita.
+ *
+ * Trae lo mínimo para elegir y armar el href. No pagina: son setenta notas y el
+ * selector filtra en el navegador, que con esa cantidad es instantáneo y no
+ * pega a la base con cada tecla.
+ */
+export async function getNotasParaEnlazar(): Promise<
+  { id: string; titulo: string; slug: string; categoria: Categoria }[]
+> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('notas')
+    .select('id, titulo, slug, categoria')
+    .eq('estado', 'publicada')
+    .order('publicada_en', { ascending: false })
+
+  return data ?? []
+}
