@@ -19,7 +19,14 @@ export function BarraAdmin({ autor }: { autor: Autor }) {
         <Link href="/admin" className="marca text-[1.1rem]">
           Delfos
         </Link>
-        <span className="meta text-white/70">Redacción</span>
+
+        {/* Las secciones del panel. Se agregan acá y en `docs/admin.md`: una
+            pantalla a la que no se llega desde esta barra es una pantalla que
+            nadie va a encontrar. */}
+        <nav aria-label="Secciones del panel" className="flex items-center gap-1">
+          <Seccion href="/admin">Notas</Seccion>
+          <Seccion href="/admin/partidos">Partidos</Seccion>
+        </nav>
 
         <span className="ml-auto text-[0.85rem] text-white/70">{autor.nombre}</span>
 
@@ -43,5 +50,24 @@ export function BarraAdmin({ autor }: { autor: Autor }) {
         </form>
       </div>
     </header>
+  )
+}
+
+/**
+ * Un link de la barra.
+ *
+ * Sin `aria-current`: marcar el activo necesita la ruta actual, que en un
+ * Server Component no está, y volver cliente toda la barra por un subrayado
+ * sería pagar de más. `NavPrincipal` del sitio público sí lo hace, y por eso
+ * es el único `"use client"` del chrome.
+ */
+function Seccion({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="tactil flex items-center px-2 font-display text-[0.85rem] font-bold hover:underline"
+    >
+      {children}
+    </Link>
   )
 }

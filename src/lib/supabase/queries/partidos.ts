@@ -152,3 +152,11 @@ export async function getPartidosParaEditor(limite = 50): Promise<PartidoConEqui
 
   return (data ?? []) as unknown as PartidoConEquipos[]
 }
+
+/** Un partido con todo —eventos y formaciones— por id, para la planilla de carga. */
+export async function getPartidoPorId(id: string): Promise<PartidoCompleto | null> {
+  const supabase = await createClient()
+  const { data } = await supabase.from('partidos').select(CAMPOS_COMPLETO).eq('id', id).maybeSingle()
+
+  return data as unknown as PartidoCompleto | null
+}
