@@ -2372,3 +2372,193 @@ entorno vieja dando vueltas.
 Y la regla que lo evita la próxima: las credenciales van a `.env.local` o a un
 gestor, nunca a un chat. Un agente no debe pedirlas ni aceptarlas por ahí, y si
 llegan igual, lo que corresponde es decir que hay que rotarlas.
+
+## El admin de notas, la vista previa y el lazo con el partido
+
+> Rama `fase/13-admin-notas`, salida de `fase/backend-supabase`. Sección escrita
+> el 20/09/2026. **No edita nada de arriba.** Ocho commits: el admin entero, la
+> vista previa, el rediseño de compartir y el vínculo nota ↔ partido.
+
+**El admin no existía y ahora existe.** Vale aclarar por qué se construyó acá:
+las tres ramas paralelas —`fase/13-planilla-de-carga`, `fase/20-e2e` y
+`fix/accesibilidad-y-pie`— están en **cero commits sobre `main`**. Los merges
+que figuran en el historial trajeron sólo los encargos, o sea el documento de
+"qué hay que hacer". Nadie escribió ese código. Conviene chequearlo antes de
+volver a repartir trabajo entre ramas.
+
+### Entrar
+
+| Ruta | Qué |
+|---|---|
+| `/admin/login` | Contraseña **y** magic link, un solo formulario |
+| `/auth/confirm` | Canjea el `token_hash` del mail, del lado del servidor |
+| `/auth/callback` | El flujo PKCE, con `?code=` |
+| `src/middleware.ts` | Protege `/admin/*`, matcher acotado |
+
+Tres decisiones que no hay que rediscutir:
+
+- **El magic link no alcanza solo.** El blueprint § 9 pide magic link y está,
+  pero depende del SMTP del proyecto; sin el respaldo de la contraseña, un
+  problema de entrega deja el panel inaccesible y no hay forma de publicar.
+- **El template del mail hay que cambiarlo en la consola.** El que viene de
+  fábrica pasa por el endpoint de verificación de Supabase y vuelve con los
+  tokens **en el fragmento de la URL**, que no viaja al servidor. El síntoma es
+  aterrizar en la home con `#error=access_denied&error_code=otp_expired`, que
+  parece expiración y no lo es. Va:
+  `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`, más
+  `http://localhost:3000/**` en Redirect URLs.
+- **El grupo `(panel)` deja `/admin/login` afuera del layout protegido**, que si
+  no se redirigiría a sí mismo para siempre. Y el layout **re-verifica fila en
+  `autores`**: tener sesión de Auth no es ser el autor, y es el mismo criterio
+  que `es_autor()` en RLS.
+
+El usuario de Auth es **el mail del propio dueño del proyecto**, no uno de
+Charlie: `autores.id` es FK a `auth.users(id)` y el seed entró sin error, así
+que ese UUID existe. Cuando Charlie tenga casilla, se le **edita el mail a ese
+mismo usuario**: el UUID no cambia y la fila de `autores` sigue válida. Borrarlo
+y crear otro sí rompe, y hay que actualizar el UUID en `seed.sql`.
+
+### Escribir
+
+`/admin` lista todo —borradores arriba—, `/admin/notas/nueva` y
+`/admin/notas/[id]` editan. El cuerpo es TipTap y **guarda JSON, no HTML**.
+
+- El slug se calcula del título **sólo mientras la nota no existe**. Renombrar
+  una publicada no le toca la URL (regla 8).
+- Los Server Actions reciben un objeto, no un `FormData`: el cuerpo es un árbol.
+- `publicarNota` revalida `/`, `/cronicas`, `/analisis` y `/nota/[slug]`. Sin
+  eso la nota no aparece hasta que venza el ISR de 60s.
+- **El disparo a Inngest está marcado con un comentario, no cableado.** No se
+  postea inline en el request: tres APIs colgando de la publicación.
+- Los dos nodos propios —`imagen` y `planilla`— **todavía no se insertan desde
+  el editor**. El renderer ya los dibuja; falta la extensión de TipTap. Un
+  cuerpo que ya los trae se edita sin perderlos: StarterKit ignora lo que no
+  conoce en vez de borrarlo.
+
+### La vista previa
+
+Sale de un pedido concreto: hasta ahora, para ver una nota terminada había que
+publicarla, mirarla y despublicarla, y eso dispara el auto-posteo, que no tiene
+vuelta atrás.
+
+**Se dibuja con `<ArticuloNota />`, el componente del sitio público.** Cero
+markup paralelo, y no puede haberlo: una preview con estilos propios muestra
+cómo se ve la preview, no cómo va a quedar la nota. No hubo que partir ningún
+componente —**ninguno de `src/components/` consulta Supabase adentro**, la
+convención ya se respetaba— salvo sacar `urlTransformada()` de
+`ImagenResponsive` a `src/lib/imagen.ts`: armaba el `srcSet` reescribiendo la
+URL del bucket y con un `blob:` producía URLs inválidas, o sea que la portada
+elegida y sin subir se veía en blanco justo en la preview.
+
+- **Publicar pasa obligatoriamente por la preview.** Es garantía de interfaz, no
+  del servidor: `publicarNota` no puede saber si alguien miró. Con un solo autor
+  no vale un token firmado; lo que el servidor sí re-chequea es que la nota esté
+  completa. **Decidido explícitamente, no lo rediscutas.**
+- La imagen elegida vive **aparte** de `entrada.imagen_portada`, donde sólo
+  puede ir una URL del bucket. El `blob:` se libera al cambiar de foto y al
+  desmontar, y **la subida ocurre al guardar o publicar**: probar tres fotos y
+  cerrar no deja nada en Storage.
+- El nodo `planilla` se dibuja con el mapa de partidos **vacío**. Se decidió
+  esperar a tener un partido cargado antes de escribir esa parte, en vez de
+  plomería que no se puede verificar. Cuando llegue: query en
+  `queries/partidos.ts` con el cliente de navegador, TanStack Query y
+  `mapaDePartidos()`.
+
+### La barra de compartir, rediseñada
+
+Se descubrió mirando la preview en ancho móvil, que es exactamente para lo que
+esa pantalla existe: con los rótulos al lado del icono, cuatro botones no entran
+en 390px y se parten en dos o tres filas.
+
+Quedaron **círculos con anillo verde, tres siempre**: WhatsApp, X y —según el
+caso— Facebook arriba. El tercero es `Más` o `Copiar link`, **nunca los dos**:
+donde hay `navigator.share` la hoja del sistema ya trae "Copiar" adentro, y
+donde no la hay copiar es lo único que reemplaza a WhatsApp.
+
+- **En móvil miden 40px y no 44: es la única excepción a `.tactil` del sitio.**
+  44 es el criterio 2.5.5 de WCAG, que es AAA; el que rige a nivel AA es el
+  2.5.8, que pide 24. Está anotado en el componente con cómo revertirlo.
+- **Instagram no está y no puede estar.** No existe un link web que abra la app
+  con la nota cargada, ni feed ni Stories. Un círculo con su logo sería un botón
+  que no hace nada. El camino a Instagram es la hoja del sistema, o sea `Más`.
+  Si alguna vez se quiere un icono de IG, va al **pie del sitio** apuntando al
+  perfil del medio, y necesita el handle, que sigue sin darse.
+
+### La nota atada al partido
+
+Tres cosas chicas que juntas dan la nota de partido de un diario deportivo, con
+mejores datos que la referencia que trajo el usuario —una nota de Olé, donde la
+ficha y las formaciones van tipeadas adentro del texto, que es justo lo que este
+proyecto vino a eliminar:
+
+1. **Selector de partido en el editor.** Es el campo que enciende todo lo
+   deportivo. **No se escribe ningún dato del partido ahí**: sólo se elige cuál.
+2. **El marcador apenas debajo de la imagen**, antes del texto
+   (`<PlanillaCompacta />`, que ya existía). Quien entra a la crónica viene a
+   saber cómo salió. La planilla completa sigue al pie.
+3. **`getNotasRelacionadas` trae primero las del mismo partido** y completa con
+   las de la temporada. Un partido genera previa, crónica y análisis, y ésas son
+   las que se leen una detrás de otra.
+
+Y `etiquetaDePartido()` en `lib/partido.ts`, con tests: `"Fecha 4 · Aldosivi 6-1
+Claypole"`.
+
+### Los datos reales, y lo que no se pudo cargar
+
+`supabase/datos/2026-plantel-y-fecha-4.sql` — **escrito, sin aplicar**. Sale de
+dos notas publicadas que están en `.migracion-wp/`: el plantel 2026 con las 32
+jugadoras y su posición, y la crónica de la fecha 4 con la formación, los
+suplentes y el resultado. Carga 33 jugadoras, el plantel, el partido Aldosivi
+6-1 Claypole y las 20 formaciones.
+
+**No carga un solo gol, y ahí está el punto importante.** La crónica los lista
+sin minuto —"Goles: Larea, dos veces, Gutiérrez, Camacho, Nielsen, Contín"— y
+`eventos.minuto` es `not null`. Inventar siete minutos sería escribir un dato
+deportivo falso que después se dibuja en la línea de tiempo del partido. El
+`insert` quedó escrito en un comentario del archivo, listo para cuando estén.
+
+Dos cosas más que la fuente no resuelve: la ficha dice **"18:80"** como hora, que
+no existe, y la arquera aparece como "Katkjia Velardez" en la crónica y "Katja
+Veñardez" en el plantel. Se usó la segunda. El usuario dijo que los nombres no
+importan por ahora —"estamos probando"— y que **los minutos los cargue Charlie
+desde la planilla**, que es la decisión correcta y la que confirma el diseño.
+
+**El plantel va sin dorsales a propósito**: la propia nota dice que en la
+categoría no hay dorsales fijos. Los números conocidos son los de ese partido y
+van en `formaciones.dorsal`, que es por partido.
+
+### La arquitectura que el usuario confirmó
+
+Preguntó si la cronología del partido conviene editarla adentro de la nota o
+aparte. **Aparte**, y las razones quedan acá porque es la decisión de diseño que
+sostiene el proyecto entero:
+
+1. Un partido tiene varias notas. Si los goles vivieran en una, habría que
+   tipearlos tres veces o elegir cuál es "dueña" del dato.
+2. Los goles alimentan cosas que no son notas: goleadoras, estadísticas por
+   jugadora y tabla de posiciones salen todas de `eventos`.
+3. El momento de carga es otro: el partido se carga desde la tribuna, en el
+   celular; la nota se escribe después.
+
+O sea que el nodo `planilla` guarda **sólo el id del partido** y trae todo lo
+demás de la base al dibujarse. Cero datos duplicados.
+
+### Lo que falta aplicar en la consola
+
+| Archivo | Qué pasa si no se aplica |
+|---|---|
+| `supabase/migrations/0010_storage_media.sql` | La subida de imagen falla: el bucket no tiene ni una política. Lo creaba el script de migración con service role |
+| `supabase/datos/2026-plantel-y-fecha-4.sql` | No hay partidos: el selector del editor sale vacío y nada deportivo se enciende |
+
+Los dos con
+`npx --no-install supabase db query --linked -f <archivo>`. **Al agente lo frena
+el clasificador de auto-mode**: hay que pedírselo al usuario.
+
+### Cómo quedó verificado
+
+`npx tsc --noEmit` limpio · `npx vitest run` 397 tests en 24 archivos ·
+`npx next build` exit 0 con 42 páginas. El admin se probó a mano en
+`localhost:3000`: login, listado, editor, preview y publicación.
+
+`pnpm lint` sigue sin correr —`eslint.config.mjs` roto desde el primer commit y
+bloqueado por el hook `config-protection`—. La receta está más arriba.
