@@ -214,3 +214,50 @@ export async function getNotasDePartido(
 
   return (data ?? []) as unknown as NotaResumen[]
 }
+
+// ============================================
+// Admin
+// ============================================
+
+/**
+ * Todas las notas para el listado del panel: borradores, publicadas y
+ * archivadas.
+ *
+ * **Es la única query de notas que no filtra por `estado`**, y por eso lleva el
+ * nombre que lleva. Las públicas filtran de más a propósito —RLS ya lo hace,
+ * pero leer la query y saber qué devuelve vale más que el renglón ahorrado—;
+ * acá el punto es exactamente ver lo que el sitio no muestra.
+ *
+ * No es un agujero: RLS deja leer borradores sólo a `es_autor()`. La misma
+ * llamada hecha por un anónimo devuelve únicamente las publicadas.
+ *
+ * Ordena por `updated_at` y no por `publicada_en`: en el panel lo que importa
+ * es qué tocaste último, y un borrador nunca tiene fecha de publicación.
+ */
+export async function getNotasDelAdmin(): Promise<NotaResumen[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('notas')
+    .select(CAMPOS_RESUMEN)
+    .order('updated_at', { ascending: false })
+
+  return (data ?? []) as unknown as NotaResumen[]
+}
+
+/**
+ * Una nota por id, con su cuerpo, para abrirla en el editor.
+ *
+ * Por id y no por slug: el slug es la URL pública y no se recalcula al
+ * renombrar (regla no negociable 8), así que dentro del panel la identidad de
+ * la nota es el id y nada más.
+ */
+export async function getNotaPorId(id: string): Promise<NotaConRelaciones | null> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('notas')
+    .select(CAMPOS_COMPLETOS)
+    .eq('id', id)
+    .maybeSingle()
+
+  return data as unknown as NotaConRelaciones | null
+}

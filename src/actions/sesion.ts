@@ -33,7 +33,24 @@ function destino(formData: FormData): string {
   return volver.startsWith('/admin') ? volver : '/admin'
 }
 
-export async function entrarConContrasena(
+/**
+ * Las dos formas entran por la misma puerta.
+ *
+ * Un `<form>` tiene una sola `action`, y tener dos formularios obligaría a
+ * escribir el mail dos veces. El botón apretado viaja en el `FormData` —es lo
+ * que hace `name` + `value` en un `<button type="submit">`— así que con eso
+ * alcanza para saber qué quiso hacer.
+ */
+export async function entrar(
+  previo: EstadoSesion,
+  formData: FormData,
+): Promise<EstadoSesion> {
+  return formData.get('accion') === 'link'
+    ? enviarMagicLink(previo, formData)
+    : entrarConContrasena(previo, formData)
+}
+
+async function entrarConContrasena(
   _previo: EstadoSesion,
   formData: FormData,
 ): Promise<EstadoSesion> {
