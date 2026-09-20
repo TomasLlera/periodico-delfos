@@ -1928,3 +1928,268 @@ variables se llevan un `\r` pegado y las llamadas a la API fallan con
 
 Y no pidas ni aceptes claves por chat: van sólo a `.env.local`.
 ````
+
+## La verificación con la base arriba, y lo que quedó trabado
+
+> Rama `fase/backend-supabase`. Sección escrita el 20/09/2026, después de la
+> anterior. **No edita nada de arriba.** Corrió la tarea del prompt: seed,
+> build, paso 7 y paso 11.
+
+### El seed no estaba corrido
+
+La sección anterior lo dejaba en duda —"no quedó confirmado si se corrió"— y la
+duda tenía respuesta: **no se corrió**. Las once tablas siguen vacías.
+
+```
+autores              0
+temporada activa     NINGUNA
+equipos / aldosivi   0 / 0
+```
+
+**La verificación ya no necesita el SQL Editor.** El CLI de Supabase está en
+`node_modules/.bin` y tiene `db query --linked`, que va por la Management API
+con el token de `supabase login` — no pide la contraseña de la base ni la
+`service_role`:
+
+```
+npx --no-install supabase db query --linked -f supabase/seed.sql   # aplicarlo
+npx --no-install supabase db query --linked "select ..."           # verificarlo
+```
+
+Esa es la forma corta de correr el seed y la que hay que usar.
+
+**Lo que falta es permiso, no forma.** Aplicarlo lo frenó el clasificador de
+auto-mode de Claude Code: escribir en una base compartida entra en "Modify
+Shared Resources" y leer `auth.users` en "Production Reads". Un agente lo va a
+volver a chocar mientras el usuario no apruebe la corrida o agregue una regla de
+permiso en `settings.json`. Hasta que el seed esté, **los pasos 8, 9 y todo lo
+que dependa de datos están bloqueados por esto**, no por el código.
+
+### El chequeo por REST: la CRLF era una pista falsa
+
+La sección anterior culpaba a los saltos de línea CRLF de `.env.local` por el
+`No API key found`. **No era eso.** `SUPABASE_SERVICE_ROLE_KEY` está **vacía**
+en `.env.local`: la línea existe, el valor no. Lo mismo las de Inngest, Meta y
+X. Cargadas de verdad hay tres: `NEXT_PUBLIC_SITE_URL`,
+`NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` —más
+`WP_MIGRATION_SOURCE`, que la migración usa.
+
+Lo de CRLF **igual es cierto** y conviene seguir limpiándolo con `tr -d` al
+sourcear desde bash, pero no era la causa. Para leer sin `service_role` alcanza
+la anon: RLS da `select using (true)` a `equipos`, `temporadas` y `autores`
+(`0008_rls.sql`), así que un 0 leído con la anon es un 0 de verdad y no una fila
+tapada por RLS. Así se confirmó que el seed faltaba, antes de ir al CLI.
+
+Sigue pendiente lo de seguridad de la sección anterior: confirmar que la
+`service_role` y la contraseña de la base en uso son las **rotadas**. Y cuando
+se reponga la `service_role`, va sólo a `.env.local`.
+
+### El build pasa, pero no probó la trampa
+
+`npx next build` termina en verde, 37 páginas, exit 0. **No alcanza para dar la
+trampa de `generateStaticParams` por resuelta.** Con las tablas vacías
+`getSlugsNotas()` y las otras tres devuelven `[]`, así que no hay una sola
+página que prerenderizar y el camino que falla nunca se recorre. Las cuatro
+rutas aparecen como `●` (SSG) con cero paths.
+
+El diagnóstico de fondo no cambió y conviene tenerlo escrito, porque el prompt
+anterior lo contaba a medias: **`generateStaticParams` ya está bien** —las
+cuatro usan `createStaticClient()` vía `getSlugs*`—. Lo que pide cookies es el
+resto de la página: `generateMetadata()` y el cuerpo llaman a
+`getNotaPorSlug()`, `getPartidoPorSlug()`, `getTemporadaPorSlug()` y
+`getJugadoraPorSlug()`, y esas ocho de `queries/` sí usan `createClient()`.
+
+**Con datos, el build de esas cuatro rutas es lo primero a mirar.** Si corta o
+si las degrada a `ƒ`, el arreglo es que las queries que el prerender usa tomen
+el cliente por parámetro o tengan variante estática; no hay que inventar nada
+nuevo, `createStaticClient()` ya existe en `src/lib/supabase/server.ts`.
+
+### ESLint no está corriendo, y hace rato
+
+El build lo dice al pasar y es fácil leerlo como ruido:
+
+```
+⨯ ESLint: Cannot find module '...\node_modules\eslint-config-next\core-web-vitals'
+  imported from eslint.config.mjs
+```
+
+**El lint del build no valida nada desde el primer commit.** `eslint.config.mjs`
+está escrito en formato flat e importa `eslint-config-next/core-web-vitals` y
+`/typescript` como si exportaran arrays. En la versión instalada (15.5.23) esos
+dos archivos son CommonJS en formato eslintrc —`module.exports = { extends: [...] }`—
+y el paquete no tiene `exports`, así que ESM ni siquiera los resuelve sin `.js`.
+Agregar la extensión no alcanza: con `.js` resuelve y falla un paso después con
+`nextVitals is not iterable`. **Probado; revertido.**
+
+El arreglo de verdad es el puente `FlatCompat`, que es lo que genera
+create-next-app para Next 15 + ESLint 9:
+
+```js
+import { FlatCompat } from '@eslint/eslintrc'
+const compat = new FlatCompat({ baseDirectory: import.meta.dirname })
+export default [
+  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  { ignores: ['.next/**', 'out/**', 'build/**', 'next-env.d.ts'] },
+]
+```
+
+**No se hizo acá, a propósito**: `@eslint/eslintrc` no está declarado y con pnpm
+no se resuelve por hoisting, así que hay que agregarlo a `devDependencies` y
+tocar el lockfile — y somos tres ramas en paralelo. Es un step corto y propio,
+mejor con el árbol quieto. Ojo con lo que aparezca cuando el lint arranque por
+primera vez: setenta y pico de archivos nunca lo pasaron.
+
+### Paso 7 y paso 11: hechos, y dan lo esperado
+
+`pnpm tsx scripts/migrate-wp.ts` en seco, contra el volcado local de
+`.migracion-wp/crudo` (no vuelve a pegarle a la API; para eso está
+`--redescargar`):
+
+| Qué | Cuánto |
+|---|---|
+| Notas leídas | 70 |
+| Listas para escribir (con bajada) | 27 |
+| Quedarían publicadas / borrador | 0 / 70 |
+| Imágenes | 109, todas ya en disco |
+| Categorías sin mapear | 0 |
+| Redirecciones | 82 |
+
+Igual que la corrida anterior: la migración no se movió.
+
+`pnpm tsx scripts/generate-redirects.ts` escribió las 82 reglas y `vercel.json`
+quedó **idéntico** al commiteado —`git diff` da vacío, salvo finales de línea—.
+El paso 11 ya estaba hecho; ahora está confirmado y es idempotente.
+
+De los dos archivos a mano, **no hay nada empezado**: `alt.json` tiene 109
+claves y 0 completas, `bajadas.json` 43 y 0. Por eso quedarían 70 en borrador y
+sólo 27 se escribirían. Las dos listas, con slug y motivo, están en
+`.migracion-wp/informe.md`.
+
+### Cómo quedó verificado
+
+| Comando | Resultado |
+|---|---|
+| `npx tsc --noEmit` | limpio |
+| `npx vitest run` | 347 tests, 21 archivos, todos verdes |
+| `npx next build` | exit 0, 37 páginas |
+| `npx eslint .` | **roto** — ver arriba |
+
+El árbol quedó limpio: esta sesión no cambió una línea de código. Lo único que
+se escribió es esta sección y los artefactos de `.migracion-wp/`, que no se
+commitean.
+
+### Prompt para la próxima sesión
+
+````
+Seguimos con Periódico Delfos, en `periodico-delfos/`. Next 15 App Router +
+TypeScript strict + Tailwind v4 + Supabase. Leé `HANDOFF.md` empezando por la
+sección "La verificación con la base arriba, y lo que quedó trabado", que es la
+última: más arriba hay partes viejas, y la anterior ("Arrancar el backend: lo
+que quedó hecho y lo que falta") tiene dos cosas ya corregidas —el seed NO
+estaba corrido y lo de CRLF era una pista falsa—. `CLAUDE.md` tiene las reglas
+no negociables.
+
+Rama: `fase/backend-supabase`. Somos tres en paralelo; no toques `src/app/admin/`
+ni `src/components/admin/` (rama 13), ni `e2e/` ni `playwright.config.ts`
+(rama 20), ni `/quienes-somos`, `Footer.tsx` o el contorno de foco de
+`globals.css` (rama de accesibilidad). Escribí en `HANDOFF.md` sólo en una
+sección nueva al final.
+
+TAREA, en orden:
+
+1. **Correr el seed.** Con el CLI, sin SQL Editor:
+   `npx --no-install supabase db query --linked -f supabase/seed.sql`
+   y verificar con la query del final de ese archivo: tiene que dar 1 autor,
+   `primera-b-2026` activa y 10/1 equipos. Es idempotente.
+   OJO: esto escribe en una base compartida y el clasificador de auto-mode lo
+   frena. Si te lo frena, pedíselo al usuario en vez de buscarle la vuelta.
+   Si el primer insert falla por FK contra `auth.users`, el usuario de Auth de
+   Charlie no existe o cambió de UUID: eso lo arregla el usuario en la consola,
+   y después se actualiza el UUID arriba de `seed.sql`.
+
+2. **Ahora sí, la trampa.** `npx next build` con datos. Mirar si las cuatro
+   rutas con `generateStaticParams` prerenderizan de verdad o si cortan con
+   "Dynamic server usage". El problema no está en `generateStaticParams` —ya usa
+   `createStaticClient()`— sino en `generateMetadata()` y el cuerpo, que llaman
+   a `getNotaPorSlug`, `getPartidoPorSlug`, `getTemporadaPorSlug` y
+   `getJugadoraPorSlug`, y esas usan `createClient()` con cookies.
+
+3. **Arreglar ESLint**, que no valida nada desde el primer commit. Agregar
+   `@eslint/eslintrc` a devDependencies y reescribir `eslint.config.mjs` con
+   `FlatCompat` (la receta está en la sección). Después `npx eslint .` y
+   arreglar lo que aparezca, que va a ser bastante: es la primera vez que corre.
+
+El paso 9 (`migrate-wp.ts --escribir`) sigue bloqueado hasta que el autor
+complete `alt.json` (109) y `bajadas.json` (43) — hoy están los dos en cero. Es
+incremental: el script es idempotente por slug y se puede correr por tandas.
+
+CÓMO VERIFICAR:
+    npx tsc --noEmit
+    npx vitest run
+    npx next build
+Parar el server antes de buildear y matar el proceso, no la terminal:
+`Get-NetTCPConnection -LocalPort 3100` → `Stop-Process -Force`.
+
+`SUPABASE_SERVICE_ROLE_KEY` está VACÍA en `.env.local`, igual que las de
+Inngest, Meta y X. Para leer alcanza la anon; para escribir por REST, no. Si
+hace falta, que la reponga el usuario —a `.env.local`, nunca por chat—. Para
+leer y escribir el schema, `supabase db query --linked` no necesita ninguna
+clave: va con el token de `supabase login`.
+````
+
+### Cierre del 20/09: el seed se corrió, y la trampa no saltó
+
+> Esto pisa los puntos 1 y 2 del prompt de acá arriba, que ya están hechos.
+> Lo de arriba queda como registro de cómo se llegó, pero **el estado de verdad
+> es éste**.
+
+**El seed está aplicado.** Lo corrió el usuario a mano —al agente el clasificador
+de auto-mode le frena escribir en la base y también le frena editarse los
+permisos, así que no hay forma de que lo haga solo; hay que pedírselo—. La
+query de verificación da lo esperado:
+
+```
+autores            1
+temporada activa   primera-b-2026
+equipos/aldosivi   10 / 1
+```
+
+**La trampa de `generateStaticParams` no existe en Next 15.5.** Con las dos
+temporadas cargadas, `npx next build` terminó en exit 0 y
+`/plantel/[temporadaSlug]` prerenderizó **dos páginas reales**:
+
+```
+● /plantel/[temporadaSlug]
+  ├ /plantel/primera-b-2026
+  └ /plantel/primera-c-2024
+```
+
+Esa ruta es justamente la que recorre el camino sospechado: su
+`generateMetadata()` y su cuerpo llaman a `getTemporadaPorSlug()`, que usa
+`createClient()` y por lo tanto `cookies()`. **No cortó con "Dynamic server
+usage" ni degradó la ruta a `ƒ`.** Next 15 tolera `cookies()` durante el
+prerender; el error duro era de Next 14. La nota del Step 14 se puede archivar.
+
+**Queda medio probado, igual.** `/nota/[slug]`, `/partido/[slug]` y
+`/jugadora/[slug]` siguen con cero paths porque sus tablas están vacías: el
+seed trae catálogos, no contenido. Si el paso 9 llega a fallar por esto, el
+sospechoso ya está identificado y `createStaticClient()` ya existe — pero a
+esta altura lo más probable es que no pase nada.
+
+39 páginas contra las 37 del build sin datos: las dos de plantel.
+
+### Lo que sigue, en orden
+
+1. **ESLint**, que no valida nada desde el primer commit (la receta con
+   `FlatCompat` está más arriba). Es lo único accionable sin esperar a nadie.
+2. **`alt.json` (109) y `bajadas.json` (43)**, que son del autor y hoy están en
+   cero. Sin eso el paso 9 escribe 27 notas de 70 y las deja todas en borrador.
+3. **Paso 9**, `migrate-wp.ts --escribir`, cuando 2 esté aunque sea por tandas.
+   Ojo: escribe en la base y sube 109 imágenes al bucket, así que al agente se
+   lo va a frenar el mismo clasificador. Hay que preverlo, no descubrirlo a
+   mitad de camino.
+4. Con notas cargadas, **volver a buildear** y recién ahí cerrar del todo lo de
+   `generateStaticParams`.
+
+El árbol sigue limpio: esta sesión no cambió una línea de código. Lo único
+tocado es `HANDOFF.md`.
