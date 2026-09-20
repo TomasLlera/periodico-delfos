@@ -17,6 +17,15 @@
  *
  * Es el único `"use client"` del sitio público, junto con el buscador: necesita
  * `navigator.share`, el portapapeles y estado para el "¡Copiado!".
+ *
+ * **"Más" y "Copiar link" son excluyentes, y son el mismo botón.** Donde hay
+ * `navigator.share` —el celular— la hoja del sistema ya trae "Copiar" adentro,
+ * así que el botón de copiar sería una segunda puerta a lo mismo; donde no la
+ * hay —el escritorio— copiar es justamente lo único que reemplaza a WhatsApp
+ * para mandar la nota por otro lado. Mostrar los dos dejaba cuatro círculos y
+ * un rótulo, que en 390px se parte en dos filas.
+ *
+ * Quedan **tres círculos siempre**, en cualquier ancho y en los dos casos.
  */
 
 import { useEffect, useState } from 'react'
@@ -89,26 +98,27 @@ export function BotonesCompartir({ url, titulo, etiqueta = 'Compartir' }: Props)
         <Rotulo>X</Rotulo>
       </EnlaceCompartir>
 
-      {puedeCompartir && (
+      {/* Uno o el otro, nunca los dos: ver el comentario de arriba. */}
+      {puedeCompartir ? (
         <BotonCompartir onClick={compartir} etiqueta="Abrir opciones para compartir">
           <Share2 size={16} aria-hidden="true" />
           <Rotulo>Más</Rotulo>
         </BotonCompartir>
+      ) : (
+        <BotonCompartir onClick={copiar} etiqueta="Copiar el link de la nota">
+          {copiado ? (
+            <>
+              <Check size={16} aria-hidden="true" />
+              <Rotulo>¡Copiado!</Rotulo>
+            </>
+          ) : (
+            <>
+              <Link2 size={16} aria-hidden="true" />
+              <Rotulo>Copiar link</Rotulo>
+            </>
+          )}
+        </BotonCompartir>
       )}
-
-      <BotonCompartir onClick={copiar} etiqueta="Copiar el link de la nota">
-        {copiado ? (
-          <>
-            <Check size={16} aria-hidden="true" />
-            <Rotulo>¡Copiado!</Rotulo>
-          </>
-        ) : (
-          <>
-            <Link2 size={16} aria-hidden="true" />
-            <Rotulo>Copiar link</Rotulo>
-          </>
-        )}
-      </BotonCompartir>
 
       {/* El cambio a "¡Copiado!" es visual; sin esto un lector de pantalla no
           se entera de que la acción funcionó. */}
