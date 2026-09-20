@@ -374,3 +374,31 @@ export function titulares(partido: PartidoCompleto): FormacionConJugadora[] {
 export function suplentes(partido: PartidoCompleto): FormacionConJugadora[] {
   return ordenarFormaciones(partido.formaciones.filter((f) => !f.es_titular))
 }
+
+/**
+ * Cómo se nombra un partido en una lista: "Fecha 4 · Aldosivi 6-1 Claypole".
+ *
+ * Es para el `<select>` del editor de notas, donde Charlie tiene que reconocer
+ * el partido de un vistazo entre cincuenta. Por eso lleva el marcador y no sólo
+ * los nombres: media docena de partidos contra el mismo rival se distinguen por
+ * el resultado antes que por la fecha.
+ *
+ * Los equipos van con `nombre_corto` cuando lo tienen —"Aldosivi", no "Club
+ * Atlético Aldosivi"—: en una lista desplegable el nombre completo empuja el
+ * marcador fuera de la vista en un celular.
+ *
+ * Un partido que todavía no se jugó no tiene marcador, así que va "vs".
+ */
+export function etiquetaDePartido(partido: PartidoConEquipos): string {
+  const local = partido.equipo_local.nombre_corto ?? partido.equipo_local.nombre
+  const visitante = partido.equipo_visitante.nombre_corto ?? partido.equipo_visitante.nombre
+
+  const fecha = partido.fecha_numero ? `Fecha ${partido.fecha_numero}` : partido.temporada.nombre
+
+  const hayResultado = partido.goles_local !== null && partido.goles_visitante !== null
+  const centro = hayResultado
+    ? `${local} ${partido.goles_local}-${partido.goles_visitante} ${visitante}`
+    : `${local} vs ${visitante}`
+
+  return `${fecha} · ${centro}`
+}

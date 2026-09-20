@@ -108,29 +108,57 @@ export async function getNotasPorCategoria(
 }
 
 /**
- * Relacionadas de la MISMA temporada.
+ * Relacionadas, **primero las del mismo partido** y después las de la
+ * temporada.
  *
- * Hoy el sitio muestra partidos de la Primera C 2024 como contexto de una nota
- * de 2026. Si la nota no tiene temporada, es mejor no mostrar nada que mostrar
- * cualquier cosa.
+ * El orden importa y no es un detalle de implementación. Un partido genera
+ * tres notas —la previa, la crónica y el análisis— y ésas son las que de verdad
+ * se siguen leyendo una detrás de otra: quien termina la crónica de Claypole
+ * quiere la previa de Claypole, no una nota de hace dos meses de la misma
+ * temporada. Es la misma idea que el sitio ya aplica al revés, desde la ficha
+ * del partido hacia las notas (`getNotasDePartido`).
+ *
+ * Si no alcanzan, se completa con la temporada. Y si la nota no tiene ni
+ * partido ni temporada, no se muestra nada: mejor eso que mostrar cualquier
+ * cosa —hoy el sitio viejo pone partidos de la Primera C 2024 como contexto de
+ * una nota de 2026.
  */
 export async function getNotasRelacionadas(
-  nota: Pick<NotaConRelaciones, 'id' | 'temporada_id' | 'categoria'>,
+  nota: Pick<NotaConRelaciones, 'id' | 'temporada_id' | 'categoria' | 'partido_id'>,
   limite = 3,
 ): Promise<NotaResumen[]> {
-  if (!nota.temporada_id) return []
-
   const supabase = await createClient()
+
+  const delPartido: NotaResumen[] = []
+
+  if (nota.partido_id) {
+    const { data } = await supabase
+      .from('notas')
+      .select(CAMPOS_RESUMEN)
+      .eq('estado', 'publicada')
+      .eq('partido_id', nota.partido_id)
+      .neq('id', nota.id)
+      .order('publicada_en', { ascending: false })
+      .limit(limite)
+
+    delPartido.push(...((data ?? []) as unknown as NotaResumen[]))
+  }
+
+  const faltan = limite - delPartido.length
+  if (faltan <= 0 || !nota.temporada_id) return delPartido
+
+  // Las de la temporada, salteando las que ya entraron por partido.
+  const yaEstan = [nota.id, ...delPartido.map((n) => n.id)]
   const { data } = await supabase
     .from('notas')
     .select(CAMPOS_RESUMEN)
     .eq('estado', 'publicada')
     .eq('temporada_id', nota.temporada_id)
-    .neq('id', nota.id)
+    .not('id', 'in', `(${yaEstan.join(',')})`)
     .order('publicada_en', { ascending: false })
-    .limit(limite)
+    .limit(faltan)
 
-  return (data ?? []) as unknown as NotaResumen[]
+  return [...delPartido, ...((data ?? []) as unknown as NotaResumen[])]
 }
 
 /** Notas donde aparece una jugadora: las de los partidos que jugó. */

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   agruparPorMinuto,
   apellidoDeEvento,
+  etiquetaDePartido,
   describirEvento,
   ladoDelEvento,
   ladosDelPartido,
@@ -361,5 +362,27 @@ describe('titulares y suplentes', () => {
     })
     expect(titulares(p).map((fila) => fila.dorsal)).toEqual([5, null])
     expect(suplentes(p).map((fila) => fila.jugadora.apellido)).toEqual(['Acosta'])
+  })
+})
+
+describe('etiquetaDePartido', () => {
+  it('lleva la fecha y el marcador', () => {
+    const p = partido({ aldosiviDeLocal: true, golesAldosivi: 6, golesRival: 1 })
+    expect(etiquetaDePartido(p)).toBe('Fecha 11 · Aldosivi 6-1 All Boys')
+  })
+
+  it('respeta de qué lado jugó cada uno', () => {
+    const p = partido({ aldosiviDeLocal: false, golesAldosivi: 2, golesRival: 3 })
+    expect(etiquetaDePartido(p)).toBe('Fecha 11 · All Boys 3-2 Aldosivi')
+  })
+
+  it('sin resultado todavía, va "vs"', () => {
+    const p = partido({ aldosiviDeLocal: true, golesAldosivi: null, golesRival: null })
+    expect(etiquetaDePartido(p)).toBe('Fecha 11 · Aldosivi vs All Boys')
+  })
+
+  it('sin número de fecha usa el nombre de la temporada', () => {
+    const p = { ...partido({ aldosiviDeLocal: true, golesAldosivi: 1, golesRival: 0 }), fecha_numero: null }
+    expect(etiquetaDePartido(p)).toBe('Primera B 2026 · Aldosivi 1-0 All Boys')
   })
 })

@@ -1,7 +1,8 @@
 'use client'
 
+import { etiquetaDePartido } from '@/lib/partido'
 import type { EntradaNota } from '@/lib/nota'
-import type { Temporada } from '@/types'
+import type { PartidoConEquipos, Temporada } from '@/types'
 
 /**
  * Lo que clasifica la nota y decide qué hace el sistema con ella: categoría,
@@ -24,10 +25,11 @@ const CATEGORIAS = [
 interface Props {
   entrada: EntradaNota
   temporadas: readonly Temporada[]
+  partidos: readonly PartidoConEquipos[]
   onCambio: <C extends keyof EntradaNota>(campo: C, valor: EntradaNota[C]) => void
 }
 
-export function CamposClasificacion({ entrada, temporadas, onCambio }: Props) {
+export function CamposClasificacion({ entrada, temporadas, partidos, onCambio }: Props) {
   return (
     <>
       <div className="grid gap-5 sm:grid-cols-2">
@@ -67,6 +69,42 @@ export function CamposClasificacion({ entrada, temporadas, onCambio }: Props) {
             ))}
           </select>
         </div>
+      </div>
+
+      {/**
+       * El partido de la nota.
+       *
+       * Es el campo que enciende todo lo deportivo: con él puesto, la nota
+       * muestra el marcador abajo de la imagen, la planilla completa al pie, y
+       * se enlaza con las otras notas del mismo partido —la previa, la crónica
+       * y el análisis—. Sin él, la nota es sólo texto.
+       *
+       * **No se escribe ningún dato del partido acá**: sólo se elige cuál. Los
+       * goles, las tarjetas y las formaciones se cargan en la planilla, que es
+       * otra pantalla y otro momento (regla no negociable 2).
+       */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="partido" className="meta text-gris">
+          Partido
+        </label>
+        <select
+          id="partido"
+          value={entrada.partido_id ?? ''}
+          onChange={(e) => onCambio('partido_id', e.target.value || null)}
+          className="tactil border border-linea-fuerte bg-tarjeta px-3 font-display text-[0.95rem]"
+        >
+          <option value="">Ninguno</option>
+          {partidos.map((p) => (
+            <option key={p.id} value={p.id}>
+              {etiquetaDePartido(p)}
+            </option>
+          ))}
+        </select>
+        <p className="text-[0.8rem] text-gris">
+          {partidos.length === 0
+            ? 'Todavía no hay partidos cargados. Se cargan desde la planilla.'
+            : 'Al elegirlo, la nota muestra el marcador y la planilla, y se enlaza con las otras notas de ese partido.'}
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-5">

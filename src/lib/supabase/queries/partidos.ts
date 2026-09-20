@@ -131,3 +131,24 @@ export async function getSlugsPartidos(): Promise<{ slug: string }[]> {
   const { data } = await supabase.from('partidos').select('slug')
   return data ?? []
 }
+
+/**
+ * Los partidos para el selector del editor de notas.
+ *
+ * Trae equipos y temporada pero **no eventos ni formaciones**: en un `<select>`
+ * sólo se muestra "Fecha 4 · Aldosivi 6-1 Claypole", así que traer la planilla
+ * entera de cada partido sería pedir de más para dibujar una línea.
+ *
+ * Los más recientes primero, que es el orden en que se escriben las notas: la
+ * crónica se escribe el mismo día del partido.
+ */
+export async function getPartidosParaEditor(limite = 50): Promise<PartidoConEquipos[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('partidos')
+    .select(CAMPOS_PARTIDO)
+    .order('fecha_hora', { ascending: false })
+    .limit(limite)
+
+  return (data ?? []) as unknown as PartidoConEquipos[]
+}

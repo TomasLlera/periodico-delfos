@@ -8,8 +8,14 @@
  *
  * El orden de la página no es arbitrario:
  *
- *   Metadatos → h1 → Bajada → LíneaAutor → Portada → Compartir → Cuerpo
- *   → Planilla del partido → Compartir → CajaAutor → Relacionadas
+ *   Metadatos → h1 → Bajada → LíneaAutor → Portada → Marcador → Compartir
+ *   → Cuerpo → Planilla del partido → Compartir → CajaAutor → Relacionadas
+ *
+ * - **El marcador va arriba, apenas debajo de la imagen.** Quien entra a la
+ *   crónica de un partido viene a saber cómo salió; hacerlo scrollear hasta el
+ *   pie para enterarse es la omisión que tienen casi todos los diarios
+ *   deportivos. Es sólo el resultado y linkea a la ficha; la planilla completa
+ *   —goles, tarjetas, formaciones— sigue yendo abajo del cuerpo.
  *
  * - **Los metadatos van arriba del `<h1>` pero fuera de él.** El sufijo
  *   "Fecha 11 – Aldosivi Femenino en la Primera B 2026" que WordPress metía
@@ -28,6 +34,7 @@ import { CuerpoNota } from '@/components/content/CuerpoNota'
 import { ImagenResponsive } from '@/components/content/ImagenResponsive'
 import { LineaAutor } from '@/components/content/LineaAutor'
 import { NotasRelacionadas } from '@/components/content/NotasRelacionadas'
+import { PlanillaCompacta } from '@/components/partido/PlanillaCompacta'
 import { PlanillaPartido } from '@/components/partido/PlanillaPartido'
 import { contarPalabras, etiquetaFecha, tiempoLectura } from '@/lib/formato'
 import { partidoIdsDelCuerpo } from '@/lib/tiptap/esquema'
@@ -107,6 +114,18 @@ export function ArticuloNota({
             sizes="(min-width: 1024px) 1000px, 100vw"
             className="w-full rounded-sm"
           />
+        </div>
+      )}
+
+      {/* El marcador, apenas debajo de la imagen y antes del texto.
+          Quien entra a la crónica de un partido viene a saber cómo salió: que
+          tenga que scrollear hasta el pie para enterarse es la omisión que
+          tienen casi todos los diarios deportivos. La planilla completa
+          —goles, tarjetas, formaciones— sigue yendo abajo; ésta es sólo el
+          resultado, y es un link a la ficha del partido. */}
+      {partidoDeLaNota && (
+        <div className="mt-6">
+          <PlanillaCompacta partido={partidoDeLaNota} />
         </div>
       )}
 

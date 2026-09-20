@@ -2,18 +2,18 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useTransition } from 'react'
-import { Eye, Save } from 'lucide-react'
 import { subirImagen } from '@/actions/imagenes'
 import { guardarNota, publicarNota } from '@/actions/notas'
 import { chequearImagen } from '@/lib/imagen'
 import { entradaDesdeNota, esquemaNota, slugDesdeTitulo, type EntradaNota } from '@/lib/nota'
 import { esSobrePublicada, notaDePrevisualizacion } from '@/lib/vista-previa'
+import { BarraAcciones } from '@/components/admin/BarraAcciones'
 import { CampoImagen } from '@/components/admin/CampoImagen'
 import { CamposClasificacion } from '@/components/admin/CamposClasificacion'
 import { CampoTexto } from '@/components/admin/CampoTexto'
 import { EditorCuerpo } from '@/components/admin/EditorCuerpo'
 import { VistaPrevia } from '@/components/admin/VistaPrevia'
-import type { Autor, NotaConRelaciones, Temporada } from '@/types'
+import type { Autor, NotaConRelaciones, PartidoConEquipos, Temporada } from '@/types'
 
 /**
  * El formulario de nota, crear y editar con el mismo componente.
@@ -33,11 +33,12 @@ interface Props {
   /** La nota guardada, si se está editando. `null` al crear. */
   nota: NotaConRelaciones | null
   temporadas: readonly Temporada[]
+  partidos: readonly PartidoConEquipos[]
   /** El de la sesión. La vista previa lo necesita para firmar la nota. */
   autor: Autor
 }
 
-export function FormularioNota({ nota, temporadas, autor }: Props) {
+export function FormularioNota({ nota, temporadas, partidos, autor }: Props) {
   const router = useRouter()
   const [entrada, setEntrada] = useState<EntradaNota>(() => entradaDesdeNota(nota))
   const [errores, setErrores] = useState<Record<string, string>>({})
@@ -238,7 +239,12 @@ export function FormularioNota({ nota, temporadas, autor }: Props) {
         <EditorCuerpo valor={entrada.cuerpo} onCambio={(d) => cambiar('cuerpo', d)} />
       </div>
 
-      <CamposClasificacion entrada={entrada} temporadas={temporadas} onCambio={cambiar} />
+      <CamposClasificacion
+        entrada={entrada}
+        temporadas={temporadas}
+        partidos={partidos}
+        onCambio={cambiar}
+      />
 
       <CampoImagen
         urlGuardada={entrada.imagen_portada}
@@ -251,33 +257,12 @@ export function FormularioNota({ nota, temporadas, autor }: Props) {
         onCredito={(v) => cambiar('imagen_credito', v)}
       />
 
-      {aviso && (
-        <p role="status" className="border-l-2 border-verde-600 bg-papel-alt px-3 py-2 text-[0.9rem]">
-          {aviso}
-        </p>
-      )}
-
-      <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-linea bg-papel py-3">
-        <button
-          type="button"
-          onClick={alGuardar}
-          disabled={guardando}
-          className="tactil flex items-center gap-2 border border-linea-fuerte px-5 font-display text-[0.9rem] font-bold hover:bg-papel-alt disabled:opacity-60"
-        >
-          <Save size={16} aria-hidden="true" />
-          Guardar borrador
-        </button>
-
-        <button
-          type="button"
-          onClick={abrirPrevia}
-          disabled={guardando}
-          className="tactil flex items-center gap-2 bg-verde-900 px-5 font-display text-[0.9rem] font-extrabold text-white hover:bg-verde-600 disabled:opacity-60"
-        >
-          <Eye size={16} aria-hidden="true" />
-          Vista previa y publicar
-        </button>
-      </div>
+      <BarraAcciones
+        aviso={aviso}
+        ocupado={guardando}
+        onGuardar={alGuardar}
+        onVistaPrevia={abrirPrevia}
+      />
 
       {previa && (
         <VistaPrevia
