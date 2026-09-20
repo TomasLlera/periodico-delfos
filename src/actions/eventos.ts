@@ -14,19 +14,31 @@ import type { TipoEvento } from '@/types'
  * el celular y señal mala. Un formulario que guarda todo junto al final pierde
  * el partido entero cuando se corta.
  *
- * La cola offline en IndexedDB que el blueprint también pide **no está todavía**
- * —ver `HANDOFF.md`—. Sin ella, un evento cargado sin señal se pierde y la
- * pantalla lo avisa; con ella, esperaría en el teléfono y subiría solo. Es el
- * siguiente paso de esta pantalla.
+ * **El id lo pone la pantalla, no la base**, y eso es lo que hace segura a la
+ * cola offline: un evento que se mandó, se guardó y cuya respuesta se perdió en
+ * el camino se reintenta con el mismo id y choca contra la clave primaria. Ese
+ * choque se trata como éxito, porque lo es: el gol ya está. Sin id propio, cada
+ * reintento con señal mala cargaría el gol otra vez, que es el error más caro
+ * que puede cometer esta pantalla.
  */
 
 export interface ResultadoEvento {
   id?: string
   error?: string
+  /** `true` cuando el reintento encontró el evento ya guardado. No es un error. */
+  yaEstaba?: boolean
 }
 
 /** Lo que manda la pantalla. Todo lo demás lo pone el servidor. */
 export interface EventoNuevo {
+  /**
+   * Generado en el navegador con `crypto.randomUUID()`, no por la base.
+   *
+   * Es la clave de idempotencia de la cola offline: el mismo evento reintentado
+   * dos veces entra una sola. La columna tiene `default gen_random_uuid()`, así
+   * que esto no rompe nada de lo que ya estaba: lo reemplaza.
+   */
+  id: string
   partido_id: string
   tipo: TipoEvento
   minuto: number
@@ -60,7 +72,14 @@ export async function agregarEvento(evento: EventoNuevo): Promise<ResultadoEvent
     .select('id')
     .single()
 
-  if (error) return { error: 'No se pudo guardar el evento' }
+  // 23505 es la clave primaria repetida: este evento ya estaba guardado y lo
+  // que falló la vez anterior fue la respuesta, no la escritura. Es el caso
+  // normal de un reintento de la cola, y decir que salió mal haría que la
+  // pantalla lo dejara en la cola para siempre.
+  if (error) {
+    if (error.code === '23505') return { id: evento.id, yaEstaba: true }
+    return { error: 'No se pudo guardar el evento' }
+  }
 
   revalidatePath(`/admin/partidos/${evento.partido_id}/planilla`)
 

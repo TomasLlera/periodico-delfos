@@ -1,12 +1,17 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
-import { agregarEvento, borrarEvento, finalizarPartido } from '@/actions/eventos'
+import { useCallback, useState, useTransition } from 'react'
+import { borrarEvento, finalizarPartido } from '@/actions/eventos'
 import { GrillaJugadoras } from '@/components/admin/GrillaJugadoras'
 import { ListaEventos } from '@/components/admin/ListaEventos'
 import { SelectorMinuto } from '@/components/admin/SelectorMinuto'
 import { BotonesTipoEvento } from '@/components/admin/BotonesTipoEvento'
+import { BotonLado } from '@/components/admin/BotonLado'
+import { BarraCola } from '@/components/admin/BarraCola'
+import { PieMarcador } from '@/components/admin/PieMarcador'
+import { usarCola } from '@/components/admin/usarCola'
+import { estadoDeLaCola, eventosVisibles } from '@/lib/cola'
 import { chequearMarcador, enCancha, enElBanco, minutoSugerido } from '@/lib/planilla'
 import type { PartidoCompleto, TipoEvento } from '@/types'
 
@@ -35,9 +40,18 @@ import type { PartidoCompleto, TipoEvento } from '@/types'
  * El minuto arranca en el del último evento cargado —ver `minutoSugerido()`—
  * porque entre dos eventos pasan pocos minutos.
  *
- * **Lo que falta y el blueprint pide:** la cola offline en IndexedDB. Sin ella,
- * un evento cargado sin señal se pierde y la pantalla lo avisa. Es el siguiente
- * paso, y es el que hace que esto sirva de verdad en una cancha de ascenso.
+ * **Nada se guarda contra el servidor primero.** Cada evento va a la cola de
+ * IndexedDB —`usarCola`— y desde ahí sube. Es lo que pide el blueprint § 7.6 y
+ * lo que hace que esto sirva en una cancha de ascenso: la tribuna del Minella
+ * no tiene señal, y un gol cargado sin datos ya no se pierde, espera en el
+ * teléfono y sube solo cuando vuelve.
+ *
+ * Por eso lo que se dibuja **no** es `partido.eventos` sino `eventosVisibles()`:
+ * lo guardado más lo pendiente. Si el gol que se acaba de tocar no apareciera
+ * en la lista, la reacción natural sería cargarlo otra vez, y la cola habría
+ * empeorado el problema que vino a resolver. Las cuentas —el marcador, quién
+ * está en cancha— usan la misma lista, así que una roja cargada sin señal saca
+ * a la jugadora de la grilla igual que con señal.
  */
 
 interface Props {
@@ -60,12 +74,24 @@ export function PlanillaCarga({ partido }: Props) {
   const [aviso, setAviso] = useState<string | null>(null)
   const [borrando, setBorrando] = useState<string | null>(null)
 
+  // `useCallback` porque el hook la tiene en una dependencia: sin esto, cada
+  // render rearmaría el efecto que escucha "volvió la conexión".
+  const alSubirAlgo = useCallback(() => router.refresh(), [router])
+  const cola = usarCola(partido.id, alSubirAlgo)
+
   const aldosivi = partido.equipo_local.es_aldosivi ? partido.equipo_local : partido.equipo_visitante
   const rival = partido.equipo_local.es_aldosivi ? partido.equipo_visitante : partido.equipo_local
 
-  const cancha = enCancha(partido.formaciones, partido.eventos, aldosivi.id)
-  const banco = enElBanco(partido.formaciones, partido.eventos, aldosivi.id)
-  const marcador = chequearMarcador(partido, partido.eventos)
+  // Lo guardado más lo que espera en el teléfono. **Todo** lo que sigue mira
+  // esta lista y no `partido.eventos`: la lista, el marcador y quién está en
+  // cancha tienen que contar igual con señal y sin señal.
+  const eventos = eventosVisibles(partido.eventos, cola.pendientes, partido.formaciones)
+  const pendiente = new Set(cola.pendientes.map((p) => p.id))
+
+  const cancha = enCancha(partido.formaciones, eventos, aldosivi.id)
+  const banco = enElBanco(partido.formaciones, eventos, aldosivi.id)
+  const marcador = chequearMarcador(partido, eventos)
+  const estadoCola = estadoDeLaCola(cola.pendientes, cola.hayConexion)
 
   function limpiar() {
     setTipo(null)
@@ -79,7 +105,10 @@ export function PlanillaCarga({ partido }: Props) {
     if (!tipo) return
 
     empezar(async () => {
-      const r = await agregarEvento({
+      // El id lo pone la pantalla y no la base: es lo que hace que reintentar
+      // el mismo evento dos veces no cargue el gol dos veces.
+      await cola.encolar({
+        id: crypto.randomUUID(),
         partido_id: partido.id,
         tipo,
         minuto,
@@ -90,14 +119,10 @@ export function PlanillaCarga({ partido }: Props) {
         jugadora_sale_id: tipo === 'cambio' ? sale : null,
       })
 
-      if (r.error) {
-        setAviso(r.error)
-        return
-      }
-
+      // No hay caso de error: encolar escribe en el teléfono y después
+      // intenta subir. Lo que no subió queda en la cola y la barra lo dice.
       setAviso(null)
       limpiar()
-      router.refresh()
     })
   }
 
@@ -110,9 +135,24 @@ export function PlanillaCarga({ partido }: Props) {
     guardar(id)
   }
 
+  /**
+   * Borrar distingue los dos casos.
+   *
+   * Un evento que todavía está en la cola no existe en la base: pedirle que lo
+   * borre daría un error raro. Se saca de la cola, que además es lo único que
+   * se puede hacer sin señal, y borrar un gol mal cargado tiene que funcionar
+   * igual con el partido en juego.
+   */
   function alBorrar(id: string) {
     setBorrando(id)
+
     empezar(async () => {
+      if (pendiente.has(id)) {
+        await cola.descartar(id)
+        setBorrando(null)
+        return
+      }
+
       const r = await borrarEvento(id, partido.id)
       setBorrando(null)
       if (r.error) setAviso(r.error)
@@ -133,7 +173,7 @@ export function PlanillaCarga({ partido }: Props) {
       <section>
         <h2 className="meta mb-2 text-gris">Cargado hasta ahora</h2>
         <ListaEventos
-          eventos={partido.eventos}
+          eventos={eventos}
           equipoLocalId={partido.equipo_local_id}
           nombreLocal={partido.equipo_local.nombre_corto ?? partido.equipo_local.nombre}
           nombreVisitante={partido.equipo_visitante.nombre_corto ?? partido.equipo_visitante.nombre}
@@ -142,9 +182,19 @@ export function PlanillaCarga({ partido }: Props) {
         />
       </section>
 
-      {aviso && (
+      <BarraCola
+        estado={estadoCola}
+        hayConexion={cola.hayConexion}
+        onReintentar={() => void cola.subir()}
+      />
+
+      {/* El error propio de la pantalla —borrar, finalizar— y el que contestó
+          el servidor al intentar subir un evento de la cola. Se muestran en el
+          mismo lugar porque para quien carga son la misma cosa: algo salió mal
+          y dice qué. */}
+      {(aviso ?? cola.ultimoError) && (
         <p role="alert" className="border-l-2 border-roja bg-papel-alt px-3 py-2 text-[0.9rem]">
-          {aviso}
+          {aviso ?? cola.ultimoError}
         </p>
       )}
 
@@ -229,50 +279,13 @@ export function PlanillaCarga({ partido }: Props) {
         )}
       </section>
 
-      <section className="flex flex-wrap items-center gap-3 border-t border-linea pt-4">
-        <p className="font-display text-[0.95rem]">
-          Van <strong className="font-mono">{marcador.cargado.local}</strong> –{' '}
-          <strong className="font-mono">{marcador.cargado.visitante}</strong>
-          {marcador.declarado && !marcador.coincide && (
-            <span className="ml-2 text-roja">
-              (cargaste {marcador.declarado.local}–{marcador.declarado.visitante} al crear el
-              partido: falta cargar algún gol)
-            </span>
-          )}
-        </p>
+      <PieMarcador
+        marcador={marcador}
+        ocupado={guardando}
+        onFinalizar={alFinalizar}
+        pendientes={cola.pendientes.length}
+      />
 
-        <button
-          type="button"
-          onClick={alFinalizar}
-          disabled={guardando}
-          className="tactil ml-auto bg-amarillo px-5 font-display text-[0.9rem] font-extrabold text-negro-cancha disabled:opacity-60"
-        >
-          Finalizar partido
-        </button>
-      </section>
     </div>
-  )
-}
-
-function BotonLado({
-  activo,
-  onClick,
-  children,
-}: {
-  activo: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={activo}
-      className={`tactil flex-1 px-3 font-display text-[0.9rem] font-bold ${
-        activo ? 'bg-verde-900 text-white' : 'border border-linea-fuerte hover:bg-papel-alt'
-      }`}
-    >
-      {children}
-    </button>
   )
 }

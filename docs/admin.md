@@ -50,11 +50,10 @@ partido sin formación abre la planilla sin ninguna jugadora que tocar.
 
 ## Lo que falta, y dónde va
 
-- **Cola offline en IndexedDB** para la planilla (blueprint § 7.6). Sin ella un
-  evento cargado sin señal se pierde. Es lo que hace que la planilla sirva en
-  una cancha de ascenso.
-- **Probar la planilla en un celular real y cronometrarla.** El encargo dice
-  que ése es el entregable de verdad: si pasa de tres minutos, iterar.
+- **Probar la planilla en un celular real y cronometrarla**, y probar la cola
+  offline cortando los datos a mitad de partido. El encargo dice que ése es el
+  entregable de verdad: si pasa de tres minutos, iterar. Es lo único del panel
+  que no se puede verificar desde esta máquina.
 - **Los nodos `imagen` y `planilla` en el editor.** El renderer ya los dibuja;
   falta la extensión de TipTap que los inserta.
 - **Reintentar posteos fallidos** desde el panel, leyendo `social_posts`.
@@ -93,6 +92,7 @@ partido sin formación abre la planilla sin ninguna jugadora que tocar.
 | Lectura | `src/lib/supabase/queries/*` | Una query por caso de uso |
 | Estado del formulario | `src/components/admin/usarFormulario.ts` | El hook que comparten los cuatro formularios |
 | Revalidación | `src/lib/revalidar.ts` | Qué rutas públicas caen con cada cambio |
+| Cola offline | `src/lib/cola.ts` · `cola-idb.ts` · `usarCola.ts` | La lógica con test, el IndexedDB y el hook |
 
 **La lógica de cada entidad está partida en dos archivos a propósito.**
 `src/lib/partido.ts` es la de lectura —lados, minutos, agrupación de eventos— y
@@ -120,6 +120,11 @@ mitad sólo el panel.
   `eventos`: se marca inactiva. Un partido con la planilla cargada no se borra:
   se marca suspendido. Los borrados que sí existen chequean antes y explican qué
   se llevarían puesto.
+- **En la planilla, el evento se guarda primero en el teléfono y después se
+  sube.** Nunca al revés: el corte de señal más desprolijo —el que deja el
+  request colgado hasta el timeout— no puede perder un gol si el gol ya estaba
+  escrito antes de intentar nada. El id lo genera el navegador, y es lo que
+  hace que reintentar no cargue el gol dos veces.
 - **La hora de un partido es la de Mar del Plata, siempre.** El huso está fijo
   en `entidades/campos.ts` y no sale del reloj de la máquina: el mismo cálculo
   corre en el servidor —Vercel, en UTC— y en el navegador.

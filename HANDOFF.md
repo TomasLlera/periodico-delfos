@@ -2684,3 +2684,66 @@ necesita la anterior, y la de alta de partido avisa cuando falta alguna.
   queda sin formación y hay que volver a guardar. Es un riesgo acotado —lo hace
   una sola persona a la vez y la pantalla todavía tiene la lista— y la
   alternativa era una función en Postgres.
+
+## La cola offline de la planilla
+
+> Misma sesión del 20/09, encadenado al Step 12. Cierra lo que le faltaba al
+> Step 13 salvo la prueba en un celular real.
+
+**Un gol cargado sin señal ya no se pierde.** Era lo último que el blueprint
+§ 7.6 pedía de la planilla y lo que estaba anotado en tres lugares distintos
+como "lo que hace que esto sirva en una cancha de ascenso".
+
+**El orden se invirtió: primero el teléfono, después el servidor.** `guardar()`
+ya no llama a `agregarEvento()`; escribe en IndexedDB y después intenta subir.
+Es lo que hace que el corte de señal más desprolijo —el que deja el request
+colgado hasta el timeout— no pueda perder nada.
+
+### Lo que hay que saber antes de tocarlo
+
+- **El id del evento lo genera el navegador**, con `crypto.randomUUID()`.
+  `EventoNuevo.id` pasó a ser obligatorio y `agregarEvento()` trata el 23505
+  —clave primaria repetida— como éxito, no como error. Sin esto, un reintento
+  cuya respuesta anterior se perdió cargaría el gol dos veces, que es el error
+  más caro de esta pantalla. **No quitar el id pensando que la base ya tiene un
+  `default`**: el default es justo lo que rompe la idempotencia.
+- **La pantalla dibuja `eventosVisibles()`, no `partido.eventos`.** Lo guardado
+  más lo pendiente, sin repetir por id. Y no sólo la lista: el marcador y
+  `enCancha()` usan la misma, así que una roja cargada sin señal saca a la
+  jugadora de la grilla igual que con señal. Si alguna cuenta vuelve a mirar
+  `partido.eventos` directo, se rompe en offline y no se nota con señal.
+- **Se reintenta en tres momentos y no hay temporizador**: al montar, cuando el
+  navegador avisa que volvió la conexión, y después de cada evento nuevo. Un
+  `setInterval` reintentando con el celular sin señal es batería, y la batería
+  tiene que durar los noventa minutos. Hay un botón de reintentar a mano porque
+  el wifi de la cancha a veces contesta y no navega.
+- **Un error del servidor no es lo mismo que no haber señal.** Si el action
+  contesta `{ error }` —"falta decir quién", "se cerró la sesión"— la red
+  anduvo: el evento **queda igual en la cola** pero el motivo se muestra en
+  pantalla (`cola.ultimoError`). Si el action **tira**, es red: se cuenta el
+  intento y se corta el lote, porque los que siguen van a fallar igual y cada
+  uno cuesta un timeout.
+- **Borrar distingue los dos casos.** Un evento que sigue en la cola se saca de
+  la cola; uno guardado se borra contra la base. Borrar un gol mal cargado
+  tiene que funcionar sin señal.
+- **`cola-idb.ts` nunca tira.** El modo privado de Safari y un navegador con el
+  almacenamiento bloqueado hacen fallar `open()`; ahí la cola se comporta como
+  si estuviera vacía y la planilla queda como estaba antes de que esto
+  existiera. Peor, pero no rota.
+- **`PlanillaCarga` volvió a pasar las 300 líneas** y se partió en `BarraCola`,
+  `PieMarcador` y `BotonLado`.
+
+### Lo que falta
+
+- **Probarlo en un celular real, cortando los datos a mitad de partido.** Es lo
+  único que no se puede verificar desde esta máquina, y es el entregable de
+  verdad del Step 13 junto con el cronómetro de tres minutos.
+- **`cola-idb.ts` no tiene test**: no hay IndexedDB en Node. Por eso es lo más
+  chico posible y todo lo que se puede decidir sin tocarlo vive en `cola.ts`,
+  que tiene catorce.
+- **La cola no expira nada.** Un evento que el servidor rechaza siempre —una
+  jugadora borrada, pongamos— se queda ahí para siempre mostrando su error.
+  Hoy la salida es borrarlo a mano de la lista, que funciona; si alguna vez
+  molesta, el lugar es `preocupa()`.
+
+Verificado: `tsc --noEmit` limpio, 552 tests en 34 archivos, `next build` exit 0.
