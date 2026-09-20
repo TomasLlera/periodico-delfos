@@ -2338,14 +2338,37 @@ El cambio no toca código: `src/lib/supabase/admin.ts` lee la misma variable y
 le da igual el formato. La `anon` ya era del sistema nuevo
 (`sb_publishable_…`), así que el proyecto tiene las API keys nuevas activadas.
 
+### Las legacy JWT keys, deshabilitadas
+
+**Hecho el 20/09**, en Settings → API Keys. Con eso la clave original expuesta
+deja de servir: era el paso que cerraba el agujero de verdad, porque
+reemplazarla en `.env.local` sólo hacía que nosotros dejáramos de usarla.
+
+El proyecto quedó **entero en el sistema de claves nuevo**, y se verificó que no
+se rompió nada:
+
+| Clave | Formato | Contra `equipos` |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `sb_publishable_…`, 46 chars | `206`, 10 filas |
+| `SUPABASE_SERVICE_ROLE_KEY` | `sb_secret_…`, 41 chars | `206`, 10 filas |
+
+Tampoco hay ninguna clave hardcodeada en lo versionado: `git grep` de JWT y de
+los dos prefijos nuevos no da nada —las únicas apariciones son estos prefijos
+escritos en este mismo archivo—, y `.env.local` está tapado por `.gitignore`
+(`.env*`, línea 34), comprobado con `git check-ignore`.
+
+Vercel no aplica: el proyecto todavía no existe, así que no hay variable de
+entorno vieja dando vueltas.
+
 ### Lo que sigue abierto, y es del usuario
 
-- **Deshabilitar las legacy JWT keys** en Settings → API Keys. Mientras estén
-  habilitadas, la clave original —la que se pegó en un chat durante el setup—
-  sigue sirviendo hasta 2036. Ya no está en `.env.local`, así que desde el repo
-  no hay forma de probar si sigue viva: hay que mirarlo en la consola.
-- **La contraseña de la base**, que sigue sin confirmarse. Se resetea en
-  Settings → Database. El CLI no la usa —`db query --linked` va con el token de
-  `supabase login`—, así que resetearla no rompe nada de lo que hoy anda.
-- Si Vercel tiene la clave vieja cargada como variable de entorno, cambiarla
-  ahí también.
+- **La contraseña de la base.** Sigue sin rotarse y el 20/09 se volvió a pegar
+  en un chat, así que ahora está expuesta dos veces y es corta. Se resetea en
+  Settings → Database → Reset database password; conviene una generada larga,
+  guardada en un gestor. El CLI no la usa —`db query --linked` va con el token
+  de `supabase login`—, así que resetearla no rompe nada de lo que hoy anda.
+  **Es el único pendiente de seguridad que queda.**
+
+Y la regla que lo evita la próxima: las credenciales van a `.env.local` o a un
+gestor, nunca a un chat. Un agente no debe pedirlas ni aceptarlas por ahí, y si
+llegan igual, lo que corresponde es decir que hay que rotarlas.
