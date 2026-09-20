@@ -1775,3 +1775,156 @@ o se escriben, o se sacan los links del pie hasta que existan.
 Con credenciales se desbloquean, en orden: Step 5 (auth + shell del admin),
 Step 6 (correr la migración con `--escribir`), Step 7 (editor de notas) y el
 resto del Build Order.
+
+---
+
+## Arrancar el backend: lo que quedó hecho y lo que falta
+
+> Rama `fase/backend-supabase`, salida de `main`. Sección escrita el 20/09/2026.
+> **No edita nada de arriba.** Es el avance sobre "Arrancar el backend": los
+> pasos 1 a 6 y el 10 están hechos; faltan el 7, el 8 y el 11.
+
+**El proyecto de Supabase existe y el schema está aplicado.** El sitio dejó de
+ser una cáscara sin base: hoy hay once tablas vacías esperando datos.
+
+```
+Proyecto   Periodico-Delfos
+ref        kftenasaixqugovknopm
+región     sa-east-1 (São Paulo) — la que pedía el plan
+Postgres   17
+estado     ACTIVE_HEALTHY, linkeado
+```
+
+### Hecho
+
+| Paso | Qué | Cómo se verificó |
+|---|---|---|
+| 1-2 | Proyecto creado, claves copiadas | `supabase projects list` |
+| 3 | `.env.local` con las tres claves | las tres cargadas |
+| 4 | Usuario de Auth de Charlie | UUID `780bfef5-2987-4e4f-af2d-c6f6d5bf6a21` |
+| — | `supabase login` + `link` | `linked: true` |
+| 5 | **Las nueve migraciones aplicadas** | 11 tablas + 3 vistas + `es_autor()` |
+| 6 | `supabase/seed.sql` escrito | **correrlo/verificarlo — ver abajo** |
+| 10 | **`src/lib/supabase/types.ts` regenerado** | 846 líneas, `tsc --noEmit` limpio |
+
+`gen types` confirmó el schema entero: `autores`, `equipos`, `eventos`,
+`formaciones`, `jugadoras`, `notas`, `partidos`, `plantel`, `social_posts`,
+`tabla_posiciones`, `temporadas`, más las vistas `buscar_notas`,
+`estadisticas_jugadora` y `goleadoras`.
+
+### El seed, que es lo primero a confirmar
+
+`supabase/seed.sql` tiene los catálogos que ninguna migración trae: la fila de
+`autores` —con el UUID ya puesto—, las dos temporadas y los diez equipos de la
+Zona B con nombres y ciudades reales. Es idempotente (`on conflict do update`) y
+va dentro de una transacción.
+
+**`supabase db push` no lo aplica**: sólo mira `migrations/`. Va a mano, pegado
+en el SQL Editor del dashboard. Al final del archivo está la query de
+verificación; tiene que dar:
+
+```
+autores              1
+temporada activa     primera-b-2026
+equipos / aldosivi   10 / 1
+```
+
+**No quedó confirmado si se corrió.** El chequeo por REST falló por un bug del
+script de verificación —`.env.local` tiene saltos de línea CRLF y al sourcearlo
+en bash la clave se lleva un `\r` pegado, así que el header salía vacío y la API
+respondía `No API key found`—. **No es un problema de la clave.** Si hay que
+volver a chequear desde bash, limpiar el `\r`: `tr -d '\r'`.
+
+Los dos índices únicos parciales que el seed respeta, y que rompen los conteos
+si se cargan a mano:
+
+- `temporadas_una_activa_idx` — una sola temporada con `activa = true`.
+- `equipos_un_aldosivi_idx` — un solo equipo con `es_aldosivi = true`.
+
+### Lo que falta
+
+| Paso | Qué | Bloqueado por |
+|---|---|---|
+| 7 | Migración **en seco**: `pnpm tsx scripts/migrate-wp.ts` → `.migracion-wp/informe.md` | nada |
+| 8 | Completar a mano `alt.json` (109 textos) y `bajadas.json` (43) | sólo el autor |
+| 9 | `migrate-wp.ts --escribir`: sube imágenes al bucket y hace upsert de las 70 notas | el paso 8 |
+| 11 | `pnpm tsx scripts/generate-redirects.ts` → las 82 reglas en `vercel.json` | el paso 7 |
+
+El paso 8 es incremental: el script es idempotente por slug, así que se puede
+completar de a tandas y volver a correr sin duplicar nada.
+
+### La trampa que ahora sí se puede probar
+
+Estaba anotada desde el Step 14 y **todavía no se probó**: `/nota/[slug]`,
+`/partido/[slug]`, `/plantel/[temporadaSlug]` y `/jugadora/[slug]` declaran
+`generateStaticParams` pero sus queries usan `createClient()`, que pide
+`cookies()`. Hasta ahora no se notaba porque sin base `generateStaticParams`
+devolvía `[]`. **Con el proyecto arriba, `next build` puede cortar con "Dynamic
+server usage".** El arreglo existe —`createStaticClient()`, el cliente sin
+cookies que ya usan el sitemap y las tres queries de slugs— pero hay que
+probarlo, no darlo por sentado.
+
+**Lo que todavía no se corrió con la base arriba**: `npx vitest run` y
+`npx next build`. `tsc --noEmit` sí, y pasa.
+
+### Seguridad, para cerrar
+
+Durante el setup se pegaron credenciales en un chat. **Confirmar que la
+`service_role` y la contraseña de la base que están en uso son las rotadas**, no
+las originales. `.env.local` está tapado por `.gitignore` (`.env*`) y se verificó
+con `git check-ignore`.
+
+### Prompt para la próxima sesión
+
+````
+Seguimos con Periódico Delfos, en `periodico-delfos/`. Next 15 App Router +
+TypeScript strict + Tailwind v4 + Supabase. Leé `HANDOFF.md` empezando por la
+sección "Arrancar el backend: lo que quedó hecho y lo que falta", que es la
+última del archivo: más arriba hay partes viejas. `CLAUDE.md` tiene las reglas
+no negociables.
+
+Rama: `fase/backend-supabase`. Somos tres en paralelo; no toques `src/app/admin/`
+ni `src/components/admin/` (rama 13), ni `e2e/` ni `playwright.config.ts`
+(rama 20), ni `/quienes-somos`, `Footer.tsx` o el contorno de foco de
+`globals.css` (rama de accesibilidad). Escribí en `HANDOFF.md` sólo en una
+sección nueva al final.
+
+**Ahora SÍ hay Supabase**: proyecto `kftenasaixqugovknopm` en sa-east-1, las
+nueve migraciones aplicadas, `.env.local` con las tres claves y
+`src/lib/supabase/types.ts` regenerado. Las tablas existen y están vacías.
+
+TAREA, en orden:
+
+1. **Confirmar el seed.** Correr la query de verificación del final de
+   `supabase/seed.sql` en el SQL Editor. Tiene que dar 1 autor,
+   `primera-b-2026` activa y 10/1 equipos. Si no, pegar el archivo entero y
+   correrlo: es idempotente.
+
+2. **Probar la trampa de `generateStaticParams`.** Correr `npx next build` con
+   la base arriba. Si corta con "Dynamic server usage", cambiar a
+   `createStaticClient()` las queries de `/nota/[slug]`, `/partido/[slug]`,
+   `/plantel/[temporadaSlug]` y `/jugadora/[slug]`.
+
+3. **Paso 7**: `pnpm tsx scripts/migrate-wp.ts` (en seco) y leer
+   `.migracion-wp/informe.md`. La corrida contra el sitio real ya dio limpia
+   antes: 70 notas, 0 categorías sin mapear, 82 reglas de redirección.
+
+4. **Paso 11**: `pnpm tsx scripts/generate-redirects.ts` y confirmar que
+   `vercel.json` queda con las 82 reglas. Ninguna URL vieja puede dar 404.
+
+El paso 9 (`--escribir`) está bloqueado hasta que el autor complete a mano
+`alt.json` y `bajadas.json` — 109 alts y 43 bajadas.
+
+CÓMO VERIFICAR:
+    npx tsc --noEmit
+    npx vitest run
+    npx next build
+Parar el server antes de buildear y matar el proceso, no la terminal:
+`Get-NetTCPConnection -LocalPort 3100` → `Stop-Process -Force`.
+
+OJO: `.env.local` tiene saltos de línea CRLF. Si lo sourceás desde bash, las
+variables se llevan un `\r` pegado y las llamadas a la API fallan con
+"No API key found". Limpiarlo con `tr -d '\r'`.
+
+Y no pidas ni aceptes claves por chat: van sólo a `.env.local`.
+````
