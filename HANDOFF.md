@@ -2562,3 +2562,45 @@ el clasificador de auto-mode**: hay que pedírselo al usuario.
 
 `pnpm lint` sigue sin correr —`eslint.config.mjs` roto desde el primer commit y
 bloqueado por el hook `config-protection`—. La receta está más arriba.
+
+## La planilla de carga y los links del editor
+
+> Rama `fase/13-admin-notas`, misma sesión del 20/09, después de la sección
+> anterior. **El mapa del panel vive ahora en `docs/admin.md`** y se actualiza
+> en el mismo commit que agrega una pantalla: esta sección no lo repite.
+
+**La planilla de carga existe** (`/admin/partidos/[id]/planilla`). Es el Step 13,
+el marcado con estrella. Dos o tres toques por evento y **se guarda al tocar la
+jugadora, sin botón de confirmar**: un "Guardar" por evento son treinta toques
+por partido, y es lo que separa los tres minutos del objetivo de los seis.
+
+- **Cuatro botones y no nueve.** `tipo_evento_t` tiene nueve valores; gol,
+  amarilla, roja y cambio son el 95% de lo que pasa. Los otros cinco se cargan
+  después, con el partido terminado.
+- **La grilla se filtra por quiénes están en cancha.** `enCancha()` aplica los
+  cambios en orden de minuto y saca a las expulsadas. Es la diferencia entre una
+  planilla usable y una lista de treinta caras.
+- **"Finalizar partido" toma el marcador de los goles cargados**, no de lo que
+  se escriba a mano. Si no coincide con lo declarado al crear el partido, la
+  pantalla lo dice y **no corrige**: cuál de los dos está bien no lo sabe el
+  sistema.
+- **Falta la cola offline en IndexedDB**, que el blueprint pide y es la que hace
+  que esto sirva en una cancha de ascenso. Hoy un evento cargado sin señal se
+  pierde.
+- **Falta probarla en un celular real y cronometrarla.** El encargo dice que ése
+  es el entregable de verdad: si pasa de tres minutos, iterar antes de seguir.
+  Se construyó y se verificó en escritorio nada más.
+
+**Se construyó el Step 13 antes que el 12**, y eso deja un hueco raro: la
+planilla edita un partido que ya existe, y **crear un partido todavía no se
+puede desde ninguna pantalla**. Hoy entran por SQL. Las seis pantallas que
+faltan están listadas en `docs/admin.md`.
+
+**El editor ya enlaza.** El blueprint lo pedía —"extensiones: encabezados,
+negrita/itálica, links, blockquote"— y faltaba. Se elige de una lista de notas
+publicadas, no se pega una URL: pegar a mano se escribe mal y no deja saber
+después qué notas citan a cuál. Queda igual un campo de URL libre para las
+fuentes de afuera.
+
+**Verificado**: `tsc --noEmit` limpio, 415 tests en 25 archivos, `next build`
+exit 0 con 42 páginas.
