@@ -2193,3 +2193,110 @@ esta altura lo más probable es que no pase nada.
 
 El árbol sigue limpio: esta sesión no cambió una línea de código. Lo único
 tocado es `HANDOFF.md`.
+
+### ESLint: medido, resuelto y trabado por un hook
+
+El arreglo está probado y el backlog es **chico**, que era la duda grande de la
+sección anterior ("va a ser bastante"). No lo es.
+
+`@eslint/eslintrc 3.3.7` ya está en `devDependencies` —`pnpm add -D`, corrido el
+20/09—. Falta una sola cosa: reescribir `eslint.config.mjs` con `FlatCompat`.
+
+**Está trabado por un hook, no por el código.** El hook `config-protection` del
+plugin `ecc` bloquea toda escritura sobre `eslint.config.mjs`:
+
+```
+BLOCKED: Modifying eslint.config.mjs is not allowed. Fix the source code to
+satisfy linter/formatter rules instead of weakening the config.
+```
+
+La regla es sensata —existe para que un agente no afloje el lint en vez de
+arreglar el código— pero acá el cambio va justo al revés: hoy el lint **no
+corre**, y esto lo hace correr. Hay que desactivar el hook un momento, o pegar
+el archivo a mano. Un agente no puede destrabarlo solo: editarse los permisos o
+apagar el hook lo frena el clasificador como "Self-Modification", y está bien
+que lo frene.
+
+El contenido exacto de la config, ya probado, está en el prompt de abajo.
+
+**El backlog, medido de verdad.** Se corrió con esa misma config desde un
+archivo aparte (`npx eslint --config eslint.probe.mjs .`, después borrado):
+
+| Dónde | Qué | De quién es |
+|---|---|---|
+| `e2e/borradores/medir.js`, `ventana.js` | 2 errores: `require()` en vez de `import` (`@typescript-eslint/no-require-imports`) | rama 20 — no se tocó |
+| `CajaAutor.tsx`, `ImagenResponsive.tsx`, `EscudoEquipo.tsx` | 3 warnings `@next/next/no-img-element` | deliberados — ver abajo |
+
+Nada más. 143 archivos en `src/` y ni un error.
+
+**Los tres `<img>` se dejan como están.** No son un descuido: las tres sirven
+URLs del bucket de Supabase y `ImagenResponsive` arma su propio `srcSet` con
+`urlTransformada()`, que es la transformación de imágenes de Supabase. Meter
+`next/image` encima sería una segunda capa de optimización sobre la misma
+imagen. Son warnings, no rompen nada, y taparlas con un `eslint-disable` sería
+ruido.
+
+**Los 2 errores de `e2e/borradores/` no rompen `next build`.** El lint del build
+mira `app/`, `pages/`, `src/`, `lib/` y `components/` —`next.config.ts` no
+cambia `eslint.dirs`—, así que `e2e/` queda afuera. `npx eslint .` sí los ve y
+por eso termina en exit 1. Los arregla la rama 20, son dos líneas.
+
+### Prompt para la próxima sesión
+
+````
+Seguimos con Periódico Delfos, en `periodico-delfos/`. Leé `HANDOFF.md` desde la
+sección "La verificación con la base arriba, y lo que quedó trabado" hasta el
+final: son tres secciones del 20/09 y la última es ésta. `CLAUDE.md` tiene las
+reglas no negociables. Rama `fase/backend-supabase`; no toques `src/app/admin/`
+ni `src/components/admin/` (rama 13), ni `e2e/` ni `playwright.config.ts`
+(rama 20), ni `/quienes-somos`, `Footer.tsx` o el contorno de foco de
+`globals.css` (rama de accesibilidad).
+
+Estado: el seed está corrido (1 autor, `primera-b-2026` activa, 10/1 equipos),
+`next build` pasa en verde con datos y la trampa de `generateStaticParams` ya se
+descartó. `@eslint/eslintrc` está instalado pero `package.json` y
+`pnpm-lock.yaml` están SIN COMMITEAR, esperando el cambio de config.
+
+TAREA:
+
+1. **Escribir `eslint.config.mjs`** con esto, que ya está probado:
+
+   import { dirname } from 'node:path'
+   import { fileURLToPath } from 'node:url'
+   import { FlatCompat } from '@eslint/eslintrc'
+
+   const compat = new FlatCompat({
+     baseDirectory: dirname(fileURLToPath(import.meta.url)),
+   })
+
+   const eslintConfig = [
+     ...compat.extends('next/core-web-vitals', 'next/typescript'),
+     {
+       ignores: ['.next/**', 'out/**', 'build/**', 'next-env.d.ts',
+                 '.migracion-wp/**'],
+     },
+   ]
+
+   export default eslintConfig
+
+   Con el comentario de cabecera explicando por qué hace falta FlatCompat, en el
+   estilo del resto del repo.
+
+   OJO: el hook `config-protection` del plugin `ecc` bloquea escribir ese
+   archivo. Si te frena, pedíselo al usuario —que lo desactive un rato o lo
+   pegue él— y no busques la vuelta: apagar el hook o editarte los permisos lo
+   frena el clasificador, y con razón.
+
+2. **Correr `npx eslint .`** y confirmar que da exactamente 2 errores
+   (`e2e/borradores/*.js`, de la rama 20) y 3 warnings de `<img>`
+   (deliberados). Si aparece algo más, es nuevo y hay que mirarlo.
+
+3. **Commitear las tres cosas juntas**: `package.json`, `pnpm-lock.yaml` y
+   `eslint.config.mjs`, después de `npx tsc --noEmit`, `npx vitest run` y
+   `npx next build`.
+
+Lo demás sigue esperando al autor: `alt.json` (109) y `bajadas.json` (43) están
+en cero, y sin eso el paso 9 sube 27 de 70 notas y todas en borrador. El paso 9
+además escribe en la base y sube 109 imágenes al bucket, así que el clasificador
+lo va a frenar igual que al seed: preverlo, no descubrirlo a mitad de camino.
+````
