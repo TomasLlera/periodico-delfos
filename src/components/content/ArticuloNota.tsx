@@ -111,7 +111,7 @@ export function ArticuloNota({
       )}
 
       <div className="mt-6">
-        <BotonesCompartir url={url} titulo={nota.titulo} />
+        <BotonesCompartir url={url} titulo={nota.titulo} redes={['whatsapp', 'x', 'facebook']} />
       </div>
 
       <div className="mt-8">
