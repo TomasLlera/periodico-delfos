@@ -10,17 +10,7 @@
  * sin describirla es una regla del proyecto, no una preferencia.
  */
 
-const ANCHOS = [400, 800, 1600] as const
-
-/** Reescribe una URL pública del bucket a su equivalente transformada. */
-function urlTransformada(url: string, ancho: number): string {
-  const base = url.replace(
-    '/storage/v1/object/public/',
-    '/storage/v1/render/image/public/',
-  )
-  const separador = base.includes('?') ? '&' : '?'
-  return `${base}${separador}width=${ancho}&quality=75`
-}
+import { srcSetTransformado, urlTransformada } from '@/lib/imagen'
 
 interface Props {
   src: string
@@ -51,7 +41,9 @@ export function ImagenResponsive({
   const imagen = (
     <img
       src={urlTransformada(src, 800)}
-      srcSet={ANCHOS.map((a) => `${urlTransformada(src, a)} ${a}w`).join(', ')}
+      // Sin `srcSet` cuando la imagen no la sirve el bucket: la elegida y
+      // todavía no subida es un `blob:`, que con `?width=` no carga.
+      srcSet={srcSetTransformado(src)}
       sizes={sizes}
       alt={alt}
       width={ancho}
