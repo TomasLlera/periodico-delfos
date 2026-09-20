@@ -2200,7 +2200,10 @@ El arreglo está probado y el backlog es **chico**, que era la duda grande de la
 sección anterior ("va a ser bastante"). No lo es.
 
 `@eslint/eslintrc 3.3.7` ya está en `devDependencies` —`pnpm add -D`, corrido el
-20/09—. Falta una sola cosa: reescribir `eslint.config.mjs` con `FlatCompat`.
+20/09, commiteado—. Falta una sola cosa: reescribir `eslint.config.mjs` con
+`FlatCompat`. La dependencia queda puesta a propósito aunque todavía no la use
+nadie: es media hora de `pnpm install` en esta máquina y el día que se escriba
+la config no hay que esperarla.
 
 **Está trabado por un hook, no por el código.** El hook `config-protection` del
 plugin `ecc` bloquea toda escritura sobre `eslint.config.mjs`:
@@ -2254,8 +2257,9 @@ ni `src/components/admin/` (rama 13), ni `e2e/` ni `playwright.config.ts`
 
 Estado: el seed está corrido (1 autor, `primera-b-2026` activa, 10/1 equipos),
 `next build` pasa en verde con datos y la trampa de `generateStaticParams` ya se
-descartó. `@eslint/eslintrc` está instalado pero `package.json` y
-`pnpm-lock.yaml` están SIN COMMITEAR, esperando el cambio de config.
+descartó. `@eslint/eslintrc` está instalado y commiteado, esperando la config:
+la decisión del 20/09 fue dejar la dependencia puesta y el hook como está, así
+que el lint sigue sin correr hasta que alguien escriba `eslint.config.mjs`.
 
 TAREA:
 
