@@ -85,10 +85,11 @@ export async function enviarMagicLink(
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      // Esta URL tiene que estar en Authentication → URL Configuration →
-      // Redirect URLs del proyecto, o Supabase manda el link al sitio pero
-      // rebota al volver.
-      emailRedirectTo: `${sitio}/auth/callback?volver=${encodeURIComponent(destino(formData))}`,
+      // A `/auth/confirm`, que canjea `token_hash` del lado del servidor. Ver
+      // el comentario de esa ruta: el template de mail hay que cambiarlo, y
+      // esta URL tiene que estar en Authentication → URL Configuration →
+      // Redirect URLs, o Supabase la ignora y manda al Site URL pelado.
+      emailRedirectTo: `${sitio}/auth/confirm?volver=${encodeURIComponent(destino(formData))}`,
       // Que no cree un usuario nuevo: el admin es de quien ya tiene fila en
       // `autores`, y cualquier otro mail que entre acá es alguien probando.
       shouldCreateUser: false,
