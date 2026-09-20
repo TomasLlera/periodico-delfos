@@ -78,33 +78,34 @@ export function BotonesCompartir({ url, titulo, etiqueta = 'Compartir' }: Props)
         etiqueta="Compartir por WhatsApp"
       >
         <MessageCircle size={16} aria-hidden="true" />
-        WhatsApp
+        <Rotulo>WhatsApp</Rotulo>
       </EnlaceCompartir>
 
       <EnlaceCompartir
         href={`https://x.com/intent/tweet?text=${encodeURIComponent(titulo)}&url=${encodeURIComponent(url)}`}
         etiqueta="Compartir en X"
       >
-        <LogoX />X
+        <LogoX />
+        <Rotulo>X</Rotulo>
       </EnlaceCompartir>
 
       {puedeCompartir && (
         <BotonCompartir onClick={compartir} etiqueta="Abrir opciones para compartir">
           <Share2 size={16} aria-hidden="true" />
-          Más
+          <Rotulo>Más</Rotulo>
         </BotonCompartir>
       )}
 
       <BotonCompartir onClick={copiar} etiqueta="Copiar el link de la nota">
         {copiado ? (
           <>
-            <Check size={16} aria-hidden="true" className="stroke-verde-600" />
-            ¡Copiado!
+            <Check size={16} aria-hidden="true" />
+            <Rotulo>¡Copiado!</Rotulo>
           </>
         ) : (
           <>
             <Link2 size={16} aria-hidden="true" />
-            Copiar link
+            <Rotulo>Copiar link</Rotulo>
           </>
         )}
       </BotonCompartir>
@@ -118,8 +119,42 @@ export function BotonesCompartir({ url, titulo, etiqueta = 'Compartir' }: Props)
   )
 }
 
+/**
+ * Círculos con anillo verde y el icono solo: 40px en móvil, 44 desde `sm`.
+ *
+ * Con los cuatro rótulos al lado del icono la barra no entraba en 390px y se
+ * partía en dos o tres filas. Lo primero que se sacó fue el texto, que en
+ * WhatsApp y X es redundante con un logo que todo el mundo reconoce.
+ *
+ * **En móvil miden 40px y no 44, que es la única excepción a `.tactil` del
+ * sitio.** Es deliberada y vale anotar el costo: 44px es el criterio 2.5.5 de
+ * WCAG, que es AAA. El que rige a nivel AA es el 2.5.8, que pide 24px, y estos
+ * botones lo cumplen con holgura incluso a 40 —además el `gap-2` entre ellos
+ * satisface la excepción por espaciado—. O sea que se pierde el AAA en este
+ * control y sólo en móvil, a cambio de que la barra entre en una línea.
+ *
+ * Si alguna vez se decide volver a 44, es cambiar `size-10` por `size-11` y
+ * borrar este párrafo.
+ *
+ * Redondos y no cuadrados porque es la forma con la que se leen estos botones
+ * en cualquier sitio de noticias: un icono en un círculo es "compartir en",
+ * antes de leer nada.
+ *
+ * El texto no desaparece, se vuelve invisible: cada botón lleva su `aria-label`
+ * y el rótulo va en un `sr-only`, así que el árbol de accesibilidad queda igual
+ * que cuando el texto se veía.
+ *
+ * El hover invierte a `verde-900`, que es una superficie del sistema y lleva
+ * texto blanco en los dos temas.
+ */
+// Sin `.tactil`: esa clase fija `min-width: 44px` y le ganaría a `size-10`.
 const ESTILO_BOTON =
-  'tactil flex items-center gap-1.5 rounded-sm border border-linea px-3 font-display text-[13px] font-medium text-tinta hover:border-verde-600 hover:text-verde-600'
+  'flex size-10 shrink-0 items-center justify-center rounded-full border border-verde-600 text-tinta transition-colors hover:bg-verde-900 hover:text-white sm:size-11'
+
+/** El rótulo de cada botón: sólo para lectores de pantalla. */
+function Rotulo({ children }: { children: React.ReactNode }) {
+  return <span className="sr-only">{children}</span>
+}
 
 function EnlaceCompartir({
   href,
@@ -156,7 +191,7 @@ function BotonCompartir({
 /** lucide v1 ya no trae logos de marca. Misma excepción que en `CajaAutor`. */
 function LogoX() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M18.9 2H22l-7.1 8.1L23.2 22h-6.5l-5.1-6.6L5.8 22H2.7l7.6-8.7L1.9 2h6.6l4.6 6.1L18.9 2Zm-1.1 18h1.7L7.3 3.8H5.5L17.8 20Z" />
     </svg>
   )
