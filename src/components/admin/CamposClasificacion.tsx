@@ -1,5 +1,6 @@
 'use client'
 
+import { Casilla } from '@/components/admin/Casilla'
 import { etiquetaDePartido } from '@/lib/partido'
 import type { EntradaNota } from '@/lib/nota'
 import type { PartidoConEquipos, Temporada } from '@/types'
@@ -102,7 +103,7 @@ export function CamposClasificacion({ entrada, temporadas, partidos, onCambio }:
         </select>
         <p className="text-[0.8rem] text-gris">
           {partidos.length === 0
-            ? 'Todavía no hay partidos cargados. Se cargan desde la planilla.'
+            ? 'Todavía no hay partidos cargados. Se crean en Partidos → Partido nuevo.'
             : 'Al elegirlo, la nota muestra el marcador y la planilla, y se enlaza con las otras notas de ese partido.'}
         </p>
       </div>
@@ -122,30 +123,5 @@ export function CamposClasificacion({ entrada, temporadas, partidos, onCambio }:
         />
       </div>
     </>
-  )
-}
-
-function Casilla({
-  id,
-  etiqueta,
-  valor,
-  onCambio,
-}: {
-  id: string
-  etiqueta: string
-  valor: boolean
-  onCambio: (v: boolean) => void
-}) {
-  return (
-    <label htmlFor={id} className="tactil flex items-center gap-2 text-[0.9rem]">
-      <input
-        id={id}
-        type="checkbox"
-        checked={valor}
-        onChange={(e) => onCambio(e.target.checked)}
-        className="size-4 accent-verde-900"
-      />
-      {etiqueta}
-    </label>
   )
 }

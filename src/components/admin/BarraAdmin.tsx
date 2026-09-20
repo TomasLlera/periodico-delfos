@@ -23,9 +23,16 @@ export function BarraAdmin({ autor }: { autor: Autor }) {
         {/* Las secciones del panel. Se agregan acá y en `docs/admin.md`: una
             pantalla a la que no se llega desde esta barra es una pantalla que
             nadie va a encontrar. */}
-        <nav aria-label="Secciones del panel" className="flex items-center gap-1">
+        <nav aria-label="Secciones del panel" className="flex flex-wrap items-center gap-1">
           <Seccion href="/admin">Notas</Seccion>
           <Seccion href="/admin/partidos">Partidos</Seccion>
+          <Seccion href="/admin/jugadoras">Jugadoras</Seccion>
+          <Seccion href="/admin/equipos">Equipos</Seccion>
+          {/* El plantel y la tabla de posiciones no tienen link propio: cuelgan
+              de una temporada y se entra desde su listado, que es donde ya se
+              sabe de cuál. Seis links en la barra la parten en dos renglones
+              en un celular. */}
+          <Seccion href="/admin/temporadas">Temporadas</Seccion>
         </nav>
 
         <span className="ml-auto text-[0.85rem] text-white/70">{autor.nombre}</span>

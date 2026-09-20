@@ -108,3 +108,29 @@ export async function getGoleadoras(
 
   return data ?? []
 }
+
+/** Una temporada por id. Para el formulario de edición del panel. */
+export async function getTemporadaPorId(id: string): Promise<Temporada | null> {
+  const supabase = await createClient()
+  const { data } = await supabase.from('temporadas').select('*').eq('id', id).maybeSingle()
+
+  return data
+}
+
+/**
+ * Las fechas que ya tienen tabla cargada, de la más nueva a la más vieja.
+ *
+ * La pantalla de la tabla abre en la fecha siguiente a la última, y para saber
+ * cuál es no hace falta traer las once filas de cada fecha: alcanza con los
+ * números.
+ */
+export async function getFechasConTabla(temporadaId: string): Promise<number[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('tabla_posiciones')
+    .select('fecha_numero')
+    .eq('temporada_id', temporadaId)
+    .order('fecha_numero', { ascending: false })
+
+  return [...new Set((data ?? []).map((f) => f.fecha_numero as number))]
+}

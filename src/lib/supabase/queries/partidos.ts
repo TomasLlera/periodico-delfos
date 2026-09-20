@@ -160,3 +160,39 @@ export async function getPartidoPorId(id: string): Promise<PartidoCompleto | nul
 
   return data as unknown as PartidoCompleto | null
 }
+
+/**
+ * Un partido con el resultado y cuánto tiene cargado, para el listado del panel.
+ *
+ * La cuenta viene de PostgREST —`eventos(count)`— y no de traer los eventos:
+ * el listado sólo necesita saber si hay algo cargado, y bajar la planilla
+ * entera de cincuenta partidos para contar filas sería pedir la base completa
+ * para dibujar dos números.
+ */
+export interface PartidoDelPanel extends PartidoConEquipos {
+  cargado: { formaciones: number; eventos: number }
+}
+
+export async function getPartidosParaPanel(limite = 100): Promise<PartidoDelPanel[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('partidos')
+    .select(`${CAMPOS_PARTIDO}, eventos(count), formaciones(count)`)
+    .order('fecha_hora', { ascending: false })
+    .limit(limite)
+
+  // PostgREST devuelve el agregado como un array de un elemento: `[{count: 3}]`,
+  // y como array vacío cuando no hay ninguno.
+  type ConCuentas = PartidoConEquipos & {
+    eventos: { count: number }[]
+    formaciones: { count: number }[]
+  }
+
+  return ((data ?? []) as unknown as ConCuentas[]).map((p) => ({
+    ...p,
+    cargado: {
+      eventos: p.eventos[0]?.count ?? 0,
+      formaciones: p.formaciones[0]?.count ?? 0,
+    },
+  }))
+}

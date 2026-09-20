@@ -13,6 +13,7 @@
  */
 
 import { z } from 'zod'
+import { slugificar, textoOpcional, textoRequerido } from '@/lib/entidades/campos'
 import type { Categoria, DocumentoTipTap, Nota, Red } from '@/types'
 
 // ============================================
@@ -29,16 +30,7 @@ import type { Categoria, DocumentoTipTap, Nota, Red } from '@/types'
  * queda editable a mano en el formulario, pero no se recalcula solo.
  */
 export function slugDesdeTitulo(titulo: string): string {
-  return titulo
-    .normalize('NFD')
-    // Saca los diacríticos que `NFD` acaba de separar: "crónica" → "cronica".
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    // La ñ sobrevive a `NFD` como "n" + tilde, así que ya quedó en "n". Lo que
-    // queda por barrer es todo lo que no sea letra, número o espacio.
-    .replace(/[^a-z0-9\s-]/g, ' ')
-    .trim()
-    .replace(/[\s-]+/g, '-')
+  return slugificar(titulo)
 }
 
 // ============================================
@@ -47,19 +39,6 @@ export function slugDesdeTitulo(titulo: string): string {
 
 const CATEGORIAS = ['cronica', 'analisis', 'temporada', 'plantel', 'institucional'] as const
 const REDES = ['facebook', 'instagram', 'x'] as const
-
-const textoRequerido = (campo: string) =>
-  z
-    .string()
-    .trim()
-    .min(1, `${campo} no puede quedar vacío`)
-
-/** Un campo de texto opcional: la cadena vacía del formulario entra como `null`. */
-const textoOpcional = z
-  .string()
-  .trim()
-  .transform((v) => (v === '' ? null : v))
-  .nullable()
 
 const esquemaDocumento: z.ZodType<DocumentoTipTap> = z.object({
   type: z.literal('doc'),

@@ -15,31 +15,53 @@ se creó y quedó una hora sin ningún link que llevara ahí.
 | `/admin/login` | Entrar: contraseña o magic link | 5 |
 | `/admin` | Listado de notas, borradores arriba | 8 |
 | `/admin/notas/nueva` · `/admin/notas/[id]` | El editor, con vista previa | 8 |
-| `/admin/partidos` | Los partidos, puerta a la planilla | — |
+| `/admin/equipos` · `/nuevo` · `/[id]` | Los rivales y el equipo propio | 12 |
+| `/admin/temporadas` · `/nueva` · `/[id]` | Las temporadas, y cuál está en curso | 12 |
+| `/admin/jugadoras` · `/nueva` · `/[id]` | Las fichas, con foto | 12 |
+| `/admin/plantel/[temporadaId]` | Quién está en el plantel, con su dorsal | 12 |
+| `/admin/tabla/[temporadaId]` | La tabla de posiciones, por fecha | 12 |
+| `/admin/partidos` | Los partidos, con lo que tiene cargado cada uno | 12 |
+| `/admin/partidos/nuevo` · `/[id]` | Crear y editar la ficha de un partido | 12 |
+| `/admin/partidos/[id]/formacion` | Quiénes juegan: titulares y suplentes | 12 |
 | `/admin/partidos/[id]/planilla` | Cargar goles, tarjetas y cambios | 13 ★ |
 
+**El plantel y la tabla no tienen link en la barra**: cuelgan de una temporada
+y se entra desde el listado de temporadas, que es donde ya se sabe de cuál. Una
+pantalla suelta obligaría a elegirla de nuevo, y seis links parten la barra en
+dos renglones en un celular.
+
+## El orden en que se carga una temporada
+
+Las seis pantallas del Step 12 no son independientes: cada una necesita la
+anterior. En una base recién creada el orden es **uno solo**, y la pantalla de
+alta de partido lo dice cuando falta algo.
+
+1. **Temporada** — de ella cuelga todo lo demás. Marcarla como en curso.
+2. **Equipos** — Aldosivi con "es el equipo propio", y los rivales.
+3. **Jugadoras** — la ficha de la persona. Sin dorsal: el dorsal es del año.
+4. **Plantel** — quién está este año y con qué número.
+5. **Partido** — necesita la temporada y dos equipos.
+6. **Formación** — quiénes juegan ese partido, del plantel del año.
+7. **Planilla** — recién acá se cargan los goles.
+
+El paso 6 es el que no estaba y el que rompía la cadena: `PlanillaCarga` arma
+su grilla con `enCancha()`, que arranca de las titulares de `formaciones`. Un
+partido sin formación abre la planilla sin ninguna jugadora que tocar.
+
 ## Lo que falta, y dónde va
-
-**Step 12 — CRUD de entidades.** Es el hueco grande, y va **antes** de que esto
-escale: hoy jugadoras, equipos, temporadas y partidos entran sólo por SQL.
-
-| Ruta a crear | Para qué | Hoy se hace |
-|---|---|---|
-| `/admin/jugadoras` | Alta y edición de jugadoras, foto incluida | SQL |
-| `/admin/equipos` | Los rivales. Uno solo es propio (`es_aldosivi`) | `seed.sql` |
-| `/admin/temporadas` | Alta de temporada, cuál está activa | `seed.sql` |
-| `/admin/plantel/[temporadaId]` | Quién está en el plantel de cada temporada | SQL |
-| `/admin/partidos/nuevo` | **Crear** un partido. Hoy sólo se puede editar uno que ya existe | SQL |
-| `/admin/tabla/[temporadaId]` | Cargar la tabla de posiciones | nadie |
-
-Otras cosas anotadas y no hechas:
 
 - **Cola offline en IndexedDB** para la planilla (blueprint § 7.6). Sin ella un
   evento cargado sin señal se pierde. Es lo que hace que la planilla sirva en
   una cancha de ascenso.
+- **Probar la planilla en un celular real y cronometrarla.** El encargo dice
+  que ése es el entregable de verdad: si pasa de tres minutos, iterar.
 - **Los nodos `imagen` y `planilla` en el editor.** El renderer ya los dibuja;
   falta la extensión de TipTap que los inserta.
 - **Reintentar posteos fallidos** desde el panel, leyendo `social_posts`.
+- **Una quita de puntos en la tabla.** Hoy `puntos` es derivado —se calcula con
+  ganados y empatados— porque el CHECK `puntos_cuadran` de `0004` lo exige. El
+  día que haga falta hay que tocar el CHECK **y** el `refine` de
+  `entidades/tabla.ts`, no sólo la pantalla.
 - **Etiquetas / palabras clave.** No hay nada en el schema y es una feature
   entera: tabla, ABM y páginas de listado. Decisión tomada el 20/09: **se deja
   para más adelante**. Ojo con la tentación de usar etiquetas para "notas de
@@ -52,15 +74,32 @@ Otras cosas anotadas y no hechas:
 1. **La ruta** va en `src/app/admin/(panel)/`. El grupo `(panel)` es el que
    tiene el layout protegido; sólo `/admin/login` queda afuera, o se
    redirigiría a sí mismo para siempre.
-2. **El link va en `BarraAdmin`.** Una pantalla a la que no se llega desde la
-   barra es una pantalla que nadie va a encontrar.
+2. **El link va en `BarraAdmin`**, salvo que cuelgue de otra entidad y se entre
+   desde su listado, como el plantel y la tabla. Una pantalla a la que no se
+   llega es una pantalla que nadie va a encontrar.
 3. **Esta tabla se actualiza en el mismo commit.**
 4. **Las queries van en `src/lib/supabase/queries/*`**, nunca un `.from()`
    adentro de un componente.
-5. **Los Server Actions van en `src/actions/*`**, uno por entidad: `notas.ts`,
-   `eventos.ts`, `imagenes.ts`, `sesion.ts`.
+5. **Los Server Actions van en `src/actions/*`**, uno por entidad.
 6. **La lógica que se pueda sacar del componente va a `src/lib/` con su test.**
-   `nota.ts`, `planilla.ts` y `vista-previa.ts` son los que ya están.
+
+## Dónde vive cada cosa del CRUD
+
+| Capa | Dónde | Qué hay |
+|---|---|---|
+| Validación y reglas | `src/lib/entidades/*` | Un esquema de Zod y la lógica pura por entidad, con test |
+| Piezas compartidas | `src/lib/entidades/campos.ts` | `slugificar`, los campos de Zod, el huso de la fecha |
+| Escritura | `src/actions/*` | Un Server Action por entidad |
+| Lectura | `src/lib/supabase/queries/*` | Una query por caso de uso |
+| Estado del formulario | `src/components/admin/usarFormulario.ts` | El hook que comparten los cuatro formularios |
+| Revalidación | `src/lib/revalidar.ts` | Qué rutas públicas caen con cada cambio |
+
+**La lógica de cada entidad está partida en dos archivos a propósito.**
+`src/lib/partido.ts` es la de lectura —lados, minutos, agrupación de eventos— y
+`src/lib/entidades/partido.ts` es la de escritura —qué se puede guardar—. Lo
+mismo con `temporada.ts`, `jugadora.ts` y `plantel.ts`. Juntarlas dejaría
+archivos de seiscientas líneas donde la mitad la usa el sitio público y la otra
+mitad sólo el panel.
 
 ## Las reglas que este panel sigue
 
@@ -72,8 +111,18 @@ Otras cosas anotadas y no hechas:
   autor; es el mismo criterio que `es_autor()` en RLS.
 - **Los datos deportivos no se escriben a mano en el texto** (regla no
   negociable 2). La nota elige un partido; los goles se cargan en la planilla.
-- **Un componente por archivo, máximo 300 líneas.** `FormularioNota` ya las pasó
-  dos veces y se partió en `CamposClasificacion`, `CampoImagen` y
-  `BarraAcciones`.
+  La única excepción del proyecto es la tabla de posiciones, razonada en el
+  blueprint § 4.4 y acotada a esa tabla.
+- **Lo que la base valida, el formulario lo repite.** No para reemplazarla
+  —manda la base— sino para que el error llegue como una frase en español al
+  lado del campo y no como un 400 de Postgres.
+- **Lo que no se puede borrar, no se borra.** Una jugadora tiene goles en
+  `eventos`: se marca inactiva. Un partido con la planilla cargada no se borra:
+  se marca suspendido. Los borrados que sí existen chequean antes y explican qué
+  se llevarían puesto.
+- **La hora de un partido es la de Mar del Plata, siempre.** El huso está fijo
+  en `entidades/campos.ts` y no sale del reloj de la máquina: el mismo cálculo
+  corre en el servidor —Vercel, en UTC— y en el navegador.
+- **Un componente por archivo, máximo 300 líneas.**
 - **Todo control lleva `.tactil`** (44px). La única excepción del proyecto está
   documentada en `BotonesCompartir`, y es del sitio público, no del panel.

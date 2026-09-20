@@ -1,46 +1,50 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ClipboardList } from 'lucide-react'
-import { etiquetaDePartido } from '@/lib/partido'
-import { getPartidosParaEditor } from '@/lib/supabase/queries/partidos'
+import { Plus } from 'lucide-react'
+import { Aviso } from '@/components/admin/Aviso'
+import { getPartidosParaPanel } from '@/lib/supabase/queries/partidos'
+import { FilaPartido } from './FilaPartido'
 
 /**
- * Los partidos, para entrar a cargar uno.
+ * Los partidos.
  *
- * **No se puede crear un partido desde acá todavía**: eso es el Step 12 —el
- * CRUD de entidades— que no está hecho. Hoy los partidos entran por SQL, como
- * el de la fecha 4 en `supabase/datos/`. Esta pantalla es sólo la puerta a la
- * planilla.
+ * Hasta el Step 12 esta pantalla era sólo la puerta a la planilla y los
+ * partidos entraban por SQL: la planilla —el Step 13— se construyó antes que
+ * el alta, y editaba un partido que tenía que existir de antes. Ahora se crean
+ * desde acá.
+ *
+ * El orden es por fecha, del más nuevo al más viejo, que es el orden en que se
+ * trabaja: la crónica se escribe el mismo día del partido.
  */
 export const metadata: Metadata = { title: 'Partidos' }
 export const dynamic = 'force-dynamic'
 
 export default async function Partidos() {
-  const partidos = await getPartidosParaEditor()
+  const partidos = await getPartidosParaPanel()
 
   return (
     <main className="mx-auto max-w-[900px] px-4 py-8">
-      <h1 className="titular mb-6 text-[1.6rem]">Partidos</h1>
+      <div className="mb-6 flex flex-wrap items-center gap-4">
+        <h1 className="titular text-[1.6rem]">Partidos</h1>
+
+        <Link
+          href="/admin/partidos/nuevo"
+          className="tactil ml-auto flex items-center gap-2 bg-amarillo px-4 font-display text-[0.9rem] font-extrabold text-negro-cancha hover:bg-amarillo/90"
+        >
+          <Plus size={16} aria-hidden="true" />
+          Partido nuevo
+        </Link>
+      </div>
 
       {partidos.length === 0 ? (
-        <p className="border-l-2 border-linea-fuerte bg-papel-alt px-4 py-3 text-[0.95rem]">
-          Todavía no hay partidos cargados. Se cargan por SQL hasta que exista el alta de
-          partidos, que es el Step 12.
-        </p>
+        <Aviso>
+          Todavía no hay partidos cargados. Un partido necesita una temporada y dos equipos:
+          si falta alguno de los dos, la pantalla de alta lo dice.
+        </Aviso>
       ) : (
         <ul>
-          {partidos.map((p) => (
-            <li key={p.id} className="flex flex-wrap items-center gap-3 border-b border-linea py-3">
-              <span className="font-display text-[1rem] font-bold">{etiquetaDePartido(p)}</span>
-              <span className="meta text-gris">{p.estado}</span>
-              <Link
-                href={`/admin/partidos/${p.id}/planilla`}
-                className="tactil ml-auto flex items-center gap-2 bg-verde-900 px-4 font-display text-[0.9rem] font-extrabold text-white hover:bg-verde-600"
-              >
-                <ClipboardList size={16} aria-hidden="true" />
-                Planilla
-              </Link>
-            </li>
+          {partidos.map((partido) => (
+            <FilaPartido key={partido.id} partido={partido} cargado={partido.cargado} />
           ))}
         </ul>
       )}

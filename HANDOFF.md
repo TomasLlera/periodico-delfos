@@ -2604,3 +2604,83 @@ fuentes de afuera.
 
 **Verificado**: `tsc --noEmit` limpio, 415 tests en 25 archivos, `next build`
 exit 0 con 42 páginas.
+
+## El Step 12: el CRUD de entidades
+
+> Rama `fase/12-crud-entidades`, sesión del 20/09, después de la planilla. **El
+> mapa del panel está en `docs/admin.md`** y se actualizó en el mismo commit:
+> esta sección no lo repite, cuenta las decisiones.
+
+**Ya se puede crear un partido.** Era el hueco que quedó de haber construido el
+Step 13 antes que el 12: la planilla editaba un partido que tenía que existir
+de antes, y los partidos entraban por SQL. Las seis pantallas que faltaban
+están, más una séptima que el blueprint no lista.
+
+**La séptima es la formación, y es la que rompía la cadena.**
+`/admin/partidos/[id]/formacion`. `PlanillaCarga` arma su grilla con
+`enCancha()`, que arranca de las titulares de `formaciones`: un partido creado
+desde el panel y sin formación abre la planilla sin ninguna jugadora que tocar.
+El blueprint la da por supuesta dentro del Step 13 y no le dio pantalla. Sin
+ella, el alta de partido no servía para nada.
+
+**El orden de carga es uno solo y está escrito en `docs/admin.md`**: temporada
+→ equipos → jugadoras → plantel → partido → formación → planilla. Cada pantalla
+necesita la anterior, y la de alta de partido avisa cuando falta alguna.
+
+### Las decisiones que no hay que volver a discutir
+
+- **La lógica de cada entidad está partida en dos archivos.**
+  `src/lib/partido.ts` es la de **lectura** —lados, minutos, agrupación de
+  eventos, la que usa el sitio público— y `src/lib/entidades/partido.ts` es la
+  de **escritura** —el esquema de Zod, qué se puede guardar—. Lo mismo con
+  temporada, jugadora y plantel. Juntarlas daría archivos de seiscientas líneas
+  con dos públicos distintos.
+- **El huso de los partidos está escrito a mano en `entidades/campos.ts`**, no
+  sale del reloj de la máquina. El formulario es un Client Component y su
+  estado inicial se calcula **también en el servidor**, donde Vercel corre en
+  UTC: convertir con el reloj local daría un valor en el HTML y otro al
+  hidratar, y el partido de las 15:30 aparecería un instante a las 18:30.
+  Argentina no tiene horario de verano desde 2009, así que el offset alcanza.
+- **`slugificar()` es una sola función para todo el proyecto.** Estaba
+  duplicada como `slugDesdeTitulo()` en `nota.ts`; ahora aquélla delega. La
+  migración desde WordPress depende de que el criterio sea el mismo (regla no
+  negociable 8), y dos funciones parecidas divergen en el primer caso raro.
+- **Lo que no se puede borrar, no se borra.** Una jugadora tiene goles en
+  `eventos`: se marca inactiva, y no hay botón de borrar en su ficha. Un
+  partido con planilla cargada tampoco: `borrarPartido()` cuenta los eventos y
+  las formaciones **antes** y se niega diciendo cuántos se llevaría puesto, en
+  lugar de dejar que el `on delete cascade` los borre en silencio.
+- **El equipo propio y la temporada activa desmarcan al anterior en el
+  action**, antes del update. Los índices únicos parciales
+  —`equipos_un_aldosivi_idx`, `temporadas_una_activa_idx`— devolverían un 23505
+  que no explica nada. Las dos pantallas avisan a quién le sacan la marca antes
+  de guardar, porque es un efecto sobre una fila que no se está editando.
+- **En la tabla de posiciones, los puntos y los jugados son derivados.** Se
+  cargan ganados, empatados y perdidos —que es lo que dice la tabla publicada—
+  y las dos sumas salen solas, porque los CHECK `puntos_cuadran` y
+  `partidos_cuadran` de `0004` las exigen igual. El costo: **una quita de
+  puntos no se puede cargar**, y el día que pase hay que tocar el CHECK y el
+  `refine` de `entidades/tabla.ts`, no sólo la pantalla. Está anotado.
+- **La tabla se guarda por fecha entera**, no fila por fila: es una foto del
+  campeonato a esa altura, y así se puede chequear antes de escribir que no
+  falte un equipo ni se repita un puesto. `huecosDeLaFecha()` lo dice.
+- **El formulario de nota no usa el hook compartido** (`usarFormulario`). Su
+  estado incluye un árbol de TipTap, una imagen sin subir y una vista previa
+  modal; tiene menos en común con los otros cuatro de lo que parece.
+
+### Lo que falta y quedó anotado
+
+- **Nada de esto se probó contra la base con datos reales.** Se verificó
+  `tsc --noEmit` limpio, 538 tests en 33 archivos y `next build` exit 0 con 53
+  rutas y 77 páginas prerenderizadas, y las trece rutas nuevas compilan. **Falta cargar una temporada
+  entera a mano desde el panel** —que es el entregable del Step 12 según el
+  blueprint: *"cargar la temporada 2026 completa: equipos, jugadoras, plantel,
+  fixture"*— y ver dónde molesta.
+- **La cola offline de la planilla sigue sin estar** (blueprint § 7.6), y la
+  planilla sigue sin probarse en un celular real ni cronometrarse. Eso es del
+  Step 13 y sigue siendo lo más importante que falta del panel.
+- **El `upsert` del plantel y el guardado de la formación no son atómicos.** La
+  formación borra e inserta: si el insert falla después del borrado, el partido
+  queda sin formación y hay que volver a guardar. Es un riesgo acotado —lo hace
+  una sola persona a la vez y la pantalla todavía tiene la lista— y la
+  alternativa era una función en Postgres.
