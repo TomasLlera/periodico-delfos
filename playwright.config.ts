@@ -1,4 +1,25 @@
 import { defineConfig, devices } from '@playwright/test'
+import { HAY_CREDENCIALES } from './e2e/credenciales'
+
+/**
+ * Sin credenciales, los dos proyectos del panel **no se arman**.
+ *
+ * Es más robusto que dejarlos y que cada test se saltee solo: el setup y el
+ * spec quedan fuera de la corrida entera, así no hay forma de que una carrera
+ * entre el arranque del servidor y el login deje un rojo que no significa
+ * nada. `credenciales.ts` no importa `@playwright/test`, que es lo que
+ * permite leerlo desde acá.
+ */
+/**
+ * Dónde queda la sesión del panel que guarda `admin.setup.ts`.
+ *
+ * Está escrita literal en los dos lados y no importada, porque **el config no
+ * puede importar de un spec**: traer `admin.setup.ts` acá arrastra el `test`
+ * de Playwright en el momento de leer la configuración y el arranque falla
+ * entero. Es un archivo generado y en `.gitignore`; si alguna vez se mueve,
+ * hay que tocar los dos.
+ */
+const SESION = 'e2e/.sesion-admin.json'
 
 /**
  * La suite de navegador del Step 20.
@@ -57,20 +78,56 @@ export default defineConfig({
    * el `channel`.
    */
   projects: [
+    /**
+     * El login del panel, una vez, antes que todo lo demás.
+     *
+     * Es un proyecto y no un `beforeEach` porque hacer login antes de cada
+     * test son veinte contra Supabase Auth por corrida, y tiene límite de
+     * intentos. Sin `E2E_ADMIN_EMAIL` el setup se saltea solo y los tests del
+     * panel también.
+     */
+    ...(HAY_CREDENCIALES ? [{ name: 'entrar', testMatch: /admin.setup.ts/ }] : []),
+
+    /**
+     * El panel. Un solo tamaño y un solo tema: lo que se prueba acá es que las
+     * pantallas abran y que los formularios validen, y eso no cambia con el
+     * viewport. Las cuatro combinaciones son para el sitio público, que es el
+     * que se mira.
+     */
+    ...(HAY_CREDENCIALES
+      ? [
+          {
+            name: 'panel',
+            testMatch: /admin.spec.ts/,
+            dependencies: ['entrar'],
+            use: {
+              ...devices['Desktop Edge'],
+              channel: 'msedge' as const,
+              viewport: { width: 1280, height: 900 },
+              storageState: SESION,
+            },
+          },
+        ]
+      : []),
+
     {
       name: 'escritorio-claro',
+      testIgnore: /admin./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 1280, height: 900 }, colorScheme: 'light' },
     },
     {
       name: 'escritorio-oscuro',
+      testIgnore: /admin./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 1280, height: 900 }, colorScheme: 'dark' },
     },
     {
       name: 'celular-claro',
+      testIgnore: /admin./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 375, height: 900 }, colorScheme: 'light' },
     },
     {
       name: 'celular-oscuro',
+      testIgnore: /admin./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 375, height: 900 }, colorScheme: 'dark' },
     },
   ],

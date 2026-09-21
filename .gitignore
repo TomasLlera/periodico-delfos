@@ -54,3 +54,6 @@ supabase/.temp/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# La sesión que guarda Playwright para entrar al panel: lleva tokens.
+e2e/.sesion-admin.json

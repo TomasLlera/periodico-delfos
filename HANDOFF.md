@@ -2977,10 +2977,55 @@ Están todas anotadas adentro de los archivos, pero conviene tenerlas juntas:
   (contraste AA, foco visible, jerarquía de encabezados) y performance
   (LCP < 2.5s en 4G simulado). La suite mide scroll horizontal, `h1` y errores
   de consola; no mide ninguna de esas tres.
-- **Ninguna pantalla del panel está cubierta.** La suite recorre el sitio
-  público; `/admin` necesita sesión, y montar un login en Playwright es un
-  encargo propio. Es lo que más falta, porque todo lo del Step 12 al 18 se
-  construyó esta sesión y no se probó en un navegador ni una vez.
+- **El panel ya tiene suite** (ver la sección siguiente), pero **no se corrió
+  nunca**: hace falta un usuario de prueba con fila en `autores` y cargar
+  `E2E_ADMIN_EMAIL` y `E2E_ADMIN_PASSWORD`. Hasta entonces esos doce tests no
+  se arman siquiera.
 - **`/quienes-somos` sigue sin `<h1>`.** Es un bug de verdad, de la rama
   `fix/accesibilidad-y-pie`, y ahora hay un test que lo va a avisar cuando se
   arregle.
+
+## La suite del panel
+
+> Rama `fase/19-nodos-del-editor`, cierre de la sesión del 20/09.
+
+`e2e/admin.spec.ts`: doce tests sobre `/admin`. Que las seis secciones abran
+con su `<h1>`, que se llegue a todas desde la barra, que los formularios se
+nieguen a guardar lo que está mal y que el editor tenga los dos botones nuevos.
+
+**Hace falta un usuario de prueba y todavía no existe:**
+
+```
+E2E_ADMIN_EMAIL=... E2E_ADMIN_PASSWORD=... pnpm test:e2e
+```
+
+El usuario tiene que **tener fila en `autores`**, no sólo existir en Supabase
+Auth: el layout del panel re-verifica eso —el mismo criterio que `es_autor()`
+en RLS— y sin la fila el login anda pero el panel rebota al login otra vez. Es
+el error que más cuesta diagnosticar de todo el panel.
+
+### Las tres decisiones
+
+- **Sin credenciales los dos proyectos del panel no se arman.** No es que cada
+  test se saltee: quedan afuera de la corrida entera. Dejarlos adentro daba un
+  rojo intermitente por una carrera entre el arranque del servidor y el login,
+  y un rojo que no significa nada es peor que no tener el test.
+- **El login se hace una vez y se guarda la sesión.** Un `beforeEach` son veinte
+  logins contra Supabase Auth por corrida, y tiene límite de intentos. El
+  archivo de sesión lleva tokens y está en `.gitignore`.
+- **Ningún test crea ni borra datos.** La suite corre contra la base de verdad,
+  la misma que usa el sitio: un test que crea un equipo de prueba deja basura
+  que después aparece en el `<select>` de un partido real. Por eso se prueba
+  que las pantallas abran y que **validen**, no el alta completa.
+
+### Lo que falta
+
+- **Los flujos de punta a punta** —crear un partido, armar la formación, cargar
+  un gol, verificar el marcador— necesitan una base de test aparte. Hoy no hay.
+- El config no puede importar de un spec: traer `admin.setup.ts` arrastra el
+  `test` de Playwright al leer la configuración y el arranque falla entero. Por
+  eso lo compartido vive en `e2e/credenciales.ts`, que no importa nada de
+  Playwright, y la ruta de la sesión está escrita literal en los dos lados.
+- Recordatorio, porque ya pasó tres veces en una sesión: **`next dev` pisa el
+  build de producción**. Antes de correr la suite, o se apaga el dev y se
+  rebuildea, o se usa `E2E_BASE_URL=http://localhost:3000`.
