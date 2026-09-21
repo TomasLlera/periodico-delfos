@@ -1,3 +1,4 @@
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient, createStaticClient } from '@/lib/supabase/server'
 import type { Categoria, NotaConRelaciones, NotaResumen, ResultadoBusqueda } from '@/types'
 
@@ -313,4 +314,31 @@ export async function getNotasParaEnlazar(): Promise<
     .order('publicada_en', { ascending: false })
 
   return data ?? []
+}
+
+/**
+ * Una nota por id **sin sesión**, para las funciones de Inngest.
+ *
+ * Es la misma consulta que `getNotaPorId()` con un cliente distinto, y la
+ * diferencia importa. `createClient()` lee las cookies del request: adentro de
+ * una función durable no hay usuario, así que la consulta correría como
+ * anónima y RLS devolvería sólo lo publicado. Hoy eso alcanzaría —al fan-out
+ * sólo le llegan notas publicadas— pero es una coincidencia, no un diseño:
+ * bastaría con querer postear una nota programada para que devuelva `null` sin
+ * explicar por qué.
+ *
+ * Usa la service role, que bypassea RLS, y es uno de los dos únicos lugares
+ * donde corresponde: procesos de servidor sin usuario (el otro es el script de
+ * migración). **Nunca importar esto desde una pantalla del panel**: ahí escribe
+ * y lee la sesión del autor.
+ */
+export async function getNotaParaPostear(id: string): Promise<NotaConRelaciones | null> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('notas')
+    .select(CAMPOS_COMPLETOS)
+    .eq('id', id)
+    .maybeSingle()
+
+  return data as unknown as NotaConRelaciones | null
 }

@@ -1,7 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { chequearPublicacion, esquemaNota } from '@/lib/nota'
+import { inngest, notaPublicada } from '@/lib/inngest/client'
+import { chequearPublicacion, esquemaNota, redesAPostear } from '@/lib/nota'
 import { getAutorDeLaSesion } from '@/lib/supabase/queries/autores'
 import { createClient } from '@/lib/supabase/server'
 
@@ -101,6 +102,41 @@ export async function guardarNota(datos: unknown, id: string | null): Promise<Re
 }
 
 /**
+ * Le avisa a Inngest que hay una nota nueva para postear.
+ *
+ * **No se postea inline en el request** (blueprint § 6.1): un fetch a tres APIs
+ * de terceros acá dejaría la publicación colgada de que las tres contesten, y
+ * Vercel corta el request mucho antes de que Meta se decida. Lo que sale de acá
+ * es un evento; el fan-out con reintentos e idempotencia lo hace la función
+ * durable de `src/lib/inngest/funciones/nota-publicada.ts`.
+ *
+ * **Un fallo al emitir el evento no hace fallar la publicación.** La nota ya
+ * está publicada y el sitio ya la muestra: convertir eso en un error haría que
+ * Charlie apretara "publicar" otra vez sobre algo que ya salió. Las redes son
+ * un efecto, no la publicación.
+ *
+ * Si la nota tiene el auto-posteo apagado no se emite nada: el evento
+ * dispararía una función que no tendría ninguna red que intentar.
+ */
+async function dispararPosteo(
+  id: string,
+  slug: string,
+  entrada: ReturnType<typeof esquemaNota.parse>,
+): Promise<void> {
+  if (redesAPostear(entrada).length === 0) return
+
+  try {
+    await inngest.send(notaPublicada.create({ notaId: id, slug }))
+  } catch {
+    // Queda el registro de que no salió en `social_posts`… que todavía no
+    // existe para esta nota, justamente porque el evento no llegó. Es la
+    // única pérdida silenciosa del pipeline y está acotada: se resuelve
+    // volviendo a publicar, o con el botón de reintentar del panel cuando
+    // exista (Step 18).
+  }
+}
+
+/**
  * Publica: guarda, sella la fecha y refresca el sitio.
  *
  * `publicada_en` lo pone el servidor y no el formulario: es la fecha que va a
@@ -142,12 +178,7 @@ export async function publicarNota(datos: unknown, id: string | null): Promise<R
 
   revalidarRutasPublicas(data.slug)
 
-  // ACÁ VA EL DISPARO A INNGEST: `nota/publicada`, y la función durable hace el
-  // fan-out a Facebook, Instagram y X con reintentos e idempotencia vía
-  // `social_posts` (blueprint § 6.1). Todavía no está cableado y **no se postea
-  // inline en el request**: un fetch a tres APIs acá dejaría la publicación
-  // colgada de que las tres respondan. Las redes elegidas salen de
-  // `redesAPostear()` en `src/lib/nota.ts`.
+  await dispararPosteo(data.id, data.slug, parseo.data)
 
   return { id: data.id, slug: data.slug }
 }

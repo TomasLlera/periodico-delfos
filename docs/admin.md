@@ -54,8 +54,13 @@ partido sin formación abre la planilla sin ninguna jugadora que tocar.
   offline cortando los datos a mitad de partido. El encargo dice que ése es el
   entregable de verdad: si pasa de tres minutos, iterar. Es lo único del panel
   que no se puede verificar desde esta máquina.
-- **Reintentar posteos fallidos** desde el panel, leyendo `social_posts`. Hoy
-  no hay nada que reintentar: Inngest no está cableado.
+- **La pantalla de posteos del panel** (Step 18): leer `social_posts` y poder
+  reintentar lo que falló. El pipeline ya escribe esa tabla —Inngest está
+  cableado en dry-run— pero no hay ninguna pantalla que la muestre, así que hoy
+  saber si un posteo salió es mirar la base a mano.
+- **Los clientes de Meta y X** (Steps 15 y 16). Bloqueados por afuera: el App
+  Review de Meta tarda días. `publicadorDe()` en `social/redes.ts` es el único
+  lugar que hay que tocar cuando lleguen.
 - **Una quita de puntos en la tabla.** Hoy `puntos` es derivado —se calcula con
   ganados y empatados— porque el CHECK `puntos_cuadran` de `0004` lo exige. El
   día que haga falta hay que tocar el CHECK **y** el `refine` de
@@ -93,6 +98,7 @@ partido sin formación abre la planilla sin ninguna jugadora que tocar.
 | Revalidación | `src/lib/revalidar.ts` | Qué rutas públicas caen con cada cambio |
 | Cola offline | `src/lib/cola.ts` · `cola-idb.ts` · `usarCola.ts` | La lógica con test, el IndexedDB y el hook |
 | Nodos del editor | `src/lib/tiptap/extensiones.tsx` | `imagen` y `planilla`, con los atributos que fija `esquema.ts` |
+| Auto-posteo | `src/lib/inngest/` · `src/lib/social/` | El fan-out durable, el copy y el registro en `social_posts` |
 
 **La lógica de cada entidad está partida en dos archivos a propósito.**
 `src/lib/partido.ts` es la de lectura —lados, minutos, agrupación de eventos— y

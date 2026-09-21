@@ -2811,3 +2811,79 @@ CRLF. Si un reemplazo "no hace nada", mirar eso antes que el patrón.
   único grande que queda del Build Order que no depende de credenciales de
   Meta ni de X: `compose.ts` y `limites.ts` ya están escritos y testeados, y el
   blueprint pide armarlo primero en modo dry-run.
+
+## Step 17: el auto-posteo, en modo dry-run
+
+> Rama `fase/19-nodos-del-editor`, misma sesión del 20/09. Es el último step
+> grande del Build Order que no depende de credenciales de afuera.
+
+**Publicar una nota ya dispara el pipeline entero.** `publicarNota()` emite
+`nota/publicada`, la función durable lee la nota, decide qué redes tocan,
+compone el copy y escribe `social_posts`. Lo único que no hace es publicar de
+verdad, porque los clientes de Meta y X son los Steps 15 y 16 y están
+bloqueados por el App Review.
+
+Eso es exactamente lo que pide el blueprint: *"probar local con
+`npx inngest-cli dev`, primero en modo dry-run"*.
+
+### Lo que hay que saber antes de tocarlo
+
+- **Inngest instalado es la 4, y el blueprint fue escrito contra la 3.** Los
+  eventos ya no se declaran con `new EventSchemas().fromRecord<…>()` sino con
+  `eventType(nombre, { schema })` y un esquema de Standard Schema —Zod 4 lo
+  cumple—, y `createFunction` recibe **dos** argumentos con los `triggers`
+  adentro de las opciones, no tres. Si un ejemplo de la documentación no
+  compila, mirar la versión antes que el código.
+- **La idempotencia no la da Inngest, la da `social_posts`.** Inngest reintenta
+  un paso que falló; sin el `unique (nota_id, platform)` cada reintento
+  publicaría otra vez. No invertir ese orden al leerlo: el UNIQUE es la
+  garantía, la cola es la comodidad.
+- **El registro se marca `processing` ANTES de llamar a la red.** Si se marcara
+  después, dos corridas simultáneas leerían las dos `pending` y postearían las
+  dos. Y si el registro no se puede escribir, **no se postea**: sin registro no
+  hay idempotencia, y postear igual es apostar a que no hay otra corrida.
+- **El dry-run no es un mock de test, es un modo de producción.** Escribe en
+  `social_posts` lo mismo que escribiría un posteo real, con un id
+  `simulado-…` que se reconoce a simple vista, y marca `success` con el mensaje
+  "Simulado: no se posteó de verdad". Se activa con `SOCIAL_DRY_RUN=true` **o**
+  con las credenciales faltando, que es el estado de hoy.
+- **Con las credenciales puestas y sin cliente escrito, avisa en vez de
+  simular.** Simular en silencio con las claves cargadas haría creer que se
+  publicó: quien las cargó espera que salga.
+- **Un fallo al emitir el evento no hace fallar la publicación.** La nota ya
+  está publicada; convertir eso en error haría que alguien apretara "publicar"
+  otra vez sobre algo que ya salió. Es la única pérdida silenciosa del
+  pipeline y está anotada en el código.
+- **`registrarSalteo()` no pisa un posteo que ya salió.** Un upsert pelado
+  convertiría en `failed` la fila `success` de una nota que se republica con
+  las credenciales caídas, o sea mentiría sobre algo publicado en Facebook.
+- **La nota se lee con la service role** (`getNotaParaPostear`), no con
+  `getNotaPorId`: adentro de la función durable no hay usuario, y con el
+  cliente de request la consulta correría como anónima. Hoy alcanzaría —sólo
+  llegan notas publicadas— pero por coincidencia, no por diseño.
+
+### Cómo probarlo
+
+```
+npx inngest-cli dev          # terminal aparte
+pnpm dev
+```
+
+Publicar una nota desde `/admin/notas/nueva` con el auto-posteo prendido, y
+mirar la corrida en `http://localhost:8288`. Tienen que quedar tres filas en
+`social_posts` con ids `simulado-…`.
+
+### Lo que falta
+
+- **Nada de esto se corrió todavía**, ni con `inngest-cli dev`. `tsc --noEmit`
+  limpio, 585 tests en 37 archivos y `next build` exit 0 con la ruta
+  `/api/inngest` registrada, pero el pipeline no se vio andar ni una vez.
+- **No hay pantalla que muestre `social_posts`** (Step 18). El pipeline escribe
+  esa tabla y hoy saber si un posteo salió es mirar la base a mano.
+- **El copy no usa el partido todavía.** `componerCopy()` acepta un
+  `PartidoCompleto` opcional para nombrar a las goleadoras y la función le pasa
+  `null`. `partidoDeLaNota()` está escrita al pie del archivo, sin usar, para
+  cuando el copy pase a importar de verdad.
+- **Los clientes de Meta y X** siguen bloqueados. Cuando lleguen las
+  credenciales, el único archivo a tocar es `publicadorDe()` en
+  `src/lib/social/redes.ts`: una línea por red.
