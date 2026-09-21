@@ -2922,3 +2922,65 @@ si una nota había salido era abrir la base a mano.
 - **El reintento es por nota, no por red.** Es deliberado —la función durable
   decide sola cuáles tocan— pero si alguna vez hace falta reintentar una sola,
   el lugar es agregar la red al evento y filtrarla en `planDeFanout()`.
+
+## Step 20: la suite de Playwright
+
+> Rama `fase/19-nodos-del-editor`, misma sesión del 20/09. Cierra la parte de
+> navegador del Step 20; las auditorías de SEO y performance siguen sin hacer.
+
+**`pnpm test:e2e`**: 168 tests, 4 combinaciones (375 y 1280 px × claro y
+oscuro). Los dos scripts sueltos de `e2e/borradores/` —que se escribían a mano,
+se corrían y se tiraban— quedaron convertidos a specs y borrados; están en el
+historial de git si alguna vez hacen falta.
+
+Resultado de la primera corrida completa: **160 pasan, 8 skipped, 0 fallos**.
+
+### Las cuatro trampas que costaron la sesión
+
+Están todas anotadas adentro de los archivos, pero conviene tenerlas juntas:
+
+1. **`next dev` y `next build` comparten `.next`.** Con el dev server abierto,
+   `next start` encuentra artefactos de desarrollo y responde **404 en todas
+   las rutas**. El síntoma es "Timed out waiting from config.webServer" y no se
+   parece en nada a la causa. Por eso el config acepta `E2E_BASE_URL`, para
+   correr contra un servidor que ya esté levantado.
+2. **Nada de `waitUntil: 'networkidle'`.** Los borradores lo usaban; en un build
+   de producción varias rutas nunca se quedan quietas y `goto` se cuelga los 30
+   segundos del timeout. Con eso, quince tests fallaban por una razón que no
+   era el código. `load` alcanza.
+3. **El error de consola no trae la URL en el texto**, está en `location()`.
+   El encargo lo avisaba y el spec cayó igual: filtrando por texto daban diez
+   errores idénticos en **todas** las rutas, hasta en una sin una sola imagen.
+4. **Dos servidores en el mismo puerto sirven HTML de un build y estáticos de
+   otro**, y eso aparece como un 400 en cada `.js` y cada `.css`. Si los
+   estáticos dan 400, mirar cuántos procesos hay en el puerto antes que el
+   código.
+
+### Los dos tipos de marcador, y por qué son dos
+
+- **`test.fail()`** para lo determinista: los `h1` que faltan en `/`,
+  `/cronicas`, `/analisis` y `/quienes-somos`. Mientras el bug exista la suite
+  queda verde, y **el día que alguien lo arregle el test pasa a fallar** con
+  "esperaba fallar y pasó", que es el recordatorio de venir a sacar el
+  marcador. Ya funcionó una vez: la lista venía del encargo con `/buscar`
+  adentro, y el propio marcador avisó que con datos cargados esa ruta sí tiene
+  su titular.
+- **`test.fixme()`** para lo intermitente: los errores de consola de
+  `/demo/nota` y `/demo/articulo` dependen de si la imagen rota alcanza a
+  fallar antes del `load`. Marcados como `fail`, la suite se ponía roja una
+  corrida de cada tres por un bug ya conocido, y un test que falla a veces
+  enseña a ignorar los rojos.
+
+### Lo que falta
+
+- **Las auditorías del Step 20 propiamente dichas**: SEO, accesibilidad
+  (contraste AA, foco visible, jerarquía de encabezados) y performance
+  (LCP < 2.5s en 4G simulado). La suite mide scroll horizontal, `h1` y errores
+  de consola; no mide ninguna de esas tres.
+- **Ninguna pantalla del panel está cubierta.** La suite recorre el sitio
+  público; `/admin` necesita sesión, y montar un login en Playwright es un
+  encargo propio. Es lo que más falta, porque todo lo del Step 12 al 18 se
+  construyó esta sesión y no se probó en un navegador ni una vez.
+- **`/quienes-somos` sigue sin `<h1>`.** Es un bug de verdad, de la rama
+  `fix/accesibilidad-y-pie`, y ahora hay un test que lo va a avisar cuando se
+  arregle.
