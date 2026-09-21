@@ -3083,3 +3083,85 @@ que es imposible —el layout raíz pone los dos—. Era **ruido de compilación
 el dev server compila la ruta al pedirla y axe analizó un documento
 intermedio. Desapareció en la segunda corrida. Si aparece una violación que no
 tiene sentido, correrla de nuevo antes de buscarla en el código.
+
+## Prompt para la próxima sesión — al 21/09/2026
+
+> **Éste es el vigente.** El bloque de más arriba con el mismo nombre quedó al
+> 18/09 y está viejo: dice que no hay Supabase y que hay tres ramas en
+> paralelo. Las dos cosas cambiaron.
+
+````
+Estoy construyendo Periódico Delfos, un medio digital de Mar del Plata dedicado al
+fútbol femenino de Aldosivi (las "Tiburonas"). Lo escribe una sola persona, Charlie
+Redondo. Es una migración desde WordPress.
+
+El proyecto está en `periodico-delfos/`. Next 15 App Router + TypeScript strict +
+Tailwind v4 + Supabase + TipTap + Inngest.
+
+El plan está en `periodico-delfos-blueprint-v2.md` —el Build Order es la sección 10— y
+el estado real en `HANDOFF.md`. **Leé primero las dos últimas secciones del HANDOFF**,
+que son las de la sesión del 20/09; más arriba en ese mismo archivo hay partes viejas.
+`CLAUDE.md` tiene las reglas no negociables y el sistema de diseño. El mapa del panel
+está en `docs/admin.md` y se actualiza en el mismo commit que agrega una pantalla.
+
+DÓNDE ESTAMOS: rama `fase/19-nodos-del-editor`, que encadena once commits de la sesión
+del 20/09. Los Steps 12, 13, 17, 18 y 19 están cerrados y el 20 a medias. Nada está
+mergeado a `main`, que quedó bastante atrás.
+
+ENTORNO — leer esto antes de tocar nada:
+- **Supabase está arriba y `.env.local` existe.** Hay datos reales: la temporada
+  Primera B 2026, el plantel y el partido de la fecha 4 contra Claypole.
+- **Varios archivos del repo están en CRLF y otros en LF.** Un script que busca y
+  reemplaza un bloque de varias líneas con `\n` **falla en silencio** contra un archivo
+  CRLF: no tira, no cambia nada, y el error aparece mucho después. Si un reemplazo "no
+  hace nada", mirá eso antes que el patrón.
+- **`next dev` y `next build` comparten `.next`.** Con el dev server abierto,
+  `next start` responde 404 en todas las rutas y la suite e2e falla entera con un
+  mensaje que no se parece a la causa. O se apaga el dev y se rebuildea, o se corre
+  `E2E_BASE_URL=http://localhost:3000 pnpm test:e2e`.
+- `pnpm lint` falla de fábrica: `eslint.config.mjs` quedó de un scaffolding de Next 16.
+  No afecta al build. No lo arregles sin leer "Pendiente manual" en el HANDOFF.
+- Hoy pasan `npx tsc --noEmit`, **597 tests de vitest en 36 archivos** y `next build`
+  exit 0. La suite de navegador da 160 pasan / 8 skipped / 0 fallos. Mantenelos verdes.
+
+LO QUE FALTA, EN ORDEN DE IMPORTANCIA:
+
+1. PROBAR EL PANEL CONTRA LA BASE, A MANO. Es lo más importante y no lo puede hacer un
+   agente solo. Los Steps 12, 17, 18 y 19 se construyeron en una sola sesión y **no se
+   abrieron en un navegador ni una vez**. El entregable del Step 12 según el blueprint
+   es "cargar la temporada 2026 completa desde el panel". El orden de carga está en
+   `docs/admin.md`: temporada → equipos → jugadoras → plantel → partido → formación →
+   planilla. Lo que salga mal, arreglarlo.
+
+2. LA SUITE DEL PANEL NO SE CORRIÓ NUNCA. `e2e/admin.spec.ts` tiene doce tests y hace
+   falta un usuario de prueba con **fila en `autores`** —no alcanza con existir en
+   Supabase Auth— y cargar `E2E_ADMIN_EMAIL` y `E2E_ADMIN_PASSWORD`. Sin eso los doce
+   ni se arman.
+
+3. LO QUE FALTA DEL STEP 20: la auditoría de SEO y la de performance (LCP < 2.5s en 4G
+   simulado). La de accesibilidad ya está automatizada con axe en
+   `e2e/accesibilidad.spec.ts`, 48 tests en verde, y encontró dos bugs reales. Ojo:
+   axe cubre cerca de la mitad de los problemas; el alt que dice "imagen1" y el orden
+   de tabulación hay que mirarlos a mano.
+
+4. LA PLANILLA EN UN CELULAR REAL, CRONOMETRADA. Es el entregable del Step 13 según su
+   encargo (`docs/encargos/planilla-de-carga.md`): si cargar un partido pasa de tres
+   minutos, iterar antes de seguir. Probar también la cola offline cortando los datos a
+   mitad de carga.
+
+BLOQUEADO POR AFUERA, no insistir: los Steps 15 y 16 (Meta y X) esperan el App Review
+de Meta y las credenciales del Developer Portal de X. El pipeline entero ya funciona en
+modo dry-run y el único archivo a tocar cuando lleguen es `publicadorDe()` en
+`src/lib/social/redes.ts`, una línea por red.
+
+CÓMO TRABAJAR ACÁ:
+- Lógica pura en `src/lib/` con tests de vitest; componentes que reciben todo por props.
+- Las queries en `src/lib/supabase/queries/*`, nunca un `.from()` adentro de un
+  componente. Los Server Actions en `src/actions/*`, uno por entidad.
+- Un componente por archivo, máximo 300 líneas.
+- Todo en español, incluidos los nombres de funciones y variables.
+- Los comentarios explican **por qué**, no qué. Mirá cualquier archivo de
+  `src/lib/entidades/` para el tono.
+- Verificar con `npx tsc --noEmit`, `npx vitest run` y `npx next build` antes de decir
+  que algo está hecho.
+````
