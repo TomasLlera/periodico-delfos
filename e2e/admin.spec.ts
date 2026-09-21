@@ -64,13 +64,17 @@ test.describe('los formularios validan antes de escribir', () => {
   test('un equipo no puede jugar contra sí mismo', async ({ page }) => {
     await page.goto('/admin/partidos/nuevo', { waitUntil: 'load' })
 
-    const local = page.getByLabel('Local')
+    // `exact: true` en los tres: por omisión `getByLabel` matchea por
+    // substring y "Local" también es parte de "Goles del local", así que el
+    // locator resuelve a dos elementos y Playwright corta por modo estricto.
+    // Vale para todo formulario de partido, que tiene las dos parejas.
+    const local = page.getByLabel('Local', { exact: true })
     const opciones = await local.locator('option').all()
     test.skip(opciones.length < 2, 'La base no tiene equipos cargados todavía.')
 
     const uno = (await opciones[1].getAttribute('value')) as string
     await local.selectOption(uno)
-    await page.getByLabel('Visitante').selectOption(uno)
+    await page.getByLabel('Visitante', { exact: true }).selectOption(uno)
 
     await page.getByRole('button', { name: 'Crear el partido' }).click()
 
@@ -80,14 +84,16 @@ test.describe('los formularios validan antes de escribir', () => {
   test('un partido finalizado necesita el resultado', async ({ page }) => {
     await page.goto('/admin/partidos/nuevo', { waitUntil: 'load' })
 
-    const opciones = await page.getByLabel('Local').locator('option').all()
+    const opciones = await page.getByLabel('Local', { exact: true }).locator('option').all()
     test.skip(opciones.length < 3, 'La base necesita al menos dos equipos.')
 
-    await page.getByLabel('Local').selectOption((await opciones[1].getAttribute('value')) as string)
     await page
-      .getByLabel('Visitante')
+      .getByLabel('Local', { exact: true })
+      .selectOption((await opciones[1].getAttribute('value')) as string)
+    await page
+      .getByLabel('Visitante', { exact: true })
       .selectOption((await opciones[2].getAttribute('value')) as string)
-    await page.getByLabel('Estado').selectOption('finalizado')
+    await page.getByLabel('Estado', { exact: true }).selectOption('finalizado')
 
     await page.getByRole('button', { name: 'Crear el partido' }).click()
 

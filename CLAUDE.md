@@ -23,6 +23,8 @@ objetivo del blueprint, no necesariamente lo que hay hoy en `src/`.
 - `pnpm test:watch` — Vitest en modo watch
 - `npx vitest run ruta/al/archivo.test.ts` — Un solo archivo de test
 - `npx inngest-cli dev` — Auto-posting local (terminal aparte)
+- `pnpm test:e2e` — Suite de navegador. Los tests del panel necesitan el
+  usuario de prueba: `pnpm tsx scripts/usuario-e2e.ts --crear` una vez.
 - `pnpm dlx supabase db push` — Aplicar migraciones
 - `pnpm dlx supabase gen types typescript --project-id <id> > src/lib/supabase/types.ts`
 
@@ -48,7 +50,7 @@ Next.js 15 (App Router) + TypeScript strict + Tailwind v4 + shadcn/ui + Supabase
   temporada.ts, plantel.ts, jugadora.ts, busqueda.ts, paginacion.ts
 - `src/actions/` — Server Actions (publicar, eventos)
 - `supabase/migrations/` — Schema completo, 0001–0009
-- `scripts/` — migrate-wp.ts, generate-redirects.ts
+- `scripts/` — migrate-wp.ts, generate-redirects.ts, usuario-e2e.ts
 
 ### Data Flow
 
