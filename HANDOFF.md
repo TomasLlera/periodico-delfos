@@ -3196,42 +3196,58 @@ entrar, y si los datos estructurados pasan el validador de Google, que exige su
 propio servicio. `NewsArticle` y `SportsEvent` se emiten y están testeados en
 vitest, pero nadie los pasó por el validador todavía.
 
-## La medición de LCP, escrita y sin correr
+## La medición de LCP, y dos formas de medir mal
 
-> Rama `fase/19-nodos-del-editor`, sesión del 21/09. Es el tercer ítem del
-> Step 20 y queda a medio cerrar.
+> Rama `fase/19-nodos-del-editor`, sesión del 21/09. Cierra el tercer ítem del
+> Step 20, y con él el step entero.
 
 `e2e/rendimiento.spec.ts` estrangula la red con el perfil que Lighthouse llama
-Slow 4G —1,6 Mbps de bajada, 150 ms de ida y vuelta—, apaga el cache y exige el
-umbral de Core Web Vitals: **LCP por debajo de 2500 ms**, a 375 px. Mide la
-portada, un listado y el partido más reciente que haya en el sitemap.
+Slow 4G —1,6 Mbps de bajada, 750 kbps de subida, 150 ms de ida y vuelta—, apaga
+el cache y exige el umbral de Core Web Vitals: **LCP por debajo de 2500 ms**, a
+375 px. Mide la portada, un listado y el partido más reciente que haya en el
+sitemap.
 
-**No estrangula el procesador**, aunque Lighthouse además lo frene 4×. El
+**Los números, contra el build del 21/09:**
+
+| Ruta | LCP | Qué pintó |
+| --- | --- | --- |
+| `/` | 672 ms | el párrafo del estado vacío |
+| `/cronicas` | 556 ms | la bajada del listado |
+| `/partido/fecha-4-…` | 572 ms | la marca de la cabecera |
+
+Sobra margen, pero **el sitio está casi vacío**: `notas` tiene 0 filas, así que
+en las tres el LCP es texto. Cuando entren las 70 notas de la migración el
+elemento va a pasar a ser una foto y el número va a subir; por eso la medición
+informa qué elemento fue, y no sólo cuántos milisegundos.
+
+### Las dos formas de medir mal, que la primera corrida hizo las dos
+
+Las dos daban rojo o casi, y ninguna era del sitio.
+
+- **Tres mediciones en paralelo compiten entre sí.** Comparten el mismo
+  `next start` y la misma máquina: la portada daba 3264 ms en paralelo y 1800
+  de a una. El proyecto va con `fullyParallel: false`, que acá no es
+  preferencia sino condición para que el número signifique algo.
+- **La primera navegación de un navegador recién abierto cuesta un segundo y
+  medio de más.** Es el arranque del proceso y la primera conexión, no la
+  página: daba igual qué ruta tocara primera —`/cronicas` sola dio 2224 ms y
+  segunda, 728—. O sea que el primer test medía Edge. Ahora hay una carga de
+  calentamiento que no se mide, y que además es lo más parecido a la verdad:
+  quien entra al sitio ya tiene el navegador abierto. **El cache se sigue
+  apagando**, que es lo que mantiene la medición en "primera visita".
+
+Si alguna vez un número de éstos se dispara, mirar primero estas dos cosas.
+
+### Qué se estrangula, y qué no
+
+**No se estrangula el procesador**, aunque Lighthouse además lo frene 4×. El
 encargo pide 4G, y ese factor depende de qué tan rápida sea la máquina que
 corre la suite: el mismo código daría verde en una y rojo en otra. Medir el
-celular de verdad sigue siendo el ítem 4 de los pendientes y no lo reemplaza un
-emulador.
+celular de verdad sigue siendo un ítem aparte y no lo reemplaza un emulador.
 
-**Contra `next dev` se saltea con el motivo escrito** en lugar de dar números
-tres veces peores que no significan nada. El marcador es el cache-buster que el
-dev server le cuelga a sus chunks (`main-app.js?v=`), que el build no tiene.
-
-### Lo que falta
-
-Correrlo. `next dev` y `next build` comparten `.next` y el dev server estaba
-abierto toda la sesión, así que **no se corrió una sola vez contra el build, ni
-se verificó `next build`** después de los cambios de SEO. Es lo primero de la
-próxima sesión:
-
-```
-# con el dev server apagado
-pnpm build && npx playwright test --project=rendimiento
-```
-
-Para tener una referencia de cuánto es "lento" en dev, medido con curl contra
-`next dev` el 21/09: la primera visita a una ruta tarda entre 1,4 y 6,6 s
-—compilación— y la segunda entre 0,30 y 0,47 s. Ninguno de los dos números
-dice nada sobre producción.
+**Contra `next dev` la suite se saltea entera** con el motivo escrito, en lugar
+de dar números tres veces peores. El marcador es el cache-buster que el dev
+server le cuelga a sus chunks (`main-app.js?v=`), que el build no tiene.
 
 ## Lo que se miró a mano de accesibilidad
 
@@ -3276,10 +3292,10 @@ archivo hay partes viejas. `CLAUDE.md` tiene las reglas no negociables y el sist
 diseño. El mapa del panel está en `docs/admin.md` y se actualiza en el mismo commit que
 agrega una pantalla.
 
-DÓNDE ESTAMOS: rama `fase/19-nodos-del-editor`, que encadena catorce commits. Los Steps
-12, 13, 17, 18 y 19 están cerrados; del 20 quedan cerrados accesibilidad y SEO, y falta
-correr la medición de performance. Nada está mergeado a `main`, que quedó bastante
-atrás.
+DÓNDE ESTAMOS: rama `fase/19-nodos-del-editor`, que encadena dieciséis commits. Los
+Steps 12, 13, 17, 18, 19 y **20 están cerrados**: las tres auditorías del 20
+—accesibilidad, SEO y performance— están automatizadas y en verde. Nada está mergeado a
+`main`, que quedó bastante atrás.
 
 ENTORNO — leer esto antes de tocar nada:
 - **Supabase está arriba y `.env.local` existe.** Hay datos reales: dos temporadas, 10
@@ -3301,42 +3317,39 @@ ENTORNO — leer esto antes de tocar nada:
   rutas a la vez, no el código. Contra `next start` no pasa.
 - `pnpm lint` falla de fábrica: `eslint.config.mjs` quedó de un scaffolding de Next 16.
   No afecta al build. No lo arregles sin leer "Pendiente manual" en el HANDOFF.
-- Al 21/09 pasan `npx tsc --noEmit` y **603 tests de vitest en 36 archivos**. De la
-  suite de navegador se corrieron esta sesión el panel (13/13) y SEO (16/16).
-  Mantenelos verdes.
+- Al 21/09 pasan `npx tsc --noEmit`, **603 tests de vitest en 36 archivos**,
+  `next build` exit 0 y la suite de navegador entera contra el build: **240 pasan, 8
+  skipped, 0 fallos**. Mantenelos verdes.
 
 LO QUE FALTA, EN ORDEN DE IMPORTANCIA:
 
-1. VERIFICAR EL BUILD Y MEDIR. Es lo único que quedó bloqueado por tener el dev server
-   abierto toda la sesión, y son dos comandos:
+1. PROBAR EL PANEL CONTRA LA BASE, A MANO. Es lo más importante y no lo puede hacer un
+   agente solo. Los Steps 12, 17, 18 y 19 **no se abrieron en un navegador ni una
+   vez**. Que la suite del panel esté verde dice que las pantallas abren y que los
+   formularios validan, no que cargar una temporada entera funcione: la suite no crea
+   ni borra datos a propósito. El entregable del Step 12 según el blueprint es "cargar
+   la temporada 2026 completa desde el panel". El orden de carga está en
+   `docs/admin.md`: temporada → equipos → jugadoras → plantel → partido → formación →
+   planilla. Lo que salga mal, arreglarlo.
 
-       pnpm build                                    # no se corrió después del SEO
-       npx playwright test --project=rendimiento     # LCP < 2,5 s en 4G
-
-   La suite de rendimiento existe y se saltea sola contra `next dev`. Con el build
-   hecho, correr además la suite entera —`pnpm test:e2e`— que con los proyectos nuevos
-   son 13 del panel + 16 de SEO + 3 de rendimiento + los 168 públicos.
-
-2. PROBAR EL PANEL CONTRA LA BASE, A MANO. Sigue siendo lo más importante y no lo puede
-   hacer un agente solo. Los Steps 12, 17, 18 y 19 **no se abrieron en un navegador ni
-   una vez**. Que la suite del panel esté verde dice que las pantallas abren y validan,
-   no que cargar una temporada entera funcione. El entregable del Step 12 según el
-   blueprint es "cargar la temporada 2026 completa desde el panel". El orden de carga
-   está en `docs/admin.md`: temporada → equipos → jugadoras → plantel → partido →
-   formación → planilla. Lo que salga mal, arreglarlo.
-
-3. LA PLANILLA EN UN CELULAR REAL, CRONOMETRADA. Es el entregable del Step 13 según su
+2. LA PLANILLA EN UN CELULAR REAL, CRONOMETRADA. Es el entregable del Step 13 según su
    encargo (`docs/encargos/planilla-de-carga.md`): si cargar un partido pasa de tres
    minutos, iterar antes de seguir. Probar también la cola offline cortando los datos a
    mitad de carga.
 
-4. LO QUE LAS AUDITORÍAS NO CUBREN. Las tres del Step 20 están automatizadas, pero:
+3. LO QUE LAS AUDITORÍAS NO CUBREN. Las tres del Step 20 están automatizadas, pero:
    - el orden de tabulación hay que recorrerlo con el teclado (no hay ningún `tabIndex`
      positivo, así que es el orden del DOM: falta ver que coincida con el visual);
    - los `alt` de las notas se revisan cuando entren las 70 de la migración, porque hoy
      `notas` está vacía y el control es de largo, no de calidad;
    - `NewsArticle` y `SportsEvent` no pasaron por el validador de datos estructurados
-     de Google, que exige su propio servicio.
+     de Google, que exige su propio servicio;
+   - el LCP se midió con el sitio casi vacío, así que en las tres rutas el elemento que
+     pinta es texto. Cuando entren las notas con foto hay que volver a medir:
+     `npx playwright test --project=rendimiento` imprime el número y qué elemento fue.
+
+4. EL MERGE. Son dieciséis commits en una rama que ya vive más de lo que `CONTRIBUTING.md`
+   considera sano. Nada de esto está en `main`.
 
 BLOQUEADO POR AFUERA, no insistir: los Steps 15 y 16 (Meta y X) esperan el App Review
 de Meta y las credenciales del Developer Portal de X. El pipeline entero ya funciona en
