@@ -99,3 +99,30 @@ export async function getSlugsJugadoras(): Promise<{ slug: string }[]> {
   const { data } = await supabase.from('jugadoras').select('slug')
   return data ?? []
 }
+
+/**
+ * Todas las jugadoras, activas e inactivas, para el listado del panel.
+ *
+ * Las inactivas **también** vienen: son las que se fueron del club, siguen
+ * teniendo goles en las planillas viejas y hay que poder encontrarlas para
+ * corregirles un dato o reactivarlas. El listado las separa; la base no.
+ *
+ * Por apellido, que es como se busca un nombre en una lista de treinta.
+ */
+export async function getJugadoras(): Promise<Jugadora[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('jugadoras')
+    .select('*')
+    .order('apellido', { ascending: true })
+    .order('nombre', { ascending: true })
+
+  return data ?? []
+}
+
+export async function getJugadoraPorId(id: string): Promise<Jugadora | null> {
+  const supabase = await createClient()
+  const { data } = await supabase.from('jugadoras').select('*').eq('id', id).maybeSingle()
+
+  return data
+}

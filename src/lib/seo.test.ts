@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { jsonLdNota, jsonLdPartido, urlDeNota, urlOg } from '@/lib/seo'
+import { jsonLdNota, jsonLdPartido, openGraphBase, urlDeNota, urlOg } from '@/lib/seo'
 import type { Autor, NotaConRelaciones } from '@/types'
 
 const AUTOR: Autor = {
@@ -190,5 +190,71 @@ describe('jsonLdPartido', () => {
   it('omite el logo del equipo cuando no hay escudo', () => {
     const ld = jsonLdPartido(partido(), 'https://x.com')
     expect(ld.homeTeam).not.toHaveProperty('logo')
+  })
+})
+
+describe('openGraphBase', () => {
+  const SITIO = 'https://periodicodelfos.com'
+
+  it('siempre emite el nombre del sitio y el locale', () => {
+    // Es la razón de existir del helper: una página que define `openGraph`
+    // pisa el del layout raíz entero, así que los dos se pierden si no los
+    // repone cada página.
+    const og = openGraphBase({ titulo: 'Crónicas' }, SITIO)
+
+    expect(og.siteName).toBe('Periódico Delfos')
+    expect(og.locale).toBe('es_AR')
+  })
+
+  it('cae en la imagen generada cuando no hay foto propia', () => {
+    const og = openGraphBase({ titulo: 'Primera B 2026', volanta: 'Temporada' }, SITIO)
+
+    expect(og.images[0]?.url).toBe(
+      'https://periodicodelfos.com/api/og?titulo=Primera+B+2026&volanta=Temporada',
+    )
+    // El alt de la imagen generada es el título, que es literalmente lo que
+    // la imagen dice.
+    expect(og.images[0]?.alt).toBe('Primera B 2026')
+  })
+
+  it('usa la foto propia y su alt cuando los hay', () => {
+    const og = openGraphBase(
+      {
+        titulo: 'Luna Vera',
+        imagen: 'https://proyecto.supabase.co/storage/v1/object/public/media/luna.jpg',
+        alt: 'Foto de Luna Vera',
+      },
+      SITIO,
+    )
+
+    expect(og.images[0]?.url).toBe(
+      'https://proyecto.supabase.co/storage/v1/object/public/media/luna.jpg',
+    )
+    expect(og.images[0]?.alt).toBe('Foto de Luna Vera')
+  })
+
+  it('ignora la volanta cuando hay foto propia', () => {
+    // La volanta es un parámetro de la imagen generada y no hay dónde pintarla
+    // sobre una foto.
+    const og = openGraphBase(
+      { titulo: 'Luna Vera', volanta: 'Plantel', imagen: 'https://ejemplo.com/luna.jpg' },
+      SITIO,
+    )
+
+    expect(og.images[0]?.url).toBe('https://ejemplo.com/luna.jpg')
+  })
+
+  it('cae en el título como alt si la foto vino sin alt', () => {
+    const og = openGraphBase({ titulo: 'Luna Vera', imagen: 'https://ejemplo.com/luna.jpg' }, SITIO)
+
+    expect(og.images[0]?.alt).toBe('Luna Vera')
+  })
+
+  it('no emite description cuando no hay bajada', () => {
+    // `description: null` en la metadata de Next emite la etiqueta vacía, que
+    // es peor que no emitirla.
+    expect(openGraphBase({ titulo: 'Buscar', descripcion: null }, SITIO).description).toBe(
+      undefined,
+    )
   })
 })

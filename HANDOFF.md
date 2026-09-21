@@ -1775,3 +1775,1595 @@ o se escriben, o se sacan los links del pie hasta que existan.
 Con credenciales se desbloquean, en orden: Step 5 (auth + shell del admin),
 Step 6 (correr la migración con `--escribir`), Step 7 (editor de notas) y el
 resto del Build Order.
+
+---
+
+## Arrancar el backend: lo que quedó hecho y lo que falta
+
+> Rama `fase/backend-supabase`, salida de `main`. Sección escrita el 20/09/2026.
+> **No edita nada de arriba.** Es el avance sobre "Arrancar el backend": los
+> pasos 1 a 6 y el 10 están hechos; faltan el 7, el 8 y el 11.
+
+**El proyecto de Supabase existe y el schema está aplicado.** El sitio dejó de
+ser una cáscara sin base: hoy hay once tablas vacías esperando datos.
+
+```
+Proyecto   Periodico-Delfos
+ref        kftenasaixqugovknopm
+región     sa-east-1 (São Paulo) — la que pedía el plan
+Postgres   17
+estado     ACTIVE_HEALTHY, linkeado
+```
+
+### Hecho
+
+| Paso | Qué | Cómo se verificó |
+|---|---|---|
+| 1-2 | Proyecto creado, claves copiadas | `supabase projects list` |
+| 3 | `.env.local` con las tres claves | las tres cargadas |
+| 4 | Usuario de Auth de Charlie | UUID `780bfef5-2987-4e4f-af2d-c6f6d5bf6a21` |
+| — | `supabase login` + `link` | `linked: true` |
+| 5 | **Las nueve migraciones aplicadas** | 11 tablas + 3 vistas + `es_autor()` |
+| 6 | `supabase/seed.sql` escrito | **correrlo/verificarlo — ver abajo** |
+| 10 | **`src/lib/supabase/types.ts` regenerado** | 846 líneas, `tsc --noEmit` limpio |
+
+`gen types` confirmó el schema entero: `autores`, `equipos`, `eventos`,
+`formaciones`, `jugadoras`, `notas`, `partidos`, `plantel`, `social_posts`,
+`tabla_posiciones`, `temporadas`, más las vistas `buscar_notas`,
+`estadisticas_jugadora` y `goleadoras`.
+
+### El seed, que es lo primero a confirmar
+
+`supabase/seed.sql` tiene los catálogos que ninguna migración trae: la fila de
+`autores` —con el UUID ya puesto—, las dos temporadas y los diez equipos de la
+Zona B con nombres y ciudades reales. Es idempotente (`on conflict do update`) y
+va dentro de una transacción.
+
+**`supabase db push` no lo aplica**: sólo mira `migrations/`. Va a mano, pegado
+en el SQL Editor del dashboard. Al final del archivo está la query de
+verificación; tiene que dar:
+
+```
+autores              1
+temporada activa     primera-b-2026
+equipos / aldosivi   10 / 1
+```
+
+**No quedó confirmado si se corrió.** El chequeo por REST falló por un bug del
+script de verificación —`.env.local` tiene saltos de línea CRLF y al sourcearlo
+en bash la clave se lleva un `\r` pegado, así que el header salía vacío y la API
+respondía `No API key found`—. **No es un problema de la clave.** Si hay que
+volver a chequear desde bash, limpiar el `\r`: `tr -d '\r'`.
+
+Los dos índices únicos parciales que el seed respeta, y que rompen los conteos
+si se cargan a mano:
+
+- `temporadas_una_activa_idx` — una sola temporada con `activa = true`.
+- `equipos_un_aldosivi_idx` — un solo equipo con `es_aldosivi = true`.
+
+### Lo que falta
+
+| Paso | Qué | Bloqueado por |
+|---|---|---|
+| 7 | Migración **en seco**: `pnpm tsx scripts/migrate-wp.ts` → `.migracion-wp/informe.md` | nada |
+| 8 | Completar a mano `alt.json` (109 textos) y `bajadas.json` (43) | sólo el autor |
+| 9 | `migrate-wp.ts --escribir`: sube imágenes al bucket y hace upsert de las 70 notas | el paso 8 |
+| 11 | `pnpm tsx scripts/generate-redirects.ts` → las 82 reglas en `vercel.json` | el paso 7 |
+
+El paso 8 es incremental: el script es idempotente por slug, así que se puede
+completar de a tandas y volver a correr sin duplicar nada.
+
+### La trampa que ahora sí se puede probar
+
+Estaba anotada desde el Step 14 y **todavía no se probó**: `/nota/[slug]`,
+`/partido/[slug]`, `/plantel/[temporadaSlug]` y `/jugadora/[slug]` declaran
+`generateStaticParams` pero sus queries usan `createClient()`, que pide
+`cookies()`. Hasta ahora no se notaba porque sin base `generateStaticParams`
+devolvía `[]`. **Con el proyecto arriba, `next build` puede cortar con "Dynamic
+server usage".** El arreglo existe —`createStaticClient()`, el cliente sin
+cookies que ya usan el sitemap y las tres queries de slugs— pero hay que
+probarlo, no darlo por sentado.
+
+**Lo que todavía no se corrió con la base arriba**: `npx vitest run` y
+`npx next build`. `tsc --noEmit` sí, y pasa.
+
+### Seguridad, para cerrar
+
+Durante el setup se pegaron credenciales en un chat. **Confirmar que la
+`service_role` y la contraseña de la base que están en uso son las rotadas**, no
+las originales. `.env.local` está tapado por `.gitignore` (`.env*`) y se verificó
+con `git check-ignore`.
+
+### Prompt para la próxima sesión
+
+````
+Seguimos con Periódico Delfos, en `periodico-delfos/`. Next 15 App Router +
+TypeScript strict + Tailwind v4 + Supabase. Leé `HANDOFF.md` empezando por la
+sección "Arrancar el backend: lo que quedó hecho y lo que falta", que es la
+última del archivo: más arriba hay partes viejas. `CLAUDE.md` tiene las reglas
+no negociables.
+
+Rama: `fase/backend-supabase`. Somos tres en paralelo; no toques `src/app/admin/`
+ni `src/components/admin/` (rama 13), ni `e2e/` ni `playwright.config.ts`
+(rama 20), ni `/quienes-somos`, `Footer.tsx` o el contorno de foco de
+`globals.css` (rama de accesibilidad). Escribí en `HANDOFF.md` sólo en una
+sección nueva al final.
+
+**Ahora SÍ hay Supabase**: proyecto `kftenasaixqugovknopm` en sa-east-1, las
+nueve migraciones aplicadas, `.env.local` con las tres claves y
+`src/lib/supabase/types.ts` regenerado. Las tablas existen y están vacías.
+
+TAREA, en orden:
+
+1. **Confirmar el seed.** Correr la query de verificación del final de
+   `supabase/seed.sql` en el SQL Editor. Tiene que dar 1 autor,
+   `primera-b-2026` activa y 10/1 equipos. Si no, pegar el archivo entero y
+   correrlo: es idempotente.
+
+2. **Probar la trampa de `generateStaticParams`.** Correr `npx next build` con
+   la base arriba. Si corta con "Dynamic server usage", cambiar a
+   `createStaticClient()` las queries de `/nota/[slug]`, `/partido/[slug]`,
+   `/plantel/[temporadaSlug]` y `/jugadora/[slug]`.
+
+3. **Paso 7**: `pnpm tsx scripts/migrate-wp.ts` (en seco) y leer
+   `.migracion-wp/informe.md`. La corrida contra el sitio real ya dio limpia
+   antes: 70 notas, 0 categorías sin mapear, 82 reglas de redirección.
+
+4. **Paso 11**: `pnpm tsx scripts/generate-redirects.ts` y confirmar que
+   `vercel.json` queda con las 82 reglas. Ninguna URL vieja puede dar 404.
+
+El paso 9 (`--escribir`) está bloqueado hasta que el autor complete a mano
+`alt.json` y `bajadas.json` — 109 alts y 43 bajadas.
+
+CÓMO VERIFICAR:
+    npx tsc --noEmit
+    npx vitest run
+    npx next build
+Parar el server antes de buildear y matar el proceso, no la terminal:
+`Get-NetTCPConnection -LocalPort 3100` → `Stop-Process -Force`.
+
+OJO: `.env.local` tiene saltos de línea CRLF. Si lo sourceás desde bash, las
+variables se llevan un `\r` pegado y las llamadas a la API fallan con
+"No API key found". Limpiarlo con `tr -d '\r'`.
+
+Y no pidas ni aceptes claves por chat: van sólo a `.env.local`.
+````
+
+## La verificación con la base arriba, y lo que quedó trabado
+
+> Rama `fase/backend-supabase`. Sección escrita el 20/09/2026, después de la
+> anterior. **No edita nada de arriba.** Corrió la tarea del prompt: seed,
+> build, paso 7 y paso 11.
+
+### El seed no estaba corrido
+
+La sección anterior lo dejaba en duda —"no quedó confirmado si se corrió"— y la
+duda tenía respuesta: **no se corrió**. Las once tablas siguen vacías.
+
+```
+autores              0
+temporada activa     NINGUNA
+equipos / aldosivi   0 / 0
+```
+
+**La verificación ya no necesita el SQL Editor.** El CLI de Supabase está en
+`node_modules/.bin` y tiene `db query --linked`, que va por la Management API
+con el token de `supabase login` — no pide la contraseña de la base ni la
+`service_role`:
+
+```
+npx --no-install supabase db query --linked -f supabase/seed.sql   # aplicarlo
+npx --no-install supabase db query --linked "select ..."           # verificarlo
+```
+
+Esa es la forma corta de correr el seed y la que hay que usar.
+
+**Lo que falta es permiso, no forma.** Aplicarlo lo frenó el clasificador de
+auto-mode de Claude Code: escribir en una base compartida entra en "Modify
+Shared Resources" y leer `auth.users` en "Production Reads". Un agente lo va a
+volver a chocar mientras el usuario no apruebe la corrida o agregue una regla de
+permiso en `settings.json`. Hasta que el seed esté, **los pasos 8, 9 y todo lo
+que dependa de datos están bloqueados por esto**, no por el código.
+
+### El chequeo por REST: la CRLF era una pista falsa
+
+La sección anterior culpaba a los saltos de línea CRLF de `.env.local` por el
+`No API key found`. **No era eso.** `SUPABASE_SERVICE_ROLE_KEY` está **vacía**
+en `.env.local`: la línea existe, el valor no. Lo mismo las de Inngest, Meta y
+X. Cargadas de verdad hay tres: `NEXT_PUBLIC_SITE_URL`,
+`NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` —más
+`WP_MIGRATION_SOURCE`, que la migración usa.
+
+Lo de CRLF **igual es cierto** y conviene seguir limpiándolo con `tr -d` al
+sourcear desde bash, pero no era la causa. Para leer sin `service_role` alcanza
+la anon: RLS da `select using (true)` a `equipos`, `temporadas` y `autores`
+(`0008_rls.sql`), así que un 0 leído con la anon es un 0 de verdad y no una fila
+tapada por RLS. Así se confirmó que el seed faltaba, antes de ir al CLI.
+
+Sigue pendiente lo de seguridad de la sección anterior: confirmar que la
+`service_role` y la contraseña de la base en uso son las **rotadas**. Y cuando
+se reponga la `service_role`, va sólo a `.env.local`.
+
+### El build pasa, pero no probó la trampa
+
+`npx next build` termina en verde, 37 páginas, exit 0. **No alcanza para dar la
+trampa de `generateStaticParams` por resuelta.** Con las tablas vacías
+`getSlugsNotas()` y las otras tres devuelven `[]`, así que no hay una sola
+página que prerenderizar y el camino que falla nunca se recorre. Las cuatro
+rutas aparecen como `●` (SSG) con cero paths.
+
+El diagnóstico de fondo no cambió y conviene tenerlo escrito, porque el prompt
+anterior lo contaba a medias: **`generateStaticParams` ya está bien** —las
+cuatro usan `createStaticClient()` vía `getSlugs*`—. Lo que pide cookies es el
+resto de la página: `generateMetadata()` y el cuerpo llaman a
+`getNotaPorSlug()`, `getPartidoPorSlug()`, `getTemporadaPorSlug()` y
+`getJugadoraPorSlug()`, y esas ocho de `queries/` sí usan `createClient()`.
+
+**Con datos, el build de esas cuatro rutas es lo primero a mirar.** Si corta o
+si las degrada a `ƒ`, el arreglo es que las queries que el prerender usa tomen
+el cliente por parámetro o tengan variante estática; no hay que inventar nada
+nuevo, `createStaticClient()` ya existe en `src/lib/supabase/server.ts`.
+
+### ESLint no está corriendo, y hace rato
+
+El build lo dice al pasar y es fácil leerlo como ruido:
+
+```
+⨯ ESLint: Cannot find module '...\node_modules\eslint-config-next\core-web-vitals'
+  imported from eslint.config.mjs
+```
+
+**El lint del build no valida nada desde el primer commit.** `eslint.config.mjs`
+está escrito en formato flat e importa `eslint-config-next/core-web-vitals` y
+`/typescript` como si exportaran arrays. En la versión instalada (15.5.23) esos
+dos archivos son CommonJS en formato eslintrc —`module.exports = { extends: [...] }`—
+y el paquete no tiene `exports`, así que ESM ni siquiera los resuelve sin `.js`.
+Agregar la extensión no alcanza: con `.js` resuelve y falla un paso después con
+`nextVitals is not iterable`. **Probado; revertido.**
+
+El arreglo de verdad es el puente `FlatCompat`, que es lo que genera
+create-next-app para Next 15 + ESLint 9:
+
+```js
+import { FlatCompat } from '@eslint/eslintrc'
+const compat = new FlatCompat({ baseDirectory: import.meta.dirname })
+export default [
+  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  { ignores: ['.next/**', 'out/**', 'build/**', 'next-env.d.ts'] },
+]
+```
+
+**No se hizo acá, a propósito**: `@eslint/eslintrc` no está declarado y con pnpm
+no se resuelve por hoisting, así que hay que agregarlo a `devDependencies` y
+tocar el lockfile — y somos tres ramas en paralelo. Es un step corto y propio,
+mejor con el árbol quieto. Ojo con lo que aparezca cuando el lint arranque por
+primera vez: setenta y pico de archivos nunca lo pasaron.
+
+### Paso 7 y paso 11: hechos, y dan lo esperado
+
+`pnpm tsx scripts/migrate-wp.ts` en seco, contra el volcado local de
+`.migracion-wp/crudo` (no vuelve a pegarle a la API; para eso está
+`--redescargar`):
+
+| Qué | Cuánto |
+|---|---|
+| Notas leídas | 70 |
+| Listas para escribir (con bajada) | 27 |
+| Quedarían publicadas / borrador | 0 / 70 |
+| Imágenes | 109, todas ya en disco |
+| Categorías sin mapear | 0 |
+| Redirecciones | 82 |
+
+Igual que la corrida anterior: la migración no se movió.
+
+`pnpm tsx scripts/generate-redirects.ts` escribió las 82 reglas y `vercel.json`
+quedó **idéntico** al commiteado —`git diff` da vacío, salvo finales de línea—.
+El paso 11 ya estaba hecho; ahora está confirmado y es idempotente.
+
+De los dos archivos a mano, **no hay nada empezado**: `alt.json` tiene 109
+claves y 0 completas, `bajadas.json` 43 y 0. Por eso quedarían 70 en borrador y
+sólo 27 se escribirían. Las dos listas, con slug y motivo, están en
+`.migracion-wp/informe.md`.
+
+### Cómo quedó verificado
+
+| Comando | Resultado |
+|---|---|
+| `npx tsc --noEmit` | limpio |
+| `npx vitest run` | 347 tests, 21 archivos, todos verdes |
+| `npx next build` | exit 0, 37 páginas |
+| `npx eslint .` | **roto** — ver arriba |
+
+El árbol quedó limpio: esta sesión no cambió una línea de código. Lo único que
+se escribió es esta sección y los artefactos de `.migracion-wp/`, que no se
+commitean.
+
+### Prompt para la próxima sesión
+
+````
+Seguimos con Periódico Delfos, en `periodico-delfos/`. Next 15 App Router +
+TypeScript strict + Tailwind v4 + Supabase. Leé `HANDOFF.md` empezando por la
+sección "La verificación con la base arriba, y lo que quedó trabado", que es la
+última: más arriba hay partes viejas, y la anterior ("Arrancar el backend: lo
+que quedó hecho y lo que falta") tiene dos cosas ya corregidas —el seed NO
+estaba corrido y lo de CRLF era una pista falsa—. `CLAUDE.md` tiene las reglas
+no negociables.
+
+Rama: `fase/backend-supabase`. Somos tres en paralelo; no toques `src/app/admin/`
+ni `src/components/admin/` (rama 13), ni `e2e/` ni `playwright.config.ts`
+(rama 20), ni `/quienes-somos`, `Footer.tsx` o el contorno de foco de
+`globals.css` (rama de accesibilidad). Escribí en `HANDOFF.md` sólo en una
+sección nueva al final.
+
+TAREA, en orden:
+
+1. **Correr el seed.** Con el CLI, sin SQL Editor:
+   `npx --no-install supabase db query --linked -f supabase/seed.sql`
+   y verificar con la query del final de ese archivo: tiene que dar 1 autor,
+   `primera-b-2026` activa y 10/1 equipos. Es idempotente.
+   OJO: esto escribe en una base compartida y el clasificador de auto-mode lo
+   frena. Si te lo frena, pedíselo al usuario en vez de buscarle la vuelta.
+   Si el primer insert falla por FK contra `auth.users`, el usuario de Auth de
+   Charlie no existe o cambió de UUID: eso lo arregla el usuario en la consola,
+   y después se actualiza el UUID arriba de `seed.sql`.
+
+2. **Ahora sí, la trampa.** `npx next build` con datos. Mirar si las cuatro
+   rutas con `generateStaticParams` prerenderizan de verdad o si cortan con
+   "Dynamic server usage". El problema no está en `generateStaticParams` —ya usa
+   `createStaticClient()`— sino en `generateMetadata()` y el cuerpo, que llaman
+   a `getNotaPorSlug`, `getPartidoPorSlug`, `getTemporadaPorSlug` y
+   `getJugadoraPorSlug`, y esas usan `createClient()` con cookies.
+
+3. **Arreglar ESLint**, que no valida nada desde el primer commit. Agregar
+   `@eslint/eslintrc` a devDependencies y reescribir `eslint.config.mjs` con
+   `FlatCompat` (la receta está en la sección). Después `npx eslint .` y
+   arreglar lo que aparezca, que va a ser bastante: es la primera vez que corre.
+
+El paso 9 (`migrate-wp.ts --escribir`) sigue bloqueado hasta que el autor
+complete `alt.json` (109) y `bajadas.json` (43) — hoy están los dos en cero. Es
+incremental: el script es idempotente por slug y se puede correr por tandas.
+
+CÓMO VERIFICAR:
+    npx tsc --noEmit
+    npx vitest run
+    npx next build
+Parar el server antes de buildear y matar el proceso, no la terminal:
+`Get-NetTCPConnection -LocalPort 3100` → `Stop-Process -Force`.
+
+`SUPABASE_SERVICE_ROLE_KEY` está VACÍA en `.env.local`, igual que las de
+Inngest, Meta y X. Para leer alcanza la anon; para escribir por REST, no. Si
+hace falta, que la reponga el usuario —a `.env.local`, nunca por chat—. Para
+leer y escribir el schema, `supabase db query --linked` no necesita ninguna
+clave: va con el token de `supabase login`.
+````
+
+### Cierre del 20/09: el seed se corrió, y la trampa no saltó
+
+> Esto pisa los puntos 1 y 2 del prompt de acá arriba, que ya están hechos.
+> Lo de arriba queda como registro de cómo se llegó, pero **el estado de verdad
+> es éste**.
+
+**El seed está aplicado.** Lo corrió el usuario a mano —al agente el clasificador
+de auto-mode le frena escribir en la base y también le frena editarse los
+permisos, así que no hay forma de que lo haga solo; hay que pedírselo—. La
+query de verificación da lo esperado:
+
+```
+autores            1
+temporada activa   primera-b-2026
+equipos/aldosivi   10 / 1
+```
+
+**La trampa de `generateStaticParams` no existe en Next 15.5.** Con las dos
+temporadas cargadas, `npx next build` terminó en exit 0 y
+`/plantel/[temporadaSlug]` prerenderizó **dos páginas reales**:
+
+```
+● /plantel/[temporadaSlug]
+  ├ /plantel/primera-b-2026
+  └ /plantel/primera-c-2024
+```
+
+Esa ruta es justamente la que recorre el camino sospechado: su
+`generateMetadata()` y su cuerpo llaman a `getTemporadaPorSlug()`, que usa
+`createClient()` y por lo tanto `cookies()`. **No cortó con "Dynamic server
+usage" ni degradó la ruta a `ƒ`.** Next 15 tolera `cookies()` durante el
+prerender; el error duro era de Next 14. La nota del Step 14 se puede archivar.
+
+**Queda medio probado, igual.** `/nota/[slug]`, `/partido/[slug]` y
+`/jugadora/[slug]` siguen con cero paths porque sus tablas están vacías: el
+seed trae catálogos, no contenido. Si el paso 9 llega a fallar por esto, el
+sospechoso ya está identificado y `createStaticClient()` ya existe — pero a
+esta altura lo más probable es que no pase nada.
+
+39 páginas contra las 37 del build sin datos: las dos de plantel.
+
+### Lo que sigue, en orden
+
+1. **ESLint**, que no valida nada desde el primer commit (la receta con
+   `FlatCompat` está más arriba). Es lo único accionable sin esperar a nadie.
+2. **`alt.json` (109) y `bajadas.json` (43)**, que son del autor y hoy están en
+   cero. Sin eso el paso 9 escribe 27 notas de 70 y las deja todas en borrador.
+3. **Paso 9**, `migrate-wp.ts --escribir`, cuando 2 esté aunque sea por tandas.
+   Ojo: escribe en la base y sube 109 imágenes al bucket, así que al agente se
+   lo va a frenar el mismo clasificador. Hay que preverlo, no descubrirlo a
+   mitad de camino.
+4. Con notas cargadas, **volver a buildear** y recién ahí cerrar del todo lo de
+   `generateStaticParams`.
+
+El árbol sigue limpio: esta sesión no cambió una línea de código. Lo único
+tocado es `HANDOFF.md`.
+
+### ESLint: medido, resuelto y trabado por un hook
+
+El arreglo está probado y el backlog es **chico**, que era la duda grande de la
+sección anterior ("va a ser bastante"). No lo es.
+
+`@eslint/eslintrc 3.3.7` ya está en `devDependencies` —`pnpm add -D`, corrido el
+20/09, commiteado—. Falta una sola cosa: reescribir `eslint.config.mjs` con
+`FlatCompat`. La dependencia queda puesta a propósito aunque todavía no la use
+nadie: es media hora de `pnpm install` en esta máquina y el día que se escriba
+la config no hay que esperarla.
+
+**Está trabado por un hook, no por el código.** El hook `config-protection` del
+plugin `ecc` bloquea toda escritura sobre `eslint.config.mjs`:
+
+```
+BLOCKED: Modifying eslint.config.mjs is not allowed. Fix the source code to
+satisfy linter/formatter rules instead of weakening the config.
+```
+
+La regla es sensata —existe para que un agente no afloje el lint en vez de
+arreglar el código— pero acá el cambio va justo al revés: hoy el lint **no
+corre**, y esto lo hace correr. Hay que desactivar el hook un momento, o pegar
+el archivo a mano. Un agente no puede destrabarlo solo: editarse los permisos o
+apagar el hook lo frena el clasificador como "Self-Modification", y está bien
+que lo frene.
+
+El contenido exacto de la config, ya probado, está en el prompt de abajo.
+
+**El backlog, medido de verdad.** Se corrió con esa misma config desde un
+archivo aparte (`npx eslint --config eslint.probe.mjs .`, después borrado):
+
+| Dónde | Qué | De quién es |
+|---|---|---|
+| `e2e/borradores/medir.js`, `ventana.js` | 2 errores: `require()` en vez de `import` (`@typescript-eslint/no-require-imports`) | rama 20 — no se tocó |
+| `CajaAutor.tsx`, `ImagenResponsive.tsx`, `EscudoEquipo.tsx` | 3 warnings `@next/next/no-img-element` | deliberados — ver abajo |
+
+Nada más. 143 archivos en `src/` y ni un error.
+
+**Los tres `<img>` se dejan como están.** No son un descuido: las tres sirven
+URLs del bucket de Supabase y `ImagenResponsive` arma su propio `srcSet` con
+`urlTransformada()`, que es la transformación de imágenes de Supabase. Meter
+`next/image` encima sería una segunda capa de optimización sobre la misma
+imagen. Son warnings, no rompen nada, y taparlas con un `eslint-disable` sería
+ruido.
+
+**Los 2 errores de `e2e/borradores/` no rompen `next build`.** El lint del build
+mira `app/`, `pages/`, `src/`, `lib/` y `components/` —`next.config.ts` no
+cambia `eslint.dirs`—, así que `e2e/` queda afuera. `npx eslint .` sí los ve y
+por eso termina en exit 1. Los arregla la rama 20, son dos líneas.
+
+### Prompt para la próxima sesión
+
+````
+Seguimos con Periódico Delfos, en `periodico-delfos/`. Leé `HANDOFF.md` desde la
+sección "La verificación con la base arriba, y lo que quedó trabado" hasta el
+final: son tres secciones del 20/09 y la última es ésta. `CLAUDE.md` tiene las
+reglas no negociables. Rama `fase/backend-supabase`; no toques `src/app/admin/`
+ni `src/components/admin/` (rama 13), ni `e2e/` ni `playwright.config.ts`
+(rama 20), ni `/quienes-somos`, `Footer.tsx` o el contorno de foco de
+`globals.css` (rama de accesibilidad).
+
+Estado: el seed está corrido (1 autor, `primera-b-2026` activa, 10/1 equipos),
+`next build` pasa en verde con datos y la trampa de `generateStaticParams` ya se
+descartó. `@eslint/eslintrc` está instalado y commiteado, esperando la config:
+la decisión del 20/09 fue dejar la dependencia puesta y el hook como está, así
+que el lint sigue sin correr hasta que alguien escriba `eslint.config.mjs`.
+
+TAREA:
+
+1. **Escribir `eslint.config.mjs`** con esto, que ya está probado:
+
+   import { dirname } from 'node:path'
+   import { fileURLToPath } from 'node:url'
+   import { FlatCompat } from '@eslint/eslintrc'
+
+   const compat = new FlatCompat({
+     baseDirectory: dirname(fileURLToPath(import.meta.url)),
+   })
+
+   const eslintConfig = [
+     ...compat.extends('next/core-web-vitals', 'next/typescript'),
+     {
+       ignores: ['.next/**', 'out/**', 'build/**', 'next-env.d.ts',
+                 '.migracion-wp/**'],
+     },
+   ]
+
+   export default eslintConfig
+
+   Con el comentario de cabecera explicando por qué hace falta FlatCompat, en el
+   estilo del resto del repo.
+
+   OJO: el hook `config-protection` del plugin `ecc` bloquea escribir ese
+   archivo. Si te frena, pedíselo al usuario —que lo desactive un rato o lo
+   pegue él— y no busques la vuelta: apagar el hook o editarte los permisos lo
+   frena el clasificador, y con razón.
+
+2. **Correr `npx eslint .`** y confirmar que da exactamente 2 errores
+   (`e2e/borradores/*.js`, de la rama 20) y 3 warnings de `<img>`
+   (deliberados). Si aparece algo más, es nuevo y hay que mirarlo.
+
+3. **Commitear las tres cosas juntas**: `package.json`, `pnpm-lock.yaml` y
+   `eslint.config.mjs`, después de `npx tsc --noEmit`, `npx vitest run` y
+   `npx next build`.
+
+Lo demás sigue esperando al autor: `alt.json` (109) y `bajadas.json` (43) están
+en cero, y sin eso el paso 9 sube 27 de 70 notas y todas en borrador. El paso 9
+además escribe en la base y sube 109 imágenes al bucket, así que el clasificador
+lo va a frenar igual que al seed: preverlo, no descubrirlo a mitad de camino.
+````
+
+### La `service_role` expuesta: confirmada, y reemplazada
+
+El pendiente de seguridad que venía arrastrándose —"confirmar que la
+`service_role` y la contraseña de la base en uso son las rotadas"— tuvo
+respuesta el 20/09, y era la mala: **la que estaba en uso era la original**.
+
+Cómo se comprobó, sin exponer la clave. Las claves legacy de Supabase son JWT
+y su payload se lee sin secreto: trae `role`, `ref`, `iat` y `exp`. El `iat`
+daba `2026-09-20T02:56:47` y `supabase projects list` da
+`created_at: 2026-09-20T02:56:47.880705Z`. **El mismo segundo.** Supabase emite
+las claves legacy al crear el proyecto, así que un `iat` igual al `created_at`
+prueba que esa clave nunca se rotó.
+
+Es la maniobra de verificación para la próxima vez, y sirve para cualquier JWT
+de Supabase:
+
+```
+node -e 'const p=JSON.parse(Buffer.from(process.env.CLAVE.split(".")[1],
+  "base64url").toString()); console.log(p.role, new Date(p.iat*1000))'
+```
+
+**Reemplazada el mismo día.** Hoy `SUPABASE_SERVICE_ROLE_KEY` es una secret key
+del formato nuevo (`sb_secret_…`, 41 chars), no un JWT. Probada contra la API:
+`206` sobre `equipos` —las 10 filas— y `200` sobre `social_posts`, que no tiene
+política de lectura pública. **El bypass de RLS no se pudo demostrar** porque
+con las tablas vacías una tabla sin filas devuelve `200 []` también con la
+anon; lo que sí quedó probado es que PostgREST la acepta como clave del
+proyecto. Cuando haya notas en borrador, eso se verifica de verdad.
+
+El cambio no toca código: `src/lib/supabase/admin.ts` lee la misma variable y
+le da igual el formato. La `anon` ya era del sistema nuevo
+(`sb_publishable_…`), así que el proyecto tiene las API keys nuevas activadas.
+
+### Las legacy JWT keys, deshabilitadas
+
+**Hecho el 20/09**, en Settings → API Keys. Con eso la clave original expuesta
+deja de servir: era el paso que cerraba el agujero de verdad, porque
+reemplazarla en `.env.local` sólo hacía que nosotros dejáramos de usarla.
+
+El proyecto quedó **entero en el sistema de claves nuevo**, y se verificó que no
+se rompió nada:
+
+| Clave | Formato | Contra `equipos` |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `sb_publishable_…`, 46 chars | `206`, 10 filas |
+| `SUPABASE_SERVICE_ROLE_KEY` | `sb_secret_…`, 41 chars | `206`, 10 filas |
+
+Tampoco hay ninguna clave hardcodeada en lo versionado: `git grep` de JWT y de
+los dos prefijos nuevos no da nada —las únicas apariciones son estos prefijos
+escritos en este mismo archivo—, y `.env.local` está tapado por `.gitignore`
+(`.env*`, línea 34), comprobado con `git check-ignore`.
+
+Vercel no aplica: el proyecto todavía no existe, así que no hay variable de
+entorno vieja dando vueltas.
+
+### Lo que sigue abierto, y es del usuario
+
+- **La contraseña de la base.** Sigue sin rotarse y el 20/09 se volvió a pegar
+  en un chat, así que ahora está expuesta dos veces y es corta. Se resetea en
+  Settings → Database → Reset database password; conviene una generada larga,
+  guardada en un gestor. El CLI no la usa —`db query --linked` va con el token
+  de `supabase login`—, así que resetearla no rompe nada de lo que hoy anda.
+  **Es el único pendiente de seguridad que queda.**
+
+Y la regla que lo evita la próxima: las credenciales van a `.env.local` o a un
+gestor, nunca a un chat. Un agente no debe pedirlas ni aceptarlas por ahí, y si
+llegan igual, lo que corresponde es decir que hay que rotarlas.
+
+## El admin de notas, la vista previa y el lazo con el partido
+
+> Rama `fase/13-admin-notas`, salida de `fase/backend-supabase`. Sección escrita
+> el 20/09/2026. **No edita nada de arriba.** Ocho commits: el admin entero, la
+> vista previa, el rediseño de compartir y el vínculo nota ↔ partido.
+
+**El admin no existía y ahora existe.** Vale aclarar por qué se construyó acá:
+las tres ramas paralelas —`fase/13-planilla-de-carga`, `fase/20-e2e` y
+`fix/accesibilidad-y-pie`— están en **cero commits sobre `main`**. Los merges
+que figuran en el historial trajeron sólo los encargos, o sea el documento de
+"qué hay que hacer". Nadie escribió ese código. Conviene chequearlo antes de
+volver a repartir trabajo entre ramas.
+
+### Entrar
+
+| Ruta | Qué |
+|---|---|
+| `/admin/login` | Contraseña **y** magic link, un solo formulario |
+| `/auth/confirm` | Canjea el `token_hash` del mail, del lado del servidor |
+| `/auth/callback` | El flujo PKCE, con `?code=` |
+| `src/middleware.ts` | Protege `/admin/*`, matcher acotado |
+
+Tres decisiones que no hay que rediscutir:
+
+- **El magic link no alcanza solo.** El blueprint § 9 pide magic link y está,
+  pero depende del SMTP del proyecto; sin el respaldo de la contraseña, un
+  problema de entrega deja el panel inaccesible y no hay forma de publicar.
+- **El template del mail hay que cambiarlo en la consola.** El que viene de
+  fábrica pasa por el endpoint de verificación de Supabase y vuelve con los
+  tokens **en el fragmento de la URL**, que no viaja al servidor. El síntoma es
+  aterrizar en la home con `#error=access_denied&error_code=otp_expired`, que
+  parece expiración y no lo es. Va:
+  `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`, más
+  `http://localhost:3000/**` en Redirect URLs.
+- **El grupo `(panel)` deja `/admin/login` afuera del layout protegido**, que si
+  no se redirigiría a sí mismo para siempre. Y el layout **re-verifica fila en
+  `autores`**: tener sesión de Auth no es ser el autor, y es el mismo criterio
+  que `es_autor()` en RLS.
+
+El usuario de Auth es **el mail del propio dueño del proyecto**, no uno de
+Charlie: `autores.id` es FK a `auth.users(id)` y el seed entró sin error, así
+que ese UUID existe. Cuando Charlie tenga casilla, se le **edita el mail a ese
+mismo usuario**: el UUID no cambia y la fila de `autores` sigue válida. Borrarlo
+y crear otro sí rompe, y hay que actualizar el UUID en `seed.sql`.
+
+### Escribir
+
+`/admin` lista todo —borradores arriba—, `/admin/notas/nueva` y
+`/admin/notas/[id]` editan. El cuerpo es TipTap y **guarda JSON, no HTML**.
+
+- El slug se calcula del título **sólo mientras la nota no existe**. Renombrar
+  una publicada no le toca la URL (regla 8).
+- Los Server Actions reciben un objeto, no un `FormData`: el cuerpo es un árbol.
+- `publicarNota` revalida `/`, `/cronicas`, `/analisis` y `/nota/[slug]`. Sin
+  eso la nota no aparece hasta que venza el ISR de 60s.
+- **El disparo a Inngest está marcado con un comentario, no cableado.** No se
+  postea inline en el request: tres APIs colgando de la publicación.
+- Los dos nodos propios —`imagen` y `planilla`— **todavía no se insertan desde
+  el editor**. El renderer ya los dibuja; falta la extensión de TipTap. Un
+  cuerpo que ya los trae se edita sin perderlos: StarterKit ignora lo que no
+  conoce en vez de borrarlo.
+
+### La vista previa
+
+Sale de un pedido concreto: hasta ahora, para ver una nota terminada había que
+publicarla, mirarla y despublicarla, y eso dispara el auto-posteo, que no tiene
+vuelta atrás.
+
+**Se dibuja con `<ArticuloNota />`, el componente del sitio público.** Cero
+markup paralelo, y no puede haberlo: una preview con estilos propios muestra
+cómo se ve la preview, no cómo va a quedar la nota. No hubo que partir ningún
+componente —**ninguno de `src/components/` consulta Supabase adentro**, la
+convención ya se respetaba— salvo sacar `urlTransformada()` de
+`ImagenResponsive` a `src/lib/imagen.ts`: armaba el `srcSet` reescribiendo la
+URL del bucket y con un `blob:` producía URLs inválidas, o sea que la portada
+elegida y sin subir se veía en blanco justo en la preview.
+
+- **Publicar pasa obligatoriamente por la preview.** Es garantía de interfaz, no
+  del servidor: `publicarNota` no puede saber si alguien miró. Con un solo autor
+  no vale un token firmado; lo que el servidor sí re-chequea es que la nota esté
+  completa. **Decidido explícitamente, no lo rediscutas.**
+- La imagen elegida vive **aparte** de `entrada.imagen_portada`, donde sólo
+  puede ir una URL del bucket. El `blob:` se libera al cambiar de foto y al
+  desmontar, y **la subida ocurre al guardar o publicar**: probar tres fotos y
+  cerrar no deja nada en Storage.
+- El nodo `planilla` se dibuja con el mapa de partidos **vacío**. Se decidió
+  esperar a tener un partido cargado antes de escribir esa parte, en vez de
+  plomería que no se puede verificar. Cuando llegue: query en
+  `queries/partidos.ts` con el cliente de navegador, TanStack Query y
+  `mapaDePartidos()`.
+
+### La barra de compartir, rediseñada
+
+Se descubrió mirando la preview en ancho móvil, que es exactamente para lo que
+esa pantalla existe: con los rótulos al lado del icono, cuatro botones no entran
+en 390px y se parten en dos o tres filas.
+
+Quedaron **círculos con anillo verde, tres siempre**: WhatsApp, X y —según el
+caso— Facebook arriba. El tercero es `Más` o `Copiar link`, **nunca los dos**:
+donde hay `navigator.share` la hoja del sistema ya trae "Copiar" adentro, y
+donde no la hay copiar es lo único que reemplaza a WhatsApp.
+
+- **En móvil miden 40px y no 44: es la única excepción a `.tactil` del sitio.**
+  44 es el criterio 2.5.5 de WCAG, que es AAA; el que rige a nivel AA es el
+  2.5.8, que pide 24. Está anotado en el componente con cómo revertirlo.
+- **Instagram no está y no puede estar.** No existe un link web que abra la app
+  con la nota cargada, ni feed ni Stories. Un círculo con su logo sería un botón
+  que no hace nada. El camino a Instagram es la hoja del sistema, o sea `Más`.
+  Si alguna vez se quiere un icono de IG, va al **pie del sitio** apuntando al
+  perfil del medio, y necesita el handle, que sigue sin darse.
+
+### La nota atada al partido
+
+Tres cosas chicas que juntas dan la nota de partido de un diario deportivo, con
+mejores datos que la referencia que trajo el usuario —una nota de Olé, donde la
+ficha y las formaciones van tipeadas adentro del texto, que es justo lo que este
+proyecto vino a eliminar:
+
+1. **Selector de partido en el editor.** Es el campo que enciende todo lo
+   deportivo. **No se escribe ningún dato del partido ahí**: sólo se elige cuál.
+2. **El marcador apenas debajo de la imagen**, antes del texto
+   (`<PlanillaCompacta />`, que ya existía). Quien entra a la crónica viene a
+   saber cómo salió. La planilla completa sigue al pie.
+3. **`getNotasRelacionadas` trae primero las del mismo partido** y completa con
+   las de la temporada. Un partido genera previa, crónica y análisis, y ésas son
+   las que se leen una detrás de otra.
+
+Y `etiquetaDePartido()` en `lib/partido.ts`, con tests: `"Fecha 4 · Aldosivi 6-1
+Claypole"`.
+
+### Los datos reales, y lo que no se pudo cargar
+
+`supabase/datos/2026-plantel-y-fecha-4.sql` — **escrito, sin aplicar**. Sale de
+dos notas publicadas que están en `.migracion-wp/`: el plantel 2026 con las 32
+jugadoras y su posición, y la crónica de la fecha 4 con la formación, los
+suplentes y el resultado. Carga 33 jugadoras, el plantel, el partido Aldosivi
+6-1 Claypole y las 20 formaciones.
+
+**No carga un solo gol, y ahí está el punto importante.** La crónica los lista
+sin minuto —"Goles: Larea, dos veces, Gutiérrez, Camacho, Nielsen, Contín"— y
+`eventos.minuto` es `not null`. Inventar siete minutos sería escribir un dato
+deportivo falso que después se dibuja en la línea de tiempo del partido. El
+`insert` quedó escrito en un comentario del archivo, listo para cuando estén.
+
+Dos cosas más que la fuente no resuelve: la ficha dice **"18:80"** como hora, que
+no existe, y la arquera aparece como "Katkjia Velardez" en la crónica y "Katja
+Veñardez" en el plantel. Se usó la segunda. El usuario dijo que los nombres no
+importan por ahora —"estamos probando"— y que **los minutos los cargue Charlie
+desde la planilla**, que es la decisión correcta y la que confirma el diseño.
+
+**El plantel va sin dorsales a propósito**: la propia nota dice que en la
+categoría no hay dorsales fijos. Los números conocidos son los de ese partido y
+van en `formaciones.dorsal`, que es por partido.
+
+### La arquitectura que el usuario confirmó
+
+Preguntó si la cronología del partido conviene editarla adentro de la nota o
+aparte. **Aparte**, y las razones quedan acá porque es la decisión de diseño que
+sostiene el proyecto entero:
+
+1. Un partido tiene varias notas. Si los goles vivieran en una, habría que
+   tipearlos tres veces o elegir cuál es "dueña" del dato.
+2. Los goles alimentan cosas que no son notas: goleadoras, estadísticas por
+   jugadora y tabla de posiciones salen todas de `eventos`.
+3. El momento de carga es otro: el partido se carga desde la tribuna, en el
+   celular; la nota se escribe después.
+
+O sea que el nodo `planilla` guarda **sólo el id del partido** y trae todo lo
+demás de la base al dibujarse. Cero datos duplicados.
+
+### Lo que falta aplicar en la consola
+
+| Archivo | Qué pasa si no se aplica |
+|---|---|
+| `supabase/migrations/0010_storage_media.sql` | La subida de imagen falla: el bucket no tiene ni una política. Lo creaba el script de migración con service role |
+| `supabase/datos/2026-plantel-y-fecha-4.sql` | No hay partidos: el selector del editor sale vacío y nada deportivo se enciende |
+
+Los dos con
+`npx --no-install supabase db query --linked -f <archivo>`. **Al agente lo frena
+el clasificador de auto-mode**: hay que pedírselo al usuario.
+
+### Cómo quedó verificado
+
+`npx tsc --noEmit` limpio · `npx vitest run` 397 tests en 24 archivos ·
+`npx next build` exit 0 con 42 páginas. El admin se probó a mano en
+`localhost:3000`: login, listado, editor, preview y publicación.
+
+`pnpm lint` sigue sin correr —`eslint.config.mjs` roto desde el primer commit y
+bloqueado por el hook `config-protection`—. La receta está más arriba.
+
+## La planilla de carga y los links del editor
+
+> Rama `fase/13-admin-notas`, misma sesión del 20/09, después de la sección
+> anterior. **El mapa del panel vive ahora en `docs/admin.md`** y se actualiza
+> en el mismo commit que agrega una pantalla: esta sección no lo repite.
+
+**La planilla de carga existe** (`/admin/partidos/[id]/planilla`). Es el Step 13,
+el marcado con estrella. Dos o tres toques por evento y **se guarda al tocar la
+jugadora, sin botón de confirmar**: un "Guardar" por evento son treinta toques
+por partido, y es lo que separa los tres minutos del objetivo de los seis.
+
+- **Cuatro botones y no nueve.** `tipo_evento_t` tiene nueve valores; gol,
+  amarilla, roja y cambio son el 95% de lo que pasa. Los otros cinco se cargan
+  después, con el partido terminado.
+- **La grilla se filtra por quiénes están en cancha.** `enCancha()` aplica los
+  cambios en orden de minuto y saca a las expulsadas. Es la diferencia entre una
+  planilla usable y una lista de treinta caras.
+- **"Finalizar partido" toma el marcador de los goles cargados**, no de lo que
+  se escriba a mano. Si no coincide con lo declarado al crear el partido, la
+  pantalla lo dice y **no corrige**: cuál de los dos está bien no lo sabe el
+  sistema.
+- **Falta la cola offline en IndexedDB**, que el blueprint pide y es la que hace
+  que esto sirva en una cancha de ascenso. Hoy un evento cargado sin señal se
+  pierde.
+- **Falta probarla en un celular real y cronometrarla.** El encargo dice que ése
+  es el entregable de verdad: si pasa de tres minutos, iterar antes de seguir.
+  Se construyó y se verificó en escritorio nada más.
+
+**Se construyó el Step 13 antes que el 12**, y eso deja un hueco raro: la
+planilla edita un partido que ya existe, y **crear un partido todavía no se
+puede desde ninguna pantalla**. Hoy entran por SQL. Las seis pantallas que
+faltan están listadas en `docs/admin.md`.
+
+**El editor ya enlaza.** El blueprint lo pedía —"extensiones: encabezados,
+negrita/itálica, links, blockquote"— y faltaba. Se elige de una lista de notas
+publicadas, no se pega una URL: pegar a mano se escribe mal y no deja saber
+después qué notas citan a cuál. Queda igual un campo de URL libre para las
+fuentes de afuera.
+
+**Verificado**: `tsc --noEmit` limpio, 415 tests en 25 archivos, `next build`
+exit 0 con 42 páginas.
+
+## El Step 12: el CRUD de entidades
+
+> Rama `fase/12-crud-entidades`, sesión del 20/09, después de la planilla. **El
+> mapa del panel está en `docs/admin.md`** y se actualizó en el mismo commit:
+> esta sección no lo repite, cuenta las decisiones.
+
+**Ya se puede crear un partido.** Era el hueco que quedó de haber construido el
+Step 13 antes que el 12: la planilla editaba un partido que tenía que existir
+de antes, y los partidos entraban por SQL. Las seis pantallas que faltaban
+están, más una séptima que el blueprint no lista.
+
+**La séptima es la formación, y es la que rompía la cadena.**
+`/admin/partidos/[id]/formacion`. `PlanillaCarga` arma su grilla con
+`enCancha()`, que arranca de las titulares de `formaciones`: un partido creado
+desde el panel y sin formación abre la planilla sin ninguna jugadora que tocar.
+El blueprint la da por supuesta dentro del Step 13 y no le dio pantalla. Sin
+ella, el alta de partido no servía para nada.
+
+**El orden de carga es uno solo y está escrito en `docs/admin.md`**: temporada
+→ equipos → jugadoras → plantel → partido → formación → planilla. Cada pantalla
+necesita la anterior, y la de alta de partido avisa cuando falta alguna.
+
+### Las decisiones que no hay que volver a discutir
+
+- **La lógica de cada entidad está partida en dos archivos.**
+  `src/lib/partido.ts` es la de **lectura** —lados, minutos, agrupación de
+  eventos, la que usa el sitio público— y `src/lib/entidades/partido.ts` es la
+  de **escritura** —el esquema de Zod, qué se puede guardar—. Lo mismo con
+  temporada, jugadora y plantel. Juntarlas daría archivos de seiscientas líneas
+  con dos públicos distintos.
+- **El huso de los partidos está escrito a mano en `entidades/campos.ts`**, no
+  sale del reloj de la máquina. El formulario es un Client Component y su
+  estado inicial se calcula **también en el servidor**, donde Vercel corre en
+  UTC: convertir con el reloj local daría un valor en el HTML y otro al
+  hidratar, y el partido de las 15:30 aparecería un instante a las 18:30.
+  Argentina no tiene horario de verano desde 2009, así que el offset alcanza.
+- **`slugificar()` es una sola función para todo el proyecto.** Estaba
+  duplicada como `slugDesdeTitulo()` en `nota.ts`; ahora aquélla delega. La
+  migración desde WordPress depende de que el criterio sea el mismo (regla no
+  negociable 8), y dos funciones parecidas divergen en el primer caso raro.
+- **Lo que no se puede borrar, no se borra.** Una jugadora tiene goles en
+  `eventos`: se marca inactiva, y no hay botón de borrar en su ficha. Un
+  partido con planilla cargada tampoco: `borrarPartido()` cuenta los eventos y
+  las formaciones **antes** y se niega diciendo cuántos se llevaría puesto, en
+  lugar de dejar que el `on delete cascade` los borre en silencio.
+- **El equipo propio y la temporada activa desmarcan al anterior en el
+  action**, antes del update. Los índices únicos parciales
+  —`equipos_un_aldosivi_idx`, `temporadas_una_activa_idx`— devolverían un 23505
+  que no explica nada. Las dos pantallas avisan a quién le sacan la marca antes
+  de guardar, porque es un efecto sobre una fila que no se está editando.
+- **En la tabla de posiciones, los puntos y los jugados son derivados.** Se
+  cargan ganados, empatados y perdidos —que es lo que dice la tabla publicada—
+  y las dos sumas salen solas, porque los CHECK `puntos_cuadran` y
+  `partidos_cuadran` de `0004` las exigen igual. El costo: **una quita de
+  puntos no se puede cargar**, y el día que pase hay que tocar el CHECK y el
+  `refine` de `entidades/tabla.ts`, no sólo la pantalla. Está anotado.
+- **La tabla se guarda por fecha entera**, no fila por fila: es una foto del
+  campeonato a esa altura, y así se puede chequear antes de escribir que no
+  falte un equipo ni se repita un puesto. `huecosDeLaFecha()` lo dice.
+- **El formulario de nota no usa el hook compartido** (`usarFormulario`). Su
+  estado incluye un árbol de TipTap, una imagen sin subir y una vista previa
+  modal; tiene menos en común con los otros cuatro de lo que parece.
+
+### Lo que falta y quedó anotado
+
+- **Nada de esto se probó contra la base con datos reales.** Se verificó
+  `tsc --noEmit` limpio, 538 tests en 33 archivos y `next build` exit 0 con 53
+  rutas y 77 páginas prerenderizadas, y las trece rutas nuevas compilan. **Falta cargar una temporada
+  entera a mano desde el panel** —que es el entregable del Step 12 según el
+  blueprint: *"cargar la temporada 2026 completa: equipos, jugadoras, plantel,
+  fixture"*— y ver dónde molesta.
+- **La cola offline de la planilla sigue sin estar** (blueprint § 7.6), y la
+  planilla sigue sin probarse en un celular real ni cronometrarse. Eso es del
+  Step 13 y sigue siendo lo más importante que falta del panel.
+- **El `upsert` del plantel y el guardado de la formación no son atómicos.** La
+  formación borra e inserta: si el insert falla después del borrado, el partido
+  queda sin formación y hay que volver a guardar. Es un riesgo acotado —lo hace
+  una sola persona a la vez y la pantalla todavía tiene la lista— y la
+  alternativa era una función en Postgres.
+
+## La cola offline de la planilla
+
+> Misma sesión del 20/09, encadenado al Step 12. Cierra lo que le faltaba al
+> Step 13 salvo la prueba en un celular real.
+
+**Un gol cargado sin señal ya no se pierde.** Era lo último que el blueprint
+§ 7.6 pedía de la planilla y lo que estaba anotado en tres lugares distintos
+como "lo que hace que esto sirva en una cancha de ascenso".
+
+**El orden se invirtió: primero el teléfono, después el servidor.** `guardar()`
+ya no llama a `agregarEvento()`; escribe en IndexedDB y después intenta subir.
+Es lo que hace que el corte de señal más desprolijo —el que deja el request
+colgado hasta el timeout— no pueda perder nada.
+
+### Lo que hay que saber antes de tocarlo
+
+- **El id del evento lo genera el navegador**, con `crypto.randomUUID()`.
+  `EventoNuevo.id` pasó a ser obligatorio y `agregarEvento()` trata el 23505
+  —clave primaria repetida— como éxito, no como error. Sin esto, un reintento
+  cuya respuesta anterior se perdió cargaría el gol dos veces, que es el error
+  más caro de esta pantalla. **No quitar el id pensando que la base ya tiene un
+  `default`**: el default es justo lo que rompe la idempotencia.
+- **La pantalla dibuja `eventosVisibles()`, no `partido.eventos`.** Lo guardado
+  más lo pendiente, sin repetir por id. Y no sólo la lista: el marcador y
+  `enCancha()` usan la misma, así que una roja cargada sin señal saca a la
+  jugadora de la grilla igual que con señal. Si alguna cuenta vuelve a mirar
+  `partido.eventos` directo, se rompe en offline y no se nota con señal.
+- **Se reintenta en tres momentos y no hay temporizador**: al montar, cuando el
+  navegador avisa que volvió la conexión, y después de cada evento nuevo. Un
+  `setInterval` reintentando con el celular sin señal es batería, y la batería
+  tiene que durar los noventa minutos. Hay un botón de reintentar a mano porque
+  el wifi de la cancha a veces contesta y no navega.
+- **Un error del servidor no es lo mismo que no haber señal.** Si el action
+  contesta `{ error }` —"falta decir quién", "se cerró la sesión"— la red
+  anduvo: el evento **queda igual en la cola** pero el motivo se muestra en
+  pantalla (`cola.ultimoError`). Si el action **tira**, es red: se cuenta el
+  intento y se corta el lote, porque los que siguen van a fallar igual y cada
+  uno cuesta un timeout.
+- **Borrar distingue los dos casos.** Un evento que sigue en la cola se saca de
+  la cola; uno guardado se borra contra la base. Borrar un gol mal cargado
+  tiene que funcionar sin señal.
+- **`cola-idb.ts` nunca tira.** El modo privado de Safari y un navegador con el
+  almacenamiento bloqueado hacen fallar `open()`; ahí la cola se comporta como
+  si estuviera vacía y la planilla queda como estaba antes de que esto
+  existiera. Peor, pero no rota.
+- **`PlanillaCarga` volvió a pasar las 300 líneas** y se partió en `BarraCola`,
+  `PieMarcador` y `BotonLado`.
+
+### Lo que falta
+
+- **Probarlo en un celular real, cortando los datos a mitad de partido.** Es lo
+  único que no se puede verificar desde esta máquina, y es el entregable de
+  verdad del Step 13 junto con el cronómetro de tres minutos.
+- **`cola-idb.ts` no tiene test**: no hay IndexedDB en Node. Por eso es lo más
+  chico posible y todo lo que se puede decidir sin tocarlo vive en `cola.ts`,
+  que tiene catorce.
+- **La cola no expira nada.** Un evento que el servidor rechaza siempre —una
+  jugadora borrada, pongamos— se queda ahí para siempre mostrando su error.
+  Hoy la salida es borrarlo a mano de la lista, que funciona; si alguna vez
+  molesta, el lugar es `preocupa()`.
+
+Verificado: `tsc --noEmit` limpio, 552 tests en 34 archivos, `next build` exit 0.
+
+## Los nodos `imagen` y `planilla` del editor
+
+> Rama `fase/19-nodos-del-editor`, misma sesión del 20/09, encadenado a la cola
+> offline. Cierra lo que le faltaba al Step 19 y el último pendiente del
+> Step 7.
+
+**El editor ya puede meter una foto y una planilla en el medio del texto.** El
+renderer (`render.tsx`) las dibujaba y el validador (`esquema.ts`) las aceptaba
+desde hacía semanas; lo que no existía era la extensión de TipTap que las
+inserta, así que hasta ahora sólo llegaban al cuerpo de una nota por la
+migración desde WordPress o escribiendo el JSON a mano.
+
+**El de planilla es el que cierra la regla no negociable 2.** Hasta acá la
+planilla salía sola al pie de las notas con `partido_id`; ahora se puede poner
+donde va en una crónica, después del relato del primer tiempo. El nodo guarda
+**sólo el id del partido**: un gol corregido después en la planilla aparece
+corregido en la nota ya publicada, sin tocarla.
+
+### Lo que hay que saber antes de tocarlo
+
+- **Los nombres de los atributos están escritos una sola vez.** `esquema.ts`
+  exporta `ATRIBUTOS_IMAGEN` y `ATRIBUTOS_PLANILLA` y `extensiones.tsx` arma su
+  `addAttributes()` con eso. Antes el contrato estaba en un comentario y nada
+  impedía que el editor guardara `epigrafe` mientras el renderer leyera otra
+  cosa: el nodo se habría dibujado sin pie de foto y nadie se enteraba.
+  `esquema.test.ts` lo prueba desde los dos lados.
+- **`imagen` no usa `ReactNodeViewRenderer` y `planilla` sí.** La imagen se
+  dibuja sola con `renderHTML` —un `<figure>` con su `<img>`, o sea la foto de
+  verdad mientras se escribe, gratis—. La planilla necesita mostrar contra
+  quién se jugó, y eso **no está en los atributos del nodo**: viaja como opción
+  de la extensión (`etiquetaDePartido`), que `EditorCuerpo` arma con la lista
+  de partidos que la página ya tenía.
+- **La imagen del cuerpo se sube al insertar, no al guardar la nota**, al revés
+  que la portada. El nodo guarda una URL y un `blob:` local metido en el JSON
+  quedaría en la base apuntando a un objeto que sólo existe en ese navegador
+  (regla no negociable 6). El costo, dicho para que no sorprenda: insertar y
+  después borrar el nodo deja el archivo huérfano en el bucket.
+- **El `alt` es obligatorio y el botón de insertar no se habilita sin él.**
+- Los tres paneles de la barra —enlazar, imagen, planilla— son un solo estado
+  `panel`, no tres booleanos: son excluyentes y con tres banderas se abrían de
+  a dos.
+
+### Una trampa que costó media hora y conviene tener anotada
+
+**Varios archivos del repo están en CRLF** y otros en LF (hay `.gitattributes`).
+Un script que busca y reemplaza un bloque de varias líneas con `\n` **falla en
+silencio** contra un archivo CRLF: no tira, no cambia nada, y el error aparece
+recién cuando `tsc` se queja de otra cosa. `FormularioNota.tsx` es uno de los
+CRLF. Si un reemplazo "no hace nada", mirar eso antes que el patrón.
+
+### Lo que falta
+
+- **Nada de esto se probó a mano en el navegador.** `tsc --noEmit` limpio, 558
+  tests en 34 archivos y `next build` exit 0, pero insertar una imagen de
+  verdad, verla en la vista previa y publicarla es algo que hay que hacer con
+  la base arriba.
+- **No hay forma de editar un nodo ya insertado**: se borra y se vuelve a
+  poner. Para un epígrafe mal escrito es un paso de más. Si molesta, el lugar
+  es un NodeView para `imagen` también.
+- **Inngest sigue sin existir** (`src/lib/inngest/`, `app/api/inngest/`). Es lo
+  único grande que queda del Build Order que no depende de credenciales de
+  Meta ni de X: `compose.ts` y `limites.ts` ya están escritos y testeados, y el
+  blueprint pide armarlo primero en modo dry-run.
+
+## Step 17: el auto-posteo, en modo dry-run
+
+> Rama `fase/19-nodos-del-editor`, misma sesión del 20/09. Es el último step
+> grande del Build Order que no depende de credenciales de afuera.
+
+**Publicar una nota ya dispara el pipeline entero.** `publicarNota()` emite
+`nota/publicada`, la función durable lee la nota, decide qué redes tocan,
+compone el copy y escribe `social_posts`. Lo único que no hace es publicar de
+verdad, porque los clientes de Meta y X son los Steps 15 y 16 y están
+bloqueados por el App Review.
+
+Eso es exactamente lo que pide el blueprint: *"probar local con
+`npx inngest-cli dev`, primero en modo dry-run"*.
+
+### Lo que hay que saber antes de tocarlo
+
+- **Inngest instalado es la 4, y el blueprint fue escrito contra la 3.** Los
+  eventos ya no se declaran con `new EventSchemas().fromRecord<…>()` sino con
+  `eventType(nombre, { schema })` y un esquema de Standard Schema —Zod 4 lo
+  cumple—, y `createFunction` recibe **dos** argumentos con los `triggers`
+  adentro de las opciones, no tres. Si un ejemplo de la documentación no
+  compila, mirar la versión antes que el código.
+- **La idempotencia no la da Inngest, la da `social_posts`.** Inngest reintenta
+  un paso que falló; sin el `unique (nota_id, platform)` cada reintento
+  publicaría otra vez. No invertir ese orden al leerlo: el UNIQUE es la
+  garantía, la cola es la comodidad.
+- **El registro se marca `processing` ANTES de llamar a la red.** Si se marcara
+  después, dos corridas simultáneas leerían las dos `pending` y postearían las
+  dos. Y si el registro no se puede escribir, **no se postea**: sin registro no
+  hay idempotencia, y postear igual es apostar a que no hay otra corrida.
+- **El dry-run no es un mock de test, es un modo de producción.** Escribe en
+  `social_posts` lo mismo que escribiría un posteo real, con un id
+  `simulado-…` que se reconoce a simple vista, y marca `success` con el mensaje
+  "Simulado: no se posteó de verdad". Se activa con `SOCIAL_DRY_RUN=true` **o**
+  con las credenciales faltando, que es el estado de hoy.
+- **Con las credenciales puestas y sin cliente escrito, avisa en vez de
+  simular.** Simular en silencio con las claves cargadas haría creer que se
+  publicó: quien las cargó espera que salga.
+- **Un fallo al emitir el evento no hace fallar la publicación.** La nota ya
+  está publicada; convertir eso en error haría que alguien apretara "publicar"
+  otra vez sobre algo que ya salió. Es la única pérdida silenciosa del
+  pipeline y está anotada en el código.
+- **`registrarSalteo()` no pisa un posteo que ya salió.** Un upsert pelado
+  convertiría en `failed` la fila `success` de una nota que se republica con
+  las credenciales caídas, o sea mentiría sobre algo publicado en Facebook.
+- **La nota se lee con la service role** (`getNotaParaPostear`), no con
+  `getNotaPorId`: adentro de la función durable no hay usuario, y con el
+  cliente de request la consulta correría como anónima. Hoy alcanzaría —sólo
+  llegan notas publicadas— pero por coincidencia, no por diseño.
+
+### Cómo probarlo
+
+```
+npx inngest-cli dev          # terminal aparte
+pnpm dev
+```
+
+Publicar una nota desde `/admin/notas/nueva` con el auto-posteo prendido, y
+mirar la corrida en `http://localhost:8288`. Tienen que quedar tres filas en
+`social_posts` con ids `simulado-…`.
+
+### Lo que falta
+
+- **Nada de esto se corrió todavía**, ni con `inngest-cli dev`. `tsc --noEmit`
+  limpio, 585 tests en 37 archivos y `next build` exit 0 con la ruta
+  `/api/inngest` registrada, pero el pipeline no se vio andar ni una vez.
+- **No hay pantalla que muestre `social_posts`** (Step 18). El pipeline escribe
+  esa tabla y hoy saber si un posteo salió es mirar la base a mano.
+- **El copy no usa el partido todavía.** `componerCopy()` acepta un
+  `PartidoCompleto` opcional para nombrar a las goleadoras y la función le pasa
+  `null`. `partidoDeLaNota()` está escrita al pie del archivo, sin usar, para
+  cuando el copy pase a importar de verdad.
+- **Los clientes de Meta y X** siguen bloqueados. Cuando lleguen las
+  credenciales, el único archivo a tocar es `publicadorDe()` en
+  `src/lib/social/redes.ts`: una línea por red.
+
+## Step 18: la pantalla de posteos
+
+> Rama `fase/19-nodos-del-editor`, misma sesión del 20/09, encadenado al
+> Step 17.
+
+**`/admin/posteos`**: qué pasó con cada posteo y el botón de reintentar. Sin
+esto lo del Step 17 era invisible — el pipeline escribía `social_posts` y saber
+si una nota había salido era abrir la base a mano.
+
+### Las dos decisiones que importan
+
+- **El panel no escribe `social_posts`.** No hay política de RLS que lo deje, y
+  está bien que no la haya: esa tabla la escribe Inngest con la service role,
+  que es donde vive la idempotencia. Si el panel la editara a mano habría dos
+  lugares decidiendo el estado de un posteo, y el segundo siempre termina
+  contradiciendo al primero. Reintentar **vuelve a emitir el evento** con
+  `forzado: true` y deja que la función durable mire el estado real y decida.
+- **Forzar cambia dos cosas y sólo dos**: destraba una red que quedó en
+  `processing` —una corrida que murió después de marcar y antes de postear la
+  dejaba trabada para siempre— y saltea el tope de cuatro intentos. **Lo que ya
+  se publicó no se vuelve a publicar ni forzando**, porque eso no se deshace
+  desde ningún lado.
+- Un posteo simulado se marca como tal en la fila aunque esté en `success`: el
+  pipeline funcionó, pero no se publicó nada, y confundir las dos cosas es
+  creer que una nota salió en Facebook cuando no salió.
+
+### Lo que falta
+
+- Igual que el Step 17: **no se corrió nunca**. 590 tests, `tsc` limpio y build
+  exit 0, pero la pantalla no se vio con datos reales porque todavía no hay un
+  solo posteo en la base.
+- **El reintento es por nota, no por red.** Es deliberado —la función durable
+  decide sola cuáles tocan— pero si alguna vez hace falta reintentar una sola,
+  el lugar es agregar la red al evento y filtrarla en `planDeFanout()`.
+
+## Step 20: la suite de Playwright
+
+> Rama `fase/19-nodos-del-editor`, misma sesión del 20/09. Cierra la parte de
+> navegador del Step 20; las auditorías de SEO y performance siguen sin hacer.
+
+**`pnpm test:e2e`**: 168 tests, 4 combinaciones (375 y 1280 px × claro y
+oscuro). Los dos scripts sueltos de `e2e/borradores/` —que se escribían a mano,
+se corrían y se tiraban— quedaron convertidos a specs y borrados; están en el
+historial de git si alguna vez hacen falta.
+
+Resultado de la primera corrida completa: **160 pasan, 8 skipped, 0 fallos**.
+
+### Las cuatro trampas que costaron la sesión
+
+Están todas anotadas adentro de los archivos, pero conviene tenerlas juntas:
+
+1. **`next dev` y `next build` comparten `.next`.** Con el dev server abierto,
+   `next start` encuentra artefactos de desarrollo y responde **404 en todas
+   las rutas**. El síntoma es "Timed out waiting from config.webServer" y no se
+   parece en nada a la causa. Por eso el config acepta `E2E_BASE_URL`, para
+   correr contra un servidor que ya esté levantado.
+2. **Nada de `waitUntil: 'networkidle'`.** Los borradores lo usaban; en un build
+   de producción varias rutas nunca se quedan quietas y `goto` se cuelga los 30
+   segundos del timeout. Con eso, quince tests fallaban por una razón que no
+   era el código. `load` alcanza.
+3. **El error de consola no trae la URL en el texto**, está en `location()`.
+   El encargo lo avisaba y el spec cayó igual: filtrando por texto daban diez
+   errores idénticos en **todas** las rutas, hasta en una sin una sola imagen.
+4. **Dos servidores en el mismo puerto sirven HTML de un build y estáticos de
+   otro**, y eso aparece como un 400 en cada `.js` y cada `.css`. Si los
+   estáticos dan 400, mirar cuántos procesos hay en el puerto antes que el
+   código.
+
+### Los dos tipos de marcador, y por qué son dos
+
+- **`test.fail()`** para lo determinista: los `h1` que faltan en `/`,
+  `/cronicas`, `/analisis` y `/quienes-somos`. Mientras el bug exista la suite
+  queda verde, y **el día que alguien lo arregle el test pasa a fallar** con
+  "esperaba fallar y pasó", que es el recordatorio de venir a sacar el
+  marcador. Ya funcionó una vez: la lista venía del encargo con `/buscar`
+  adentro, y el propio marcador avisó que con datos cargados esa ruta sí tiene
+  su titular.
+- **`test.fixme()`** para lo intermitente: los errores de consola de
+  `/demo/nota` y `/demo/articulo` dependen de si la imagen rota alcanza a
+  fallar antes del `load`. Marcados como `fail`, la suite se ponía roja una
+  corrida de cada tres por un bug ya conocido, y un test que falla a veces
+  enseña a ignorar los rojos.
+
+### Lo que falta
+
+- **Las auditorías del Step 20 propiamente dichas**: SEO, accesibilidad
+  (contraste AA, foco visible, jerarquía de encabezados) y performance
+  (LCP < 2.5s en 4G simulado). La suite mide scroll horizontal, `h1` y errores
+  de consola; no mide ninguna de esas tres.
+- **El panel ya tiene suite** (ver la sección siguiente), pero **no se corrió
+  nunca**: hace falta un usuario de prueba con fila en `autores` y cargar
+  `E2E_ADMIN_EMAIL` y `E2E_ADMIN_PASSWORD`. Hasta entonces esos doce tests no
+  se arman siquiera.
+- **`/quienes-somos` sigue sin `<h1>`.** Es un bug de verdad, de la rama
+  `fix/accesibilidad-y-pie`, y ahora hay un test que lo va a avisar cuando se
+  arregle.
+
+## La suite del panel
+
+> Rama `fase/19-nodos-del-editor`, cierre de la sesión del 20/09.
+
+`e2e/admin.spec.ts`: doce tests sobre `/admin`. Que las seis secciones abran
+con su `<h1>`, que se llegue a todas desde la barra, que los formularios se
+nieguen a guardar lo que está mal y que el editor tenga los dos botones nuevos.
+
+**Hace falta un usuario de prueba y todavía no existe:**
+
+```
+E2E_ADMIN_EMAIL=... E2E_ADMIN_PASSWORD=... pnpm test:e2e
+```
+
+El usuario tiene que **tener fila en `autores`**, no sólo existir en Supabase
+Auth: el layout del panel re-verifica eso —el mismo criterio que `es_autor()`
+en RLS— y sin la fila el login anda pero el panel rebota al login otra vez. Es
+el error que más cuesta diagnosticar de todo el panel.
+
+### Las tres decisiones
+
+- **Sin credenciales los dos proyectos del panel no se arman.** No es que cada
+  test se saltee: quedan afuera de la corrida entera. Dejarlos adentro daba un
+  rojo intermitente por una carrera entre el arranque del servidor y el login,
+  y un rojo que no significa nada es peor que no tener el test.
+- **El login se hace una vez y se guarda la sesión.** Un `beforeEach` son veinte
+  logins contra Supabase Auth por corrida, y tiene límite de intentos. El
+  archivo de sesión lleva tokens y está en `.gitignore`.
+- **Ningún test crea ni borra datos.** La suite corre contra la base de verdad,
+  la misma que usa el sitio: un test que crea un equipo de prueba deja basura
+  que después aparece en el `<select>` de un partido real. Por eso se prueba
+  que las pantallas abran y que **validen**, no el alta completa.
+
+### Lo que falta
+
+- **Los flujos de punta a punta** —crear un partido, armar la formación, cargar
+  un gol, verificar el marcador— necesitan una base de test aparte. Hoy no hay.
+- El config no puede importar de un spec: traer `admin.setup.ts` arrastra el
+  `test` de Playwright al leer la configuración y el arranque falla entero. Por
+  eso lo compartido vive en `e2e/credenciales.ts`, que no importa nada de
+  Playwright, y la ruta de la sesión está escrita literal en los dos lados.
+- Recordatorio, porque ya pasó tres veces en una sesión: **`next dev` pisa el
+  build de producción**. Antes de correr la suite, o se apaga el dev y se
+  rebuildea, o se usa `E2E_BASE_URL=http://localhost:3000`.
+
+## La auditoría de accesibilidad, y dos bugs que encontró
+
+> Rama `fase/19-nodos-del-editor`, sesión del 20/09. Cierra el ítem de
+> accesibilidad del Step 20; faltan los de SEO y performance.
+
+`e2e/accesibilidad.spec.ts` corre **axe-core** sobre doce rutas × las cuatro
+combinaciones de viewport y tema: 48 tests, todos en verde. Mide WCAG 2.1 A y
+AA, que es a lo que el proyecto se comprometió.
+
+**Los dos temas no son repetición.** El contraste se calcula sobre los colores
+que se están pintando, así que un token que falla AA sólo en oscuro aparece
+únicamente en esas dos corridas. Era la razón de tener los dos temas en la
+suite y recién ahora se usa para algo.
+
+**Se deja afuera `best-practice`**, el criterio propio de axe: tiene reglas
+razonables y otras discutibles, y mezclarlas haría que un rojo no distinga
+"incumple WCAG" de "a axe no le gusta".
+
+### Los dos bugs
+
+Los dos son la misma regla, `scrollable-region-focusable`, y los dos son
+reales: **un contenedor que scrollea a lo ancho y no se puede recorrer con el
+teclado**.
+
+- `LineaDeTiempo` — la línea de tiempo de la planilla. Adentro no hay nada
+  enfocable: los eventos son iconos con su texto en un `sr-only`, no links. Se
+  arrastraba con el dedo y con el mouse, y con las flechas no: quien navega sin
+  mouse no llegaba a los goles del segundo tiempo.
+- `TablaPosiciones` — mide 520px y a 375 se desplaza. Las columnas de goles
+  quedaban fuera del alcance. **Este sólo aparecía en los dos proyectos de
+  375px**, que es exactamente el argumento de correr la suite en los cuatro.
+
+Los dos se arreglaron igual: `tabIndex={0}`, un `role` con nombre —una parada
+de tabulación sin nombre se anuncia como "grupo" y no dice dónde quedó el
+foco— y un anillo de foco visible.
+
+### Lo que esto NO cubre
+
+**Una auditoría automática detecta alrededor de la mitad de los problemas
+reales.** axe no sabe si el texto alternativo de una foto la describe o dice
+"imagen1", ni si el orden de tabulación tiene sentido, ni si un `aria-label`
+está bien redactado. Eso se mira a mano y sigue pendiente.
+
+Y faltan los otros dos ítems del Step 20: **la auditoría de SEO** y la de
+**performance** (LCP < 2.5s en 4G simulado).
+
+### Una trampa del dev server
+
+La primera corrida acusó `document-title` y `html-has-lang` en `/demo/partido`,
+que es imposible —el layout raíz pone los dos—. Era **ruido de compilación**:
+el dev server compila la ruta al pedirla y axe analizó un documento
+intermedio. Desapareció en la segunda corrida. Si aparece una violación que no
+tiene sentido, correrla de nuevo antes de buscarla en el código.
+
+## El usuario de prueba, y la suite del panel corriendo por primera vez
+
+> Rama `fase/19-nodos-del-editor`, sesión del 21/09.
+
+Los doce tests de `e2e/admin.spec.ts` se escribieron la sesión pasada y nunca
+se habían armado: sin `E2E_ADMIN_EMAIL` y `E2E_ADMIN_PASSWORD`,
+`playwright.config.ts` ni crea los dos proyectos del panel. Hoy corren los
+trece —el setup más los doce— y están en verde.
+
+`scripts/usuario-e2e.ts` crea el usuario:
+
+```
+pnpm tsx scripts/usuario-e2e.ts            # en seco: informa y no escribe
+pnpm tsx scripts/usuario-e2e.ts --crear    # lo crea y guarda las claves
+```
+
+Hace **las dos cosas que hacen falta y que a mano viven en pantallas distintas
+de la consola de Supabase**: el usuario en Auth y la fila en `autores`. Sin la
+segunda el login anda y el panel rebota al login sin decir por qué, que es el
+error que más cuesta diagnosticar de todo el panel.
+
+Es idempotente: si el usuario ya existe le pone una contraseña nueva en lugar
+de fallar, que es lo que va a hacer falta el día que se pierda.
+
+### Las tres decisiones
+
+- **Un usuario aparte y no el de Charlie.** La suite corre contra la base de
+  verdad: entrar con la cuenta del único autor deja su sesión invalidada cuando
+  un test se cuelga, y cualquier cosa que llegue a escribirse queda firmada por
+  él. La fila de más en `autores` no se ve en el sitio público, que no tiene
+  página de autores.
+- **Las claves viven en `.env.local`** y `e2e/credenciales.ts` las lee de ahí,
+  con el cargador compartido `scripts/env-local.ts`. Pasarlas en la línea de
+  comandos es exactamente cómo la suite estuvo doce tests sin correr una sola
+  vez. Lo que ya esté en el entorno le gana al archivo, así que sigue siendo
+  posible pisarlas en una corrida puntual.
+- El mail es `e2e@periodicodelfos.com` y el usuario se crea **ya confirmado**:
+  sin `email_confirm` queda pendiente y el login falla con "Email not
+  confirmed", que no se parece en nada a la causa.
+
+### El bug que encontró la primera corrida
+
+Estaba en el test y no en el panel: `getByLabel('Local')` matchea **por
+substring**, y "Local" también está adentro de "Goles del local". El locator
+resolvía a dos elementos y Playwright cortaba por modo estricto. Con
+`exact: true` en los tres campos del formulario de partido, los trece pasan.
+Vale para cualquier test futuro sobre esa pantalla, que tiene las dos parejas.
+
+### Una trampa: la suite del panel contra `next dev`
+
+Con los seis workers por omisión, seis de los doce tests fallan con
+`net::ERR_ABORTED` y timeouts de 30 s. **No es el panel**: es el dev server
+compilando seis rutas a la vez. Con `--workers=1` pasan los trece. Contra
+`next start`, que es el modo normal de la suite, el problema no existe.
+
+## La auditoría de SEO, y los dos bugs que encontró
+
+> Rama `fase/19-nodos-del-editor`, sesión del 21/09. Cierra el ítem de SEO del
+> Step 20.
+
+`e2e/seo.spec.ts` son dieciséis tests que miran **el HTML servido**, no el
+código. Esa es toda la diferencia: el primero de los dos bugs es invisible
+leyendo los archivos.
+
+### Los dos bugs
+
+**1. Una página que define `openGraph` pisa el del layout raíz entero.** No lo
+completa: Next mergea la metadata campo por campo y `openGraph` es un campo. El
+resultado era que `og:site_name` y `og:locale` estaban en la portada —la única
+página que no define el suyo— y faltaban en las notas, los partidos, las
+jugadoras, los dos listados, quiénes somos, temporada y plantel. Mirando los
+archivos parece que está puesto una vez y alcanza.
+
+**2. Siete rutas no emitían `og:image`.** Sólo la tenían notas, partidos y
+jugadoras. Compartir la portada, un listado o la temporada a WhatsApp daba el
+rectángulo gris con el dominio, que es el defecto del sitio de WordPress que
+esta migración venía a dejar atrás. Y la infraestructura ya existía —`/api/og`
+y `urlOg()`—, sólo que no se usaba fuera de esas tres.
+
+Los dos se arreglan con `openGraphBase()` en `src/lib/seo.ts`: lógica pura, seis
+tests de vitest, y cada página la desparrama y agrega lo suyo (`type`, `url`,
+`publishedTime`). La alternativa era repetir `siteName` y `locale` en nueve
+archivos, que es exactamente cómo se vuelve a perder.
+
+### Lo que verifica la suite
+
+Metadata completa y `<title>` de menos de 70 caracteres en las rutas fijas,
+canonical absoluta y apuntando a sí misma, `noindex` en `/buscar` y en las
+cuatro demos, y `robots.txt`, `sitemap.xml` y `rss.xml` consistentes entre sí
+—que el sitemap no liste nada que robots prohíbe, sin repetidos y todo del
+mismo origen—.
+
+**Las páginas de contenido salen del sitemap y no escritas a mano.** Un test que
+nombre `fecha-4-aldosivi-claypole-2026` se pone en rojo el día que ese partido
+se borre; así, con la base vacía se saltea solo.
+
+**Corre en un proyecto solo y no en los cuatro.** Ninguna de estas etiquetas
+depende del ancho ni del tema. Es lo contrario de la de accesibilidad, donde
+los cuatro viewports son la razón de que encuentre lo que encuentra.
+
+El largo del `<title>` se exige sólo en las rutas fijas: el de una nota o un
+partido lo arma el contenido —"Aldosivi 6 - 1 Claypole · Fecha 4 · Primera B
+2026" ya mide 69 con el sufijo— y un nombre de club largo lo pasa sin que haya
+nada para arreglar.
+
+### Lo que esto NO cubre
+
+Si el título describe la página o sólo la nombra, si la bajada da ganas de
+entrar, y si los datos estructurados pasan el validador de Google, que exige su
+propio servicio. `NewsArticle` y `SportsEvent` se emiten y están testeados en
+vitest, pero nadie los pasó por el validador todavía.
+
+## La medición de LCP, y dos formas de medir mal
+
+> Rama `fase/19-nodos-del-editor`, sesión del 21/09. Cierra el tercer ítem del
+> Step 20, y con él el step entero.
+
+`e2e/rendimiento.spec.ts` estrangula la red con el perfil que Lighthouse llama
+Slow 4G —1,6 Mbps de bajada, 750 kbps de subida, 150 ms de ida y vuelta—, apaga
+el cache y exige el umbral de Core Web Vitals: **LCP por debajo de 2500 ms**, a
+375 px. Mide la portada, un listado y el partido más reciente que haya en el
+sitemap.
+
+**Los números, contra el build del 21/09:**
+
+| Ruta | LCP | Qué pintó |
+| --- | --- | --- |
+| `/` | 672 ms | el párrafo del estado vacío |
+| `/cronicas` | 556 ms | la bajada del listado |
+| `/partido/fecha-4-…` | 572 ms | la marca de la cabecera |
+
+Sobra margen, pero **el sitio está casi vacío**: `notas` tiene 0 filas, así que
+en las tres el LCP es texto. Cuando entren las 70 notas de la migración el
+elemento va a pasar a ser una foto y el número va a subir; por eso la medición
+informa qué elemento fue, y no sólo cuántos milisegundos.
+
+### Las dos formas de medir mal, que la primera corrida hizo las dos
+
+Las dos daban rojo o casi, y ninguna era del sitio.
+
+- **Tres mediciones en paralelo compiten entre sí.** Comparten el mismo
+  `next start` y la misma máquina: la portada daba 3264 ms en paralelo y 1800
+  de a una. El proyecto va con `fullyParallel: false`, que acá no es
+  preferencia sino condición para que el número signifique algo.
+- **La primera navegación de un navegador recién abierto cuesta un segundo y
+  medio de más.** Es el arranque del proceso y la primera conexión, no la
+  página: daba igual qué ruta tocara primera —`/cronicas` sola dio 2224 ms y
+  segunda, 728—. O sea que el primer test medía Edge. Ahora hay una carga de
+  calentamiento que no se mide, y que además es lo más parecido a la verdad:
+  quien entra al sitio ya tiene el navegador abierto. **El cache se sigue
+  apagando**, que es lo que mantiene la medición en "primera visita".
+
+Si alguna vez un número de éstos se dispara, mirar primero estas dos cosas.
+
+### Qué se estrangula, y qué no
+
+**No se estrangula el procesador**, aunque Lighthouse además lo frene 4×. El
+encargo pide 4G, y ese factor depende de qué tan rápida sea la máquina que
+corre la suite: el mismo código daría verde en una y rojo en otra. Medir el
+celular de verdad sigue siendo un ítem aparte y no lo reemplaza un emulador.
+
+**Contra `next dev` la suite se saltea entera** con el motivo escrito, en lugar
+de dar números tres veces peores. El marcador es el cache-buster que el dev
+server le cuelga a sus chunks (`main-app.js?v=`), que el build no tiene.
+
+## Lo que se miró a mano de accesibilidad
+
+> Sesión del 21/09. Completa lo que axe no puede ver, hasta donde se puede sin
+> una persona con un teclado.
+
+- **No hay un solo `tabIndex` positivo, ni `autoFocus`, ni `accessKey` en todo
+  `src/`.** Los dos únicos `tabIndex` son los `={0}` que se agregaron para los
+  contenedores que scrollean. O sea que el orden de tabulación es el orden del
+  DOM en todas las páginas, que es la mitad del problema resuelta por
+  construcción; que el orden del DOM coincida con el visual hay que mirarlo con
+  el teclado.
+- **Los `alt` escritos a mano en componentes son todos deliberados.** Las fotos
+  que van con `alt=""` —escudo, foto de jugadora, tarjeta de nota— tienen al
+  lado el nombre como texto, y repetirlo sería ruido para un lector de
+  pantalla. Cada uno tiene el comentario que lo explica.
+- **El `alt` que puede decir "imagen1" es dato, no código**, y hoy no hay
+  ninguno: la tabla `notas` está vacía (0 filas al 21/09). El control existe
+  —`imagen_alt` es obligatorio si hay portada, con Zod en el formulario y un
+  CHECK en `0005_notas.sql`— pero es de largo, no de calidad: nada distingue
+  "Las jugadoras festejan el tercer gol" de "foto". Cuando entren las 70 notas
+  de la migración, eso se revisa fila por fila o se le pone una heurística al
+  editor.
+
+## Prompt para la próxima sesión — al 21/09/2026, tarde
+
+> **Éste es el vigente.** Los dos bloques de más arriba con el mismo nombre
+> quedaron al 18/09 y al 21/09 a la mañana, y los dos están viejos.
+
+````
+Estoy construyendo Periódico Delfos, un medio digital de Mar del Plata dedicado al
+fútbol femenino de Aldosivi (las "Tiburonas"). Lo escribe una sola persona, Charlie
+Redondo. Es una migración desde WordPress.
+
+El proyecto está en `periodico-delfos/`. Next 15 App Router + TypeScript strict +
+Tailwind v4 + Supabase + TipTap + Inngest.
+
+El plan está en `periodico-delfos-blueprint-v2.md` —el Build Order es la sección 10— y
+el estado real en `HANDOFF.md`. **Leé primero las cinco últimas secciones del
+HANDOFF**, que son las de las sesiones del 20 y el 21/09; más arriba en ese mismo
+archivo hay partes viejas. `CLAUDE.md` tiene las reglas no negociables y el sistema de
+diseño. El mapa del panel está en `docs/admin.md` y se actualiza en el mismo commit que
+agrega una pantalla.
+
+DÓNDE ESTAMOS: rama `fase/19-nodos-del-editor`, que encadena dieciséis commits. Los
+Steps 12, 13, 17, 18, 19 y **20 están cerrados**: las tres auditorías del 20
+—accesibilidad, SEO y performance— están automatizadas y en verde. Nada está mergeado a
+`main`, que quedó bastante atrás.
+
+ENTORNO — leer esto antes de tocar nada:
+- **Supabase está arriba y `.env.local` existe.** Hay datos reales: dos temporadas, 10
+  equipos, 33 jugadoras con su plantel y el partido de la fecha 4 contra Claypole. La
+  tabla `notas` está vacía.
+- **El usuario de prueba del panel ya existe** y sus claves están en `.env.local`. La
+  suite del panel se arma sola. Si hiciera falta reponerlo:
+  `pnpm tsx scripts/usuario-e2e.ts --crear`.
+- **Varios archivos del repo están en CRLF y otros en LF.** Un script que busca y
+  reemplaza un bloque de varias líneas con `\n` **falla en silencio** contra un archivo
+  CRLF: no tira, no cambia nada, y el error aparece mucho después. Casi todo `src/app`
+  está en CRLF. Si un reemplazo "no hace nada", mirá eso antes que el patrón.
+- **`next dev` y `next build` comparten `.next`.** Con el dev server abierto,
+  `next start` responde 404 en todas las rutas y la suite e2e falla entera con un
+  mensaje que no se parece a la causa. O se apaga el dev y se rebuildea, o se corre
+  `E2E_BASE_URL=http://localhost:3000 pnpm test:e2e`.
+- **Contra el dev server, la suite necesita `--workers=1`.** Con los seis por omisión,
+  media docena de tests fallan con `net::ERR_ABORTED`: es el dev compilando varias
+  rutas a la vez, no el código. Contra `next start` no pasa.
+- `pnpm lint` falla de fábrica: `eslint.config.mjs` quedó de un scaffolding de Next 16.
+  No afecta al build. No lo arregles sin leer "Pendiente manual" en el HANDOFF.
+- Al 21/09 pasan `npx tsc --noEmit`, **603 tests de vitest en 36 archivos**,
+  `next build` exit 0 y la suite de navegador entera contra el build: **240 pasan, 8
+  skipped, 0 fallos**. Mantenelos verdes.
+
+LO QUE FALTA, EN ORDEN DE IMPORTANCIA:
+
+1. PROBAR EL PANEL CONTRA LA BASE, A MANO. Es lo más importante y no lo puede hacer un
+   agente solo. Los Steps 12, 17, 18 y 19 **no se abrieron en un navegador ni una
+   vez**. Que la suite del panel esté verde dice que las pantallas abren y que los
+   formularios validan, no que cargar una temporada entera funcione: la suite no crea
+   ni borra datos a propósito. El entregable del Step 12 según el blueprint es "cargar
+   la temporada 2026 completa desde el panel". El orden de carga está en
+   `docs/admin.md`: temporada → equipos → jugadoras → plantel → partido → formación →
+   planilla. Lo que salga mal, arreglarlo.
+
+2. LA PLANILLA EN UN CELULAR REAL, CRONOMETRADA. Es el entregable del Step 13 según su
+   encargo (`docs/encargos/planilla-de-carga.md`): si cargar un partido pasa de tres
+   minutos, iterar antes de seguir. Probar también la cola offline cortando los datos a
+   mitad de carga.
+
+3. LO QUE LAS AUDITORÍAS NO CUBREN. Las tres del Step 20 están automatizadas, pero:
+   - el orden de tabulación hay que recorrerlo con el teclado (no hay ningún `tabIndex`
+     positivo, así que es el orden del DOM: falta ver que coincida con el visual);
+   - los `alt` de las notas se revisan cuando entren las 70 de la migración, porque hoy
+     `notas` está vacía y el control es de largo, no de calidad;
+   - `NewsArticle` y `SportsEvent` no pasaron por el validador de datos estructurados
+     de Google, que exige su propio servicio;
+   - el LCP se midió con el sitio casi vacío, así que en las tres rutas el elemento que
+     pinta es texto. Cuando entren las notas con foto hay que volver a medir:
+     `npx playwright test --project=rendimiento` imprime el número y qué elemento fue.
+
+4. EL MERGE. Son dieciséis commits en una rama que ya vive más de lo que `CONTRIBUTING.md`
+   considera sano. Nada de esto está en `main`.
+
+BLOQUEADO POR AFUERA, no insistir: los Steps 15 y 16 (Meta y X) esperan el App Review
+de Meta y las credenciales del Developer Portal de X. El pipeline entero ya funciona en
+modo dry-run y el único archivo a tocar cuando lleguen es `publicadorDe()` en
+`src/lib/social/redes.ts`, una línea por red.
+
+CÓMO TRABAJAR ACÁ:
+- Lógica pura en `src/lib/` con tests de vitest; componentes que reciben todo por props.
+- Las queries en `src/lib/supabase/queries/*`, nunca un `.from()` adentro de un
+  componente. Los Server Actions en `src/actions/*`, uno por entidad.
+- Un componente por archivo, máximo 300 líneas.
+- Todo en español, incluidos los nombres de funciones y variables.
+- Los comentarios explican **por qué**, no qué. Mirá cualquier archivo de
+  `src/lib/entidades/` para el tono.
+- Verificar con `npx tsc --noEmit`, `npx vitest run` y `npx next build` antes de decir
+  que algo está hecho.
+````

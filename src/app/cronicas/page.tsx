@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/Header'
 import { ListadoNotas } from '@/components/listado/ListadoNotas'
 import { hrefDePagina } from '@/components/listado/Paginacion'
 import { contarPaginas, paginaPedida, POR_PAGINA } from '@/lib/paginacion'
+import { openGraphBase } from '@/lib/seo'
 import { getNotasPorCategoria } from '@/lib/supabase/queries/notas'
 import { haySupabase } from '@/lib/supabase/server'
 
@@ -43,7 +44,7 @@ export async function generateMetadata({ searchParams }: Params): Promise<Metada
     title: titulo,
     description: DESCRIPCION,
     alternates: { canonical: `${SITE_URL}${hrefDePagina(BASE, pagina)}` },
-    openGraph: { title: titulo, description: DESCRIPCION, type: 'website' },
+    openGraph: { ...openGraphBase({ titulo, descripcion: DESCRIPCION }, SITE_URL), type: 'website' },
   }
 }
 
@@ -67,6 +68,7 @@ export default async function Cronicas({ searchParams }: Params) {
         <ListadoNotas
           id="listado-cronicas"
           titulo={TITULO}
+          nivel={1}
           descripcion={DESCRIPCION}
           notas={notas}
           base={BASE}

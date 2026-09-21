@@ -37,7 +37,17 @@ export function TablaPosiciones({ filas, fecha, temporada }: Props) {
   if (filas.length === 0) return <SinTabla temporada={temporada} />
 
   return (
-    <div className="overflow-x-auto">
+    // La tabla mide 520px y a 375 se desplaza a lo ancho: sin `tabIndex` eso
+    // se puede hacer con el dedo pero no con el teclado, y las columnas de
+    // goles quedan fuera del alcance de quien navega sin mouse. Misma regla
+    // que la línea de tiempo de la planilla —`scrollable-region-focusable`— y
+    // la encontró la auditoría de axe, sólo en los proyectos de 375px.
+    <div
+      tabIndex={0}
+      role="region"
+      aria-label={`Tabla de posiciones de ${temporada}`}
+      className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-600"
+    >
       <table className="w-full min-w-[520px] border-collapse text-left">
         <caption className="mb-4 max-w-medida text-left font-display text-[0.85rem] leading-snug text-gris">
           {temporada}

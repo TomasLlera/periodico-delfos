@@ -18,6 +18,16 @@ import type { NotaResumen } from '@/types'
 interface Props {
   id: string
   titulo: string
+  /**
+   * Nivel del encabezado, como en `CabeceraBloque`.
+   *
+   * `2` en la portada, donde este listado es un bloque de una página que ya
+   * tiene su `<h1>`; `1` en `/cronicas` y `/analisis`, donde el listado **es**
+   * la página y su título es el único que hay. Sin esto las dos quedaban sin
+   * ningún `<h1>`, que rompe la jerarquía de encabezados y deja a quien navega
+   * con lector de pantalla sin saber en qué página está.
+   */
+  nivel?: 1 | 2
   /** Bajo el título, qué hay en este listado. */
   descripcion: string
   notas: readonly NotaResumen[]
@@ -30,6 +40,7 @@ interface Props {
 export function ListadoNotas({
   id,
   titulo,
+  nivel = 2,
   descripcion,
   notas,
   base,
@@ -39,7 +50,7 @@ export function ListadoNotas({
 }: Props) {
   return (
     <section aria-labelledby={id}>
-      <CabeceraBloque id={id} titulo={titulo} />
+      <CabeceraBloque id={id} titulo={titulo} nivel={nivel} />
 
       <p className="max-w-medida font-body text-[1.05rem] leading-relaxed text-tinta-suave">
         {descripcion}

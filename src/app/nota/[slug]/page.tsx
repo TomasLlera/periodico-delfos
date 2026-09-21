@@ -15,7 +15,7 @@ import { ArticuloNota } from '@/components/content/ArticuloNota'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { etiquetaCategoria } from '@/lib/formato'
-import { jsonLdNota, urlDeNota, urlOg } from '@/lib/seo'
+import { jsonLdNota, openGraphBase, urlDeNota } from '@/lib/seo'
 import { getNotaPorSlug, getNotasRelacionadas, getSlugsNotas } from '@/lib/supabase/queries/notas'
 import { getPartidosPorIds } from '@/lib/supabase/queries/partidos'
 import { haySupabase } from '@/lib/supabase/server'
@@ -57,27 +57,24 @@ export async function generateMetadata({
     description: nota.bajada,
     alternates: { canonical: url },
     openGraph: {
-      type: 'article',
-      title: nota.titulo,
-      description: nota.bajada,
-      url,
-      publishedTime: nota.publicada_en ?? undefined,
-      authors: [nota.autor.nombre],
       // `imagen_alt` es obligatorio en la base, así que si hay portada hay alt.
       // Las notas que no la tienen —son varias de las 70 que trajo la
       // migración— se comparten con la imagen que genera `/api/og`, en lugar
       // del rectángulo gris con el dominio que muestran hoy.
-      images: [
-        nota.imagen_portada
-          ? { url: nota.imagen_portada, alt: nota.imagen_alt }
-          : {
-              url: urlOg(
-                { titulo: nota.titulo, volanta: etiquetaCategoria(nota.categoria) },
-                SITE_URL,
-              ),
-              alt: nota.titulo,
-            },
-      ],
+      ...openGraphBase(
+        {
+          titulo: nota.titulo,
+          descripcion: nota.bajada,
+          volanta: etiquetaCategoria(nota.categoria),
+          imagen: nota.imagen_portada,
+          alt: nota.imagen_alt,
+        },
+        SITE_URL,
+      ),
+      type: 'article',
+      url,
+      publishedTime: nota.publicada_en ?? undefined,
+      authors: [nota.autor.nombre],
     },
     twitter: {
       // Siempre grande: ahora siempre hay una imagen de 1200×630.

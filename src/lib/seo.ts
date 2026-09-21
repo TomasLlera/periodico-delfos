@@ -78,6 +78,51 @@ export function urlOg(
   return `${urlSitio.replace(/\/+$/, '')}/api/og?${parametros.toString()}`
 }
 
+/**
+ * Lo que toda página tiene que emitir en Open Graph y Next no hereda.
+ *
+ * **Una página que define `openGraph` pisa el del layout raíz entero**, no lo
+ * completa: Next mergea la metadata campo por campo y `openGraph` es un campo.
+ * El resultado era que `og:site_name` y `og:locale` estaban en la portada —la
+ * única que no lo define— y faltaban en las notas, los partidos, las jugadoras
+ * y los dos listados. Se encontró leyendo el HTML servido y no el código:
+ * mirando los archivos parece que está puesto una vez y alcanza.
+ *
+ * Y toda página lleva imagen. Sin `images` el enlace se comparte como un
+ * rectángulo gris con el dominio, que es exactamente lo que hace hoy el sitio
+ * de WordPress. Cuando no hay foto propia va la que genera `/api/og`, que ya
+ * existía para las notas sin portada.
+ */
+export function openGraphBase(
+  {
+    titulo,
+    descripcion,
+    volanta,
+    imagen,
+    alt,
+  }: {
+    titulo: string
+    descripcion?: string | null
+    /** La volanta de la imagen generada. Se ignora si hay `imagen`. */
+    volanta?: string | null
+    imagen?: string | null
+    alt?: string | null
+  },
+  urlSitio: string,
+) {
+  return {
+    siteName: NOMBRE_SITIO,
+    locale: 'es_AR',
+    title: titulo,
+    description: descripcion ?? undefined,
+    images: [
+      imagen
+        ? { url: imagen, alt: alt ?? titulo }
+        : { url: urlOg({ titulo, volanta }, urlSitio), alt: titulo },
+    ],
+  }
+}
+
 /** URL absoluta de un partido. */
 export function urlDePartido(slug: string, urlSitio: string): string {
   return `${urlSitio.replace(/\/+$/, '')}/partido/${slug}`

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { CabeceraBloque } from '@/components/portada/CabeceraBloque'
+import { openGraphBase } from '@/lib/seo'
 
 /**
  * Quiénes somos. Step 10 del Build Order.
@@ -22,7 +23,10 @@ export const metadata: Metadata = {
   title: 'Quiénes somos',
   description: DESCRIPCION,
   alternates: { canonical: `${SITE_URL}/quienes-somos` },
-  openGraph: { title: 'Quiénes somos', description: DESCRIPCION, type: 'website' },
+  openGraph: {
+    ...openGraphBase({ titulo: 'Quiénes somos', descripcion: DESCRIPCION }, SITE_URL),
+    type: 'website',
+  },
 }
 
 export default function QuienesSomos() {
@@ -31,7 +35,7 @@ export default function QuienesSomos() {
       <Header />
 
       <main className="mx-auto max-w-[1200px] px-4 py-10">
-        <CabeceraBloque id="quienes-somos" titulo="Quiénes somos" />
+        <CabeceraBloque id="quienes-somos" titulo="Quiénes somos" nivel={1} />
 
         <div className="prose-nota">
           <p>

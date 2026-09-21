@@ -102,6 +102,21 @@ export default async function Portada() {
       <Header temperatura={temperatura} />
 
       <main className="mx-auto max-w-[1200px] px-4 pb-4">
+        {/* El `<h1>` de la portada, que no se ve y tiene que estar.
+
+            La portada no tiene un titular propio: lo más grande de la página
+            es la nota de tapa, y ponerle el `<h1>` a esa nota diría que la
+            página se llama como la nota del día. El nombre del medio está en
+            la cabecera, pero ahí es un link que se repite en todas las
+            páginas y no puede ser el `<h1>` de ninguna.
+
+            Sin esto la portada quedaba sin ningún `<h1>`: quien navega con
+            lector de pantalla saltaba de encabezado en encabezado sin saber
+            nunca en qué página estaba. */}
+        <h1 className="sr-only">
+          Periódico Delfos, fútbol femenino de Aldosivi desde Mar del Plata
+        </h1>
+
         {tapa ? (
           <NotaTapa nota={tapa} />
         ) : (

@@ -11,7 +11,7 @@ import {
 } from '@/components/jugadora/TablaEstadisticas'
 import { totalesJugadora } from '@/lib/jugadora'
 import { nombreCompleto, puestoEnTemporada } from '@/lib/plantel'
-import { urlOg } from '@/lib/seo'
+import { openGraphBase } from '@/lib/seo'
 import {
   getEstadisticasJugadora,
   getGolesDeJugadora,
@@ -71,17 +71,19 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     description: descripcion,
     alternates: { canonical: `${SITE_URL.replace(/\/+$/, '')}/jugadora/${jugadora.slug}` },
     openGraph: {
-      type: 'profile',
-      title: nombre,
-      description: descripcion,
-      images: [
+      // La foto de la jugadora si la hay; si no, la imagen generada, que es
+      // mejor que el rectángulo gris con el dominio. Lo resuelve el helper.
+      ...openGraphBase(
         {
-          // La foto de la jugadora si la hay; si no, la imagen generada, que es
-          // mejor que el rectángulo gris con el dominio.
-          url: jugadora.foto_url ?? urlOg({ titulo: nombre, volanta: 'Plantel' }, SITE_URL),
-          alt: jugadora.foto_url ? `Foto de ${nombre}` : nombre,
+          titulo: nombre,
+          descripcion,
+          volanta: 'Plantel',
+          imagen: jugadora.foto_url,
+          alt: `Foto de ${nombre}`,
         },
-      ],
+        SITE_URL,
+      ),
+      type: 'profile',
     },
   }
 }

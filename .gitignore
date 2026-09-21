@@ -45,3 +45,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# CLI de Supabase: estado del link, puede traer la URL del pooler con credenciales
+supabase/.temp/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# La sesión que guarda Playwright para entrar al panel: lleva tokens.
+e2e/.sesion-admin.json

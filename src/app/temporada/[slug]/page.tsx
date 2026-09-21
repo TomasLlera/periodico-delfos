@@ -7,6 +7,7 @@ import { FixtureTemporada } from '@/components/temporada/FixtureTemporada'
 import { ListaGoleadoras } from '@/components/temporada/ListaGoleadoras'
 import { PestanasTemporada } from '@/components/temporada/PestanasTemporada'
 import { TablaPosiciones } from '@/components/temporada/TablaPosiciones'
+import { openGraphBase } from '@/lib/seo'
 import { pestanaPedida } from '@/lib/temporada'
 import { getPartidosTemporada } from '@/lib/supabase/queries/partidos'
 import {
@@ -52,7 +53,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     // La canonical es la ruta pelada: las tres pestañas son la misma página
     // con `?ver=`, y sin esto se indexarían como tres URLs distintas.
     alternates: { canonical: `${SITE_URL.replace(/\/+$/, '')}/temporada/${temporada.slug}` },
-    openGraph: { type: 'website', title: temporada.nombre, description: descripcion },
+    openGraph: {
+      ...openGraphBase(
+        { titulo: temporada.nombre, descripcion, volanta: 'Temporada' },
+        SITE_URL,
+      ),
+      type: 'website',
+    },
   }
 }
 

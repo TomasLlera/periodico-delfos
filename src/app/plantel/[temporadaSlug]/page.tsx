@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { GrillaPlantel } from '@/components/plantel/GrillaPlantel'
+import { openGraphBase } from '@/lib/seo'
 import { getPlantel } from '@/lib/supabase/queries/jugadoras'
 import { getSlugsTemporadas, getTemporadaPorSlug } from '@/lib/supabase/queries/temporadas'
 import { haySupabase } from '@/lib/supabase/server'
@@ -48,7 +49,12 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     title: titulo,
     description: descripcion,
     alternates: { canonical: `${SITE_URL.replace(/\/+$/, '')}/plantel/${temporada.slug}` },
-    openGraph: { type: 'website', title: titulo, description: descripcion },
+    openGraph: {
+      // La volanta es la temporada y no 'Plantel': el título de la tarjeta ya
+      // empieza con esa palabra y repetirla arriba se lee como un error.
+      ...openGraphBase({ titulo, descripcion, volanta: temporada.nombre }, SITE_URL),
+      type: 'website',
+    },
   }
 }
 
