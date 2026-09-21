@@ -110,24 +110,38 @@ export default defineConfig({
         ]
       : []),
 
+    /**
+     * La auditoría de SEO, en un solo proyecto.
+     *
+     * Ninguna de las etiquetas que mira depende del ancho ni del tema, así que
+     * correrla en los cuatro sería el mismo resultado cuatro veces. Es lo
+     * contrario de la de accesibilidad, donde los cuatro son la razón de que
+     * encuentre lo que encuentra.
+     */
+    {
+      name: 'seo',
+      testMatch: /seo.spec.ts/,
+      use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 1280, height: 900 } },
+    },
+
     {
       name: 'escritorio-claro',
-      testIgnore: /admin./,
+      testIgnore: /(admin|seo)\./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 1280, height: 900 }, colorScheme: 'light' },
     },
     {
       name: 'escritorio-oscuro',
-      testIgnore: /admin./,
+      testIgnore: /(admin|seo)\./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 1280, height: 900 }, colorScheme: 'dark' },
     },
     {
       name: 'celular-claro',
-      testIgnore: /admin./,
+      testIgnore: /(admin|seo)\./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 375, height: 900 }, colorScheme: 'light' },
     },
     {
       name: 'celular-oscuro',
-      testIgnore: /admin./,
+      testIgnore: /(admin|seo)\./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 375, height: 900 }, colorScheme: 'dark' },
     },
   ],

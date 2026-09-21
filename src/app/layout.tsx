@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Archivo, Source_Serif_4, IBM_Plex_Mono } from 'next/font/google'
 import { BarraEstado } from '@/components/layout/BarraEstado'
+import { urlOg } from '@/lib/seo'
 import { getEstadoDelSitio } from '@/lib/supabase/queries/estado'
 import './globals.css'
 
@@ -44,6 +45,17 @@ export const metadata: Metadata = {
     siteName: 'Periódico Delfos',
     locale: 'es_AR',
     type: 'website',
+    // La tarjeta por omisión, para las páginas que no definen la suya. Sin
+    // esto la portada se comparte como un rectángulo gris con el dominio, que
+    // es el defecto del sitio de WordPress que esta migración venía a dejar
+    // atrás. Ojo: una página que define `openGraph` pisa este objeto entero y
+    // tiene que volver a poner la imagen — para eso está `openGraphBase()`.
+    images: [
+      {
+        url: urlOg({ titulo: 'El fútbol femenino de Aldosivi, fecha a fecha' }, SITE_URL),
+        alt: 'Periódico Delfos',
+      },
+    ],
   },
   alternates: {
     types: {

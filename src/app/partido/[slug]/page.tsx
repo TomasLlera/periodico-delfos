@@ -5,7 +5,7 @@ import { Header } from '@/components/layout/Header'
 import { NotasRelacionadas } from '@/components/content/NotasRelacionadas'
 import { PlanillaPartido } from '@/components/partido/PlanillaPartido'
 import { etiquetaFecha, marcador } from '@/lib/formato'
-import { jsonLdPartido, urlDePartido, urlOg } from '@/lib/seo'
+import { jsonLdPartido, openGraphBase, urlDePartido } from '@/lib/seo'
 import { getNotasDePartido } from '@/lib/supabase/queries/notas'
 import { getPartidoPorSlug, getSlugsPartidos } from '@/lib/supabase/queries/partidos'
 import { haySupabase } from '@/lib/supabase/server'
@@ -66,17 +66,13 @@ export async function generateMetadata({
     description: descripcion,
     alternates: { canonical: url },
     openGraph: {
-      type: 'article',
-      title: nombre,
-      description: descripcion,
-      url,
       // Un partido nunca tiene foto propia: siempre va la imagen generada.
-      images: [
-        {
-          url: urlOg({ titulo: nombre, volanta: partido.temporada.nombre }, SITE_URL),
-          alt: nombre,
-        },
-      ],
+      ...openGraphBase(
+        { titulo: nombre, descripcion, volanta: partido.temporada.nombre },
+        SITE_URL,
+      ),
+      type: 'article',
+      url,
     },
     twitter: { card: 'summary_large_image', title: nombre, description: descripcion },
   }
