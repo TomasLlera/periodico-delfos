@@ -24,6 +24,7 @@ se creó y quedó una hora sin ningún link que llevara ahí.
 | `/admin/partidos/nuevo` · `/[id]` | Crear y editar la ficha de un partido | 12 |
 | `/admin/partidos/[id]/formacion` | Quiénes juegan: titulares y suplentes | 12 |
 | `/admin/partidos/[id]/planilla` | Cargar goles, tarjetas y cambios | 13 ★ |
+| `/admin/posteos` | Qué pasó con los posteos, y reintentar | 18 |
 
 **El plantel y la tabla no tienen link en la barra**: cuelgan de una temporada
 y se entra desde el listado de temporadas, que es donde ya se sabe de cuál. Una
@@ -54,10 +55,6 @@ partido sin formación abre la planilla sin ninguna jugadora que tocar.
   offline cortando los datos a mitad de partido. El encargo dice que ése es el
   entregable de verdad: si pasa de tres minutos, iterar. Es lo único del panel
   que no se puede verificar desde esta máquina.
-- **La pantalla de posteos del panel** (Step 18): leer `social_posts` y poder
-  reintentar lo que falló. El pipeline ya escribe esa tabla —Inngest está
-  cableado en dry-run— pero no hay ninguna pantalla que la muestre, así que hoy
-  saber si un posteo salió es mirar la base a mano.
 - **Los clientes de Meta y X** (Steps 15 y 16). Bloqueados por afuera: el App
   Review de Meta tarda días. `publicadorDe()` en `social/redes.ts` es el único
   lugar que hay que tocar cuando lleguen.
@@ -109,6 +106,10 @@ mitad sólo el panel.
 
 ## Las reglas que este panel sigue
 
+- **El panel no escribe `social_posts`.** No hay política de RLS que lo deje,
+  a propósito: esa tabla la escribe Inngest con la service role, que es donde
+  vive la idempotencia. Reintentar un posteo no edita la fila, vuelve a
+  disparar el pipeline y deja que la función durable decida.
 - **Todo se escribe con la sesión del autor, nunca con la service role.** El
   cliente de `supabase/admin.ts` bypassea RLS y es para procesos sin usuario
   —Inngest, los scripts—. Si una pantalla del admin lo necesitara, está mal

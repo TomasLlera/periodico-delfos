@@ -110,3 +110,45 @@ describe('agotada', () => {
     expect(agotada(plan[2])).toBe(true)
   })
 })
+
+/**
+ * El reintento que se pide a mano desde el panel.
+ *
+ * Es distinto de una corrida automática en dos cosas y sólo en dos: destraba
+ * lo que quedó colgado y saltea el tope de intentos. Lo que no cambia es lo
+ * único que no se puede deshacer.
+ */
+describe('planDeFanout forzado', () => {
+  it('lo que ya se publicó no se vuelve a publicar ni forzando', () => {
+    const plan = planDeFanout(TODAS, [registro('facebook', 'success')], conTodo, true)
+    expect(redesAIntentar(plan)).toEqual(['instagram', 'x'])
+    expect(plan.find((p) => p.red === 'facebook')?.motivo).toBe('ya-posteada')
+  })
+
+  /**
+   * El caso que justifica el modo forzado: una corrida murió después de marcar
+   * `processing` y antes de postear. Sin esto, esa red queda trabada para
+   * siempre y no hay forma de destrabarla desde el panel.
+   */
+  it('destraba un processing que quedó colgado', () => {
+    const registros = [registro('instagram', 'processing')]
+    expect(redesAIntentar(planDeFanout(TODAS, registros, conTodo))).not.toContain('instagram')
+    expect(redesAIntentar(planDeFanout(TODAS, registros, conTodo, true))).toContain('instagram')
+  })
+
+  it('saltea el tope de intentos: forzar es decir "probá igual"', () => {
+    const plan = planDeFanout(TODAS, [registro('x', 'failed', INTENTOS_MAXIMOS)], conTodo, true)
+    expect(agotada(plan[2], true)).toBe(false)
+    expect(agotada(plan[2])).toBe(true)
+  })
+
+  it('una red que la nota no eligió sigue sin intentarse', () => {
+    const plan = planDeFanout(['facebook'], [], conTodo, true)
+    expect(redesAIntentar(plan)).toEqual(['facebook'])
+  })
+
+  it('y una sin credenciales tampoco: forzar no las inventa', () => {
+    const plan = planDeFanout(TODAS, [], (red) => red !== 'x', true)
+    expect(redesAIntentar(plan)).not.toContain('x')
+  })
+})

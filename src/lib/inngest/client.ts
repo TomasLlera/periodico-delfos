@@ -39,6 +39,14 @@ export const notaPublicada = eventType('nota/publicada', {
   schema: z.object({
     notaId: z.string(),
     slug: z.string(),
+    /**
+     * Un reintento pedido a mano desde el panel.
+     *
+     * Cambia dos cosas y sólo dos: destraba una red que quedó en `processing`
+     * porque una corrida murió a mitad de camino, y saltea el tope de
+     * intentos. Lo que ya se publicó no se vuelve a publicar ni forzando.
+     */
+    forzado: z.boolean().optional(),
   }),
 })
 

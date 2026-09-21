@@ -45,7 +45,7 @@ export const postearNota = inngest.createFunction(
     triggers: [notaPublicada],
   },
   async ({ event, step, logger }) => {
-    const { notaId, slug } = event.data
+    const { notaId, slug, forzado = false } = event.data
 
     /**
      * La nota se lee **adentro** de la función y no viaja en el evento: entre
@@ -68,8 +68,11 @@ export const postearNota = inngest.createFunction(
 
     const registros = await step.run('leer-los-posteos', () => registrosDeNota(notaId))
 
-    const plan = planDeFanout(nota.redes, registros, (red) =>
-      tieneCredenciales(red, process.env),
+    const plan = planDeFanout(
+      nota.redes,
+      registros,
+      (red) => tieneCredenciales(red, process.env),
+      forzado,
     )
 
     const posteadas: Red[] = []
@@ -91,7 +94,7 @@ export const postearNota = inngest.createFunction(
         continue
       }
 
-      if (agotada(item)) {
+      if (agotada(item, forzado)) {
         await step.run(`anotar-agotada-${item.red}`, () =>
           marcarFallo(
             notaId,

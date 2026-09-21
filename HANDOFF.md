@@ -2887,3 +2887,38 @@ mirar la corrida en `http://localhost:8288`. Tienen que quedar tres filas en
 - **Los clientes de Meta y X** siguen bloqueados. Cuando lleguen las
   credenciales, el único archivo a tocar es `publicadorDe()` en
   `src/lib/social/redes.ts`: una línea por red.
+
+## Step 18: la pantalla de posteos
+
+> Rama `fase/19-nodos-del-editor`, misma sesión del 20/09, encadenado al
+> Step 17.
+
+**`/admin/posteos`**: qué pasó con cada posteo y el botón de reintentar. Sin
+esto lo del Step 17 era invisible — el pipeline escribía `social_posts` y saber
+si una nota había salido era abrir la base a mano.
+
+### Las dos decisiones que importan
+
+- **El panel no escribe `social_posts`.** No hay política de RLS que lo deje, y
+  está bien que no la haya: esa tabla la escribe Inngest con la service role,
+  que es donde vive la idempotencia. Si el panel la editara a mano habría dos
+  lugares decidiendo el estado de un posteo, y el segundo siempre termina
+  contradiciendo al primero. Reintentar **vuelve a emitir el evento** con
+  `forzado: true` y deja que la función durable mire el estado real y decida.
+- **Forzar cambia dos cosas y sólo dos**: destraba una red que quedó en
+  `processing` —una corrida que murió después de marcar y antes de postear la
+  dejaba trabada para siempre— y saltea el tope de cuatro intentos. **Lo que ya
+  se publicó no se vuelve a publicar ni forzando**, porque eso no se deshace
+  desde ningún lado.
+- Un posteo simulado se marca como tal en la fila aunque esté en `success`: el
+  pipeline funcionó, pero no se publicó nada, y confundir las dos cosas es
+  creer que una nota salió en Facebook cuando no salió.
+
+### Lo que falta
+
+- Igual que el Step 17: **no se corrió nunca**. 590 tests, `tsc` limpio y build
+  exit 0, pero la pantalla no se vio con datos reales porque todavía no hay un
+  solo posteo en la base.
+- **El reintento es por nota, no por red.** Es deliberado —la función durable
+  decide sola cuáles tocan— pero si alguna vez hace falta reintentar una sola,
+  el lugar es agregar la red al evento y filtrarla en `planDeFanout()`.

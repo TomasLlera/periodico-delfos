@@ -48,6 +48,16 @@ export interface PlanDeRed {
 const TERMINADOS: readonly EstadoPosteo[] = ['success', 'processing']
 
 /**
+ * Lo que **no** se vuelve a intentar ni forzando a mano.
+ *
+ * Sólo lo que ya salió. Un reintento manual tiene que poder destrabar un
+ * `processing` que quedó colgado —una corrida que murió después de marcar y
+ * antes de postear deja esa red trabada para siempre— pero jamás volver a
+ * publicar algo que está publicado: eso no se deshace desde acá.
+ */
+const TERMINADOS_FORZANDO: readonly EstadoPosteo[] = ['success']
+
+/**
  * Qué hacer con cada red para una nota.
  *
  * Devuelve las tres siempre, con su motivo, y no sólo las que hay que postear:
@@ -58,7 +68,11 @@ export function planDeFanout(
   redesElegidas: readonly Red[],
   registros: readonly Pick<SocialPost, 'platform' | 'status' | 'attempts'>[],
   conCredenciales: (red: Red) => boolean,
+  /** Un reintento pedido a mano desde el panel, no una corrida automática. */
+  forzado = false,
 ): PlanDeRed[] {
+  const terminados = forzado ? TERMINADOS_FORZANDO : TERMINADOS
+
   return REDES.map((red) => {
     const registro = registros.find((r) => r.platform === red)
     const intentosPrevios = registro?.attempts ?? 0
@@ -67,7 +81,7 @@ export function planDeFanout(
       return { red, intentar: false, motivo: 'no-elegida', intentosPrevios }
     }
 
-    if (registro && TERMINADOS.includes(registro.status)) {
+    if (registro && terminados.includes(registro.status)) {
       return {
         red,
         intentar: false,
@@ -120,6 +134,10 @@ export function explicarSalteo(plan: PlanDeRed): string | null {
  */
 export const INTENTOS_MAXIMOS = 4
 
-export function agotada(plan: PlanDeRed): boolean {
+export function agotada(plan: PlanDeRed, forzado = false): boolean {
+  // Forzar a mano es, justamente, decir "sé que falló cuatro veces, probá otra
+  // vez": el tope existe para que el sistema no insista solo, no para impedir
+  // que alguien lo intente después de arreglar la credencial.
+  if (forzado) return false
   return plan.intentosPrevios >= INTENTOS_MAXIMOS
 }

@@ -33,6 +33,7 @@ export function BarraAdmin({ autor }: { autor: Autor }) {
               sabe de cuál. Seis links en la barra la parten en dos renglones
               en un celular. */}
           <Seccion href="/admin/temporadas">Temporadas</Seccion>
+          <Seccion href="/admin/posteos">Posteos</Seccion>
         </nav>
 
         <span className="ml-auto text-[0.85rem] text-white/70">{autor.nombre}</span>
