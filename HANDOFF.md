@@ -3084,11 +3084,182 @@ el dev server compila la ruta al pedirla y axe analizó un documento
 intermedio. Desapareció en la segunda corrida. Si aparece una violación que no
 tiene sentido, correrla de nuevo antes de buscarla en el código.
 
-## Prompt para la próxima sesión — al 21/09/2026
+## El usuario de prueba, y la suite del panel corriendo por primera vez
 
-> **Éste es el vigente.** El bloque de más arriba con el mismo nombre quedó al
-> 18/09 y está viejo: dice que no hay Supabase y que hay tres ramas en
-> paralelo. Las dos cosas cambiaron.
+> Rama `fase/19-nodos-del-editor`, sesión del 21/09.
+
+Los doce tests de `e2e/admin.spec.ts` se escribieron la sesión pasada y nunca
+se habían armado: sin `E2E_ADMIN_EMAIL` y `E2E_ADMIN_PASSWORD`,
+`playwright.config.ts` ni crea los dos proyectos del panel. Hoy corren los
+trece —el setup más los doce— y están en verde.
+
+`scripts/usuario-e2e.ts` crea el usuario:
+
+```
+pnpm tsx scripts/usuario-e2e.ts            # en seco: informa y no escribe
+pnpm tsx scripts/usuario-e2e.ts --crear    # lo crea y guarda las claves
+```
+
+Hace **las dos cosas que hacen falta y que a mano viven en pantallas distintas
+de la consola de Supabase**: el usuario en Auth y la fila en `autores`. Sin la
+segunda el login anda y el panel rebota al login sin decir por qué, que es el
+error que más cuesta diagnosticar de todo el panel.
+
+Es idempotente: si el usuario ya existe le pone una contraseña nueva en lugar
+de fallar, que es lo que va a hacer falta el día que se pierda.
+
+### Las tres decisiones
+
+- **Un usuario aparte y no el de Charlie.** La suite corre contra la base de
+  verdad: entrar con la cuenta del único autor deja su sesión invalidada cuando
+  un test se cuelga, y cualquier cosa que llegue a escribirse queda firmada por
+  él. La fila de más en `autores` no se ve en el sitio público, que no tiene
+  página de autores.
+- **Las claves viven en `.env.local`** y `e2e/credenciales.ts` las lee de ahí,
+  con el cargador compartido `scripts/env-local.ts`. Pasarlas en la línea de
+  comandos es exactamente cómo la suite estuvo doce tests sin correr una sola
+  vez. Lo que ya esté en el entorno le gana al archivo, así que sigue siendo
+  posible pisarlas en una corrida puntual.
+- El mail es `e2e@periodicodelfos.com` y el usuario se crea **ya confirmado**:
+  sin `email_confirm` queda pendiente y el login falla con "Email not
+  confirmed", que no se parece en nada a la causa.
+
+### El bug que encontró la primera corrida
+
+Estaba en el test y no en el panel: `getByLabel('Local')` matchea **por
+substring**, y "Local" también está adentro de "Goles del local". El locator
+resolvía a dos elementos y Playwright cortaba por modo estricto. Con
+`exact: true` en los tres campos del formulario de partido, los trece pasan.
+Vale para cualquier test futuro sobre esa pantalla, que tiene las dos parejas.
+
+### Una trampa: la suite del panel contra `next dev`
+
+Con los seis workers por omisión, seis de los doce tests fallan con
+`net::ERR_ABORTED` y timeouts de 30 s. **No es el panel**: es el dev server
+compilando seis rutas a la vez. Con `--workers=1` pasan los trece. Contra
+`next start`, que es el modo normal de la suite, el problema no existe.
+
+## La auditoría de SEO, y los dos bugs que encontró
+
+> Rama `fase/19-nodos-del-editor`, sesión del 21/09. Cierra el ítem de SEO del
+> Step 20.
+
+`e2e/seo.spec.ts` son dieciséis tests que miran **el HTML servido**, no el
+código. Esa es toda la diferencia: el primero de los dos bugs es invisible
+leyendo los archivos.
+
+### Los dos bugs
+
+**1. Una página que define `openGraph` pisa el del layout raíz entero.** No lo
+completa: Next mergea la metadata campo por campo y `openGraph` es un campo. El
+resultado era que `og:site_name` y `og:locale` estaban en la portada —la única
+página que no define el suyo— y faltaban en las notas, los partidos, las
+jugadoras, los dos listados, quiénes somos, temporada y plantel. Mirando los
+archivos parece que está puesto una vez y alcanza.
+
+**2. Siete rutas no emitían `og:image`.** Sólo la tenían notas, partidos y
+jugadoras. Compartir la portada, un listado o la temporada a WhatsApp daba el
+rectángulo gris con el dominio, que es el defecto del sitio de WordPress que
+esta migración venía a dejar atrás. Y la infraestructura ya existía —`/api/og`
+y `urlOg()`—, sólo que no se usaba fuera de esas tres.
+
+Los dos se arreglan con `openGraphBase()` en `src/lib/seo.ts`: lógica pura, seis
+tests de vitest, y cada página la desparrama y agrega lo suyo (`type`, `url`,
+`publishedTime`). La alternativa era repetir `siteName` y `locale` en nueve
+archivos, que es exactamente cómo se vuelve a perder.
+
+### Lo que verifica la suite
+
+Metadata completa y `<title>` de menos de 70 caracteres en las rutas fijas,
+canonical absoluta y apuntando a sí misma, `noindex` en `/buscar` y en las
+cuatro demos, y `robots.txt`, `sitemap.xml` y `rss.xml` consistentes entre sí
+—que el sitemap no liste nada que robots prohíbe, sin repetidos y todo del
+mismo origen—.
+
+**Las páginas de contenido salen del sitemap y no escritas a mano.** Un test que
+nombre `fecha-4-aldosivi-claypole-2026` se pone en rojo el día que ese partido
+se borre; así, con la base vacía se saltea solo.
+
+**Corre en un proyecto solo y no en los cuatro.** Ninguna de estas etiquetas
+depende del ancho ni del tema. Es lo contrario de la de accesibilidad, donde
+los cuatro viewports son la razón de que encuentre lo que encuentra.
+
+El largo del `<title>` se exige sólo en las rutas fijas: el de una nota o un
+partido lo arma el contenido —"Aldosivi 6 - 1 Claypole · Fecha 4 · Primera B
+2026" ya mide 69 con el sufijo— y un nombre de club largo lo pasa sin que haya
+nada para arreglar.
+
+### Lo que esto NO cubre
+
+Si el título describe la página o sólo la nombra, si la bajada da ganas de
+entrar, y si los datos estructurados pasan el validador de Google, que exige su
+propio servicio. `NewsArticle` y `SportsEvent` se emiten y están testeados en
+vitest, pero nadie los pasó por el validador todavía.
+
+## La medición de LCP, escrita y sin correr
+
+> Rama `fase/19-nodos-del-editor`, sesión del 21/09. Es el tercer ítem del
+> Step 20 y queda a medio cerrar.
+
+`e2e/rendimiento.spec.ts` estrangula la red con el perfil que Lighthouse llama
+Slow 4G —1,6 Mbps de bajada, 150 ms de ida y vuelta—, apaga el cache y exige el
+umbral de Core Web Vitals: **LCP por debajo de 2500 ms**, a 375 px. Mide la
+portada, un listado y el partido más reciente que haya en el sitemap.
+
+**No estrangula el procesador**, aunque Lighthouse además lo frene 4×. El
+encargo pide 4G, y ese factor depende de qué tan rápida sea la máquina que
+corre la suite: el mismo código daría verde en una y rojo en otra. Medir el
+celular de verdad sigue siendo el ítem 4 de los pendientes y no lo reemplaza un
+emulador.
+
+**Contra `next dev` se saltea con el motivo escrito** en lugar de dar números
+tres veces peores que no significan nada. El marcador es el cache-buster que el
+dev server le cuelga a sus chunks (`main-app.js?v=`), que el build no tiene.
+
+### Lo que falta
+
+Correrlo. `next dev` y `next build` comparten `.next` y el dev server estaba
+abierto toda la sesión, así que **no se corrió una sola vez contra el build, ni
+se verificó `next build`** después de los cambios de SEO. Es lo primero de la
+próxima sesión:
+
+```
+# con el dev server apagado
+pnpm build && npx playwright test --project=rendimiento
+```
+
+Para tener una referencia de cuánto es "lento" en dev, medido con curl contra
+`next dev` el 21/09: la primera visita a una ruta tarda entre 1,4 y 6,6 s
+—compilación— y la segunda entre 0,30 y 0,47 s. Ninguno de los dos números
+dice nada sobre producción.
+
+## Lo que se miró a mano de accesibilidad
+
+> Sesión del 21/09. Completa lo que axe no puede ver, hasta donde se puede sin
+> una persona con un teclado.
+
+- **No hay un solo `tabIndex` positivo, ni `autoFocus`, ni `accessKey` en todo
+  `src/`.** Los dos únicos `tabIndex` son los `={0}` que se agregaron para los
+  contenedores que scrollean. O sea que el orden de tabulación es el orden del
+  DOM en todas las páginas, que es la mitad del problema resuelta por
+  construcción; que el orden del DOM coincida con el visual hay que mirarlo con
+  el teclado.
+- **Los `alt` escritos a mano en componentes son todos deliberados.** Las fotos
+  que van con `alt=""` —escudo, foto de jugadora, tarjeta de nota— tienen al
+  lado el nombre como texto, y repetirlo sería ruido para un lector de
+  pantalla. Cada uno tiene el comentario que lo explica.
+- **El `alt` que puede decir "imagen1" es dato, no código**, y hoy no hay
+  ninguno: la tabla `notas` está vacía (0 filas al 21/09). El control existe
+  —`imagen_alt` es obligatorio si hay portada, con Zod en el formulario y un
+  CHECK en `0005_notas.sql`— pero es de largo, no de calidad: nada distingue
+  "Las jugadoras festejan el tercer gol" de "foto". Cuando entren las 70 notas
+  de la migración, eso se revisa fila por fila o se le pone una heurística al
+  editor.
+
+## Prompt para la próxima sesión — al 21/09/2026, tarde
+
+> **Éste es el vigente.** Los dos bloques de más arriba con el mismo nombre
+> quedaron al 18/09 y al 21/09 a la mañana, y los dos están viejos.
 
 ````
 Estoy construyendo Periódico Delfos, un medio digital de Mar del Plata dedicado al
@@ -3099,55 +3270,73 @@ El proyecto está en `periodico-delfos/`. Next 15 App Router + TypeScript strict
 Tailwind v4 + Supabase + TipTap + Inngest.
 
 El plan está en `periodico-delfos-blueprint-v2.md` —el Build Order es la sección 10— y
-el estado real en `HANDOFF.md`. **Leé primero las dos últimas secciones del HANDOFF**,
-que son las de la sesión del 20/09; más arriba en ese mismo archivo hay partes viejas.
-`CLAUDE.md` tiene las reglas no negociables y el sistema de diseño. El mapa del panel
-está en `docs/admin.md` y se actualiza en el mismo commit que agrega una pantalla.
+el estado real en `HANDOFF.md`. **Leé primero las cinco últimas secciones del
+HANDOFF**, que son las de las sesiones del 20 y el 21/09; más arriba en ese mismo
+archivo hay partes viejas. `CLAUDE.md` tiene las reglas no negociables y el sistema de
+diseño. El mapa del panel está en `docs/admin.md` y se actualiza en el mismo commit que
+agrega una pantalla.
 
-DÓNDE ESTAMOS: rama `fase/19-nodos-del-editor`, que encadena once commits de la sesión
-del 20/09. Los Steps 12, 13, 17, 18 y 19 están cerrados y el 20 a medias. Nada está
-mergeado a `main`, que quedó bastante atrás.
+DÓNDE ESTAMOS: rama `fase/19-nodos-del-editor`, que encadena catorce commits. Los Steps
+12, 13, 17, 18 y 19 están cerrados; del 20 quedan cerrados accesibilidad y SEO, y falta
+correr la medición de performance. Nada está mergeado a `main`, que quedó bastante
+atrás.
 
 ENTORNO — leer esto antes de tocar nada:
-- **Supabase está arriba y `.env.local` existe.** Hay datos reales: la temporada
-  Primera B 2026, el plantel y el partido de la fecha 4 contra Claypole.
+- **Supabase está arriba y `.env.local` existe.** Hay datos reales: dos temporadas, 10
+  equipos, 33 jugadoras con su plantel y el partido de la fecha 4 contra Claypole. La
+  tabla `notas` está vacía.
+- **El usuario de prueba del panel ya existe** y sus claves están en `.env.local`. La
+  suite del panel se arma sola. Si hiciera falta reponerlo:
+  `pnpm tsx scripts/usuario-e2e.ts --crear`.
 - **Varios archivos del repo están en CRLF y otros en LF.** Un script que busca y
   reemplaza un bloque de varias líneas con `\n` **falla en silencio** contra un archivo
-  CRLF: no tira, no cambia nada, y el error aparece mucho después. Si un reemplazo "no
-  hace nada", mirá eso antes que el patrón.
+  CRLF: no tira, no cambia nada, y el error aparece mucho después. Casi todo `src/app`
+  está en CRLF. Si un reemplazo "no hace nada", mirá eso antes que el patrón.
 - **`next dev` y `next build` comparten `.next`.** Con el dev server abierto,
   `next start` responde 404 en todas las rutas y la suite e2e falla entera con un
   mensaje que no se parece a la causa. O se apaga el dev y se rebuildea, o se corre
   `E2E_BASE_URL=http://localhost:3000 pnpm test:e2e`.
+- **Contra el dev server, la suite necesita `--workers=1`.** Con los seis por omisión,
+  media docena de tests fallan con `net::ERR_ABORTED`: es el dev compilando varias
+  rutas a la vez, no el código. Contra `next start` no pasa.
 - `pnpm lint` falla de fábrica: `eslint.config.mjs` quedó de un scaffolding de Next 16.
   No afecta al build. No lo arregles sin leer "Pendiente manual" en el HANDOFF.
-- Hoy pasan `npx tsc --noEmit`, **597 tests de vitest en 36 archivos** y `next build`
-  exit 0. La suite de navegador da 160 pasan / 8 skipped / 0 fallos. Mantenelos verdes.
+- Al 21/09 pasan `npx tsc --noEmit` y **603 tests de vitest en 36 archivos**. De la
+  suite de navegador se corrieron esta sesión el panel (13/13) y SEO (16/16).
+  Mantenelos verdes.
 
 LO QUE FALTA, EN ORDEN DE IMPORTANCIA:
 
-1. PROBAR EL PANEL CONTRA LA BASE, A MANO. Es lo más importante y no lo puede hacer un
-   agente solo. Los Steps 12, 17, 18 y 19 se construyeron en una sola sesión y **no se
-   abrieron en un navegador ni una vez**. El entregable del Step 12 según el blueprint
-   es "cargar la temporada 2026 completa desde el panel". El orden de carga está en
-   `docs/admin.md`: temporada → equipos → jugadoras → plantel → partido → formación →
-   planilla. Lo que salga mal, arreglarlo.
+1. VERIFICAR EL BUILD Y MEDIR. Es lo único que quedó bloqueado por tener el dev server
+   abierto toda la sesión, y son dos comandos:
 
-2. LA SUITE DEL PANEL NO SE CORRIÓ NUNCA. `e2e/admin.spec.ts` tiene doce tests y hace
-   falta un usuario de prueba con **fila en `autores`** —no alcanza con existir en
-   Supabase Auth— y cargar `E2E_ADMIN_EMAIL` y `E2E_ADMIN_PASSWORD`. Sin eso los doce
-   ni se arman.
+       pnpm build                                    # no se corrió después del SEO
+       npx playwright test --project=rendimiento     # LCP < 2,5 s en 4G
 
-3. LO QUE FALTA DEL STEP 20: la auditoría de SEO y la de performance (LCP < 2.5s en 4G
-   simulado). La de accesibilidad ya está automatizada con axe en
-   `e2e/accesibilidad.spec.ts`, 48 tests en verde, y encontró dos bugs reales. Ojo:
-   axe cubre cerca de la mitad de los problemas; el alt que dice "imagen1" y el orden
-   de tabulación hay que mirarlos a mano.
+   La suite de rendimiento existe y se saltea sola contra `next dev`. Con el build
+   hecho, correr además la suite entera —`pnpm test:e2e`— que con los proyectos nuevos
+   son 13 del panel + 16 de SEO + 3 de rendimiento + los 168 públicos.
 
-4. LA PLANILLA EN UN CELULAR REAL, CRONOMETRADA. Es el entregable del Step 13 según su
+2. PROBAR EL PANEL CONTRA LA BASE, A MANO. Sigue siendo lo más importante y no lo puede
+   hacer un agente solo. Los Steps 12, 17, 18 y 19 **no se abrieron en un navegador ni
+   una vez**. Que la suite del panel esté verde dice que las pantallas abren y validan,
+   no que cargar una temporada entera funcione. El entregable del Step 12 según el
+   blueprint es "cargar la temporada 2026 completa desde el panel". El orden de carga
+   está en `docs/admin.md`: temporada → equipos → jugadoras → plantel → partido →
+   formación → planilla. Lo que salga mal, arreglarlo.
+
+3. LA PLANILLA EN UN CELULAR REAL, CRONOMETRADA. Es el entregable del Step 13 según su
    encargo (`docs/encargos/planilla-de-carga.md`): si cargar un partido pasa de tres
    minutos, iterar antes de seguir. Probar también la cola offline cortando los datos a
    mitad de carga.
+
+4. LO QUE LAS AUDITORÍAS NO CUBREN. Las tres del Step 20 están automatizadas, pero:
+   - el orden de tabulación hay que recorrerlo con el teclado (no hay ningún `tabIndex`
+     positivo, así que es el orden del DOM: falta ver que coincida con el visual);
+   - los `alt` de las notas se revisan cuando entren las 70 de la migración, porque hoy
+     `notas` está vacía y el control es de largo, no de calidad;
+   - `NewsArticle` y `SportsEvent` no pasaron por el validador de datos estructurados
+     de Google, que exige su propio servicio.
 
 BLOQUEADO POR AFUERA, no insistir: los Steps 15 y 16 (Meta y X) esperan el App Review
 de Meta y las credenciales del Developer Portal de X. El pipeline entero ya funciona en

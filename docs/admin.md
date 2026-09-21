@@ -116,6 +116,9 @@ mitad sólo el panel.
   pensada: lo que falta es una política.
 - **El layout re-verifica fila en `autores`.** Tener sesión de Auth no es ser el
   autor; es el mismo criterio que `es_autor()` en RLS.
+  Es el error que más cuesta diagnosticar del panel: el login anda y la pantalla
+  rebota al login otra vez, sin decir por qué. Para crear un usuario con las dos
+  cosas —Auth y la fila— está `pnpm tsx scripts/usuario-e2e.ts --crear`.
 - **Los datos deportivos no se escriben a mano en el texto** (regla no
   negociable 2). La nota elige un partido; los goles se cargan en la planilla.
   La única excepción del proyecto es la tabla de posiciones, razonada en el
