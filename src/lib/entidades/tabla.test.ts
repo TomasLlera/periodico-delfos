@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   esquemaFilaTabla,
+  fechasSinTabla,
   fechaSugerida,
   filaEnBlanco,
   huecosDeLaFecha,
@@ -134,5 +135,38 @@ describe('filaEnBlanco', () => {
 
   it('y en cero, que es una fila que cuadra', () => {
     expect(motivosQueNoCuadran(filaEnBlanco(TEMPORADA, 1, 1))).toEqual([])
+  })
+})
+
+describe('fechasSinTabla', () => {
+  const jugado = (fecha_numero: number | null) => ({ fecha_numero, estado: 'finalizado' })
+
+  it('una fecha jugada sin tabla es un pendiente', () => {
+    expect(fechasSinTabla([jugado(4)], [])).toEqual([4])
+  })
+
+  it('y deja de serlo cuando la tabla se carga: el aviso se apaga solo', () => {
+    expect(fechasSinTabla([jugado(4)], [4])).toEqual([])
+  })
+
+  it('un partido que todavía no se jugó no pide tabla', () => {
+    expect(fechasSinTabla([{ fecha_numero: 5, estado: 'programado' }], [])).toEqual([])
+  })
+
+  it('un suspendido tampoco', () => {
+    expect(fechasSinTabla([{ fecha_numero: 5, estado: 'suspendido' }], [])).toEqual([])
+  })
+
+  /** Un amistoso no tiene una fila de tabla que le corresponda. */
+  it('un partido sin número de fecha no entra', () => {
+    expect(fechasSinTabla([jugado(null)], [])).toEqual([])
+  })
+
+  it('no repite la fecha aunque haya dos partidos de esa fecha', () => {
+    expect(fechasSinTabla([jugado(4), jugado(4)], [])).toEqual([4])
+  })
+
+  it('las devuelve en orden, que es como se cargan', () => {
+    expect(fechasSinTabla([jugado(7), jugado(3), jugado(5)], [3])).toEqual([5, 7])
   })
 })

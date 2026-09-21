@@ -119,7 +119,11 @@ mitad sólo el panel.
 - **Los datos deportivos no se escriben a mano en el texto** (regla no
   negociable 2). La nota elige un partido; los goles se cargan en la planilla.
   La única excepción del proyecto es la tabla de posiciones, razonada en el
-  blueprint § 4.4 y acotada a esa tabla.
+  blueprint § 4.4 y acotada a esa tabla. **Y como es la excepción, el panel
+  avisa**: una fecha jugada sin tabla cargada muestra un recordatorio en el
+  listado de partidos y en la planilla, con el link ya apuntado a esa fecha. No
+  es un modal a propósito —se cierra una vez y no vuelve—: se calcula del dato
+  y se apaga solo cuando la tabla está.
 - **Lo que la base valida, el formulario lo repite.** No para reemplazarla
   —manda la base— sino para que el error llegue como una frase en español al
   lado del campo y no como un 400 de Postgres.

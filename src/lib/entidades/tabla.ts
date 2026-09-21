@@ -160,3 +160,36 @@ export function filaEnBlanco(
     goles_contra: 0,
   }
 }
+
+/**
+ * Las fechas que ya se jugaron y todavía no tienen tabla cargada.
+ *
+ * Es el recordatorio de que la tabla de posiciones **no se calcula sola**
+ * (§ 4.4). Cargar el resultado de un partido actualiza las goleadoras, la ficha
+ * de la jugadora y la portada, pero no mueve a los otros diez equipos del
+ * campeonato: eso hay que copiarlo a mano, y es justo el paso que se olvida
+ * porque todo lo demás pasó solo.
+ *
+ * **Se deriva del dato, no de una marca.** No hay ningún campo "ya avisé": la
+ * fecha aparece mientras el partido esté finalizado y la tabla no tenga esa
+ * fecha, y desaparece sola al cargarla. Un aviso que se cierra a mano se cierra
+ * sin querer y no vuelve nunca.
+ *
+ * Un partido sin número de fecha —un amistoso— no entra: no tiene una fila de
+ * tabla que le corresponda.
+ */
+export function fechasSinTabla(
+  partidos: readonly { fecha_numero: number | null; estado: string }[],
+  fechasCargadas: readonly number[],
+): number[] {
+  const cargadas = new Set(fechasCargadas)
+
+  const pendientes = new Set(
+    partidos
+      .filter((p) => p.estado === 'finalizado' && p.fecha_numero !== null)
+      .map((p) => p.fecha_numero as number)
+      .filter((fecha) => !cargadas.has(fecha)),
+  )
+
+  return [...pendientes].sort((a, b) => a - b)
+}
