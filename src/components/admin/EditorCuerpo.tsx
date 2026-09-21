@@ -3,9 +3,25 @@
 import { useState } from 'react'
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import { Bold, Italic, Link2, List, ListOrdered, Quote, Redo2, Undo2, Unlink } from 'lucide-react'
+import {
+  Bold,
+  ClipboardList,
+  ImagePlus,
+  Italic,
+  Link2,
+  List,
+  ListOrdered,
+  Quote,
+  Redo2,
+  Undo2,
+  Unlink,
+} from 'lucide-react'
 import { EnlazarNota, type NotaEnlazable } from '@/components/admin/EnlazarNota'
-import type { DocumentoTipTap } from '@/types'
+import { InsertarImagen } from '@/components/admin/InsertarImagen'
+import { InsertarPlanilla } from '@/components/admin/InsertarPlanilla'
+import { etiquetaDePartido } from '@/lib/partido'
+import { NodoImagen, NodoPlanilla } from '@/lib/tiptap/extensiones'
+import type { DocumentoTipTap, PartidoConEquipos } from '@/types'
 
 /**
  * El cuerpo de la nota, en TipTap.
@@ -20,13 +36,20 @@ import type { DocumentoTipTap } from '@/types'
  * dibuja en el servidor un árbol que el cliente rearma distinto, y React tira
  * un error de hidratación en cada carga del editor.
  *
- * **Los dos nodos propios del proyecto —`imagen` y `planilla`— todavía no están
- * en esta barra.** El contrato de sus atributos está documentado arriba de
- * `src/lib/tiptap/esquema.ts` y el renderer ya los dibuja; lo que falta es la
- * extensión que los inserta, y va junto con la subida al bucket. Mientras
- * tanto, un cuerpo que ya los tiene —los que trae la migración— se edita sin
- * perderlos: StarterKit ignora lo que no conoce en vez de borrarlo.
+ * **Los dos nodos propios del proyecto —`imagen` y `planilla`— se insertan
+ * desde esta barra.** Viven en `src/lib/tiptap/extensiones.tsx` y respetan el
+ * contrato de atributos que documenta `esquema.ts`, que es el mismo que lee el
+ * renderer del sitio. Tocar esos nombres en un solo lado guarda nodos que el
+ * sitio después descarta en silencio.
+ *
+ * El de planilla es el que cierra la regla no negociable 2: deja poner los
+ * goles del partido **en el medio de la crónica** sin que nadie los escriba en
+ * el texto. Guarda el id del partido y nada más, así que un gol corregido
+ * después en la planilla aparece corregido en la nota ya publicada.
  */
+
+/** Cuál de los tres paneles está abierto. Uno solo a la vez: son excluyentes. */
+type Panel = 'enlazar' | 'imagen' | 'planilla'
 
 interface Props {
   valor: DocumentoTipTap
@@ -35,12 +58,28 @@ interface Props {
   notas: readonly NotaEnlazable[]
   /** La que se está editando, para no ofrecerse a sí misma. */
   idActual: string | null
+  /** Para embeber una planilla. Los mismos que ya usa el selector de la nota. */
+  partidos: readonly PartidoConEquipos[]
 }
 
-export function EditorCuerpo({ valor, onCambio, notas, idActual }: Props) {
-  const [enlazando, setEnlazando] = useState(false)
+export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Props) {
+  const [panel, setPanel] = useState<Panel | null>(null)
+
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [
+      StarterKit,
+      NodoImagen,
+      // El nodo guarda sólo el id; el nombre del partido se lo da esta opción
+      // para poder dibujar el bloque mientras se escribe. `partidos` lo trae
+      // la página del editor y no cambia mientras la pantalla está abierta,
+      // así que la clausura no se queda vieja.
+      NodoPlanilla.configure({
+        etiquetaDePartido: (id) => {
+          const partido = partidos.find((p) => p.id === id)
+          return partido ? etiquetaDePartido(partido) : null
+        },
+      }),
+    ],
     content: valor,
     immediatelyRender: false,
     editorProps: {
@@ -105,13 +144,15 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual }: Props) {
             el panel: enlazar el vacío deja un link invisible en el cuerpo. */}
         <button
           type="button"
-          onClick={() => setEnlazando((v) => !v)}
+          onClick={() => setPanel((p) => (p === 'enlazar' ? null : 'enlazar'))}
           disabled={editor.state.selection.empty && !editor.isActive('link')}
           title="Anclar una nota o un link"
           aria-label="Anclar una nota o un link"
-          aria-pressed={enlazando}
+          aria-pressed={panel === 'enlazar'}
           className={`tactil flex min-w-11 items-center justify-center px-2 disabled:opacity-40 ${
-            enlazando || editor.isActive('link') ? 'bg-verde-900 text-white' : 'hover:bg-papel-alt'
+            panel === 'enlazar' || editor.isActive('link')
+              ? 'bg-verde-900 text-white'
+              : 'hover:bg-papel-alt'
           }`}
         >
           <Link2 size={16} aria-hidden="true" />
@@ -127,16 +168,67 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual }: Props) {
         >
           <Unlink size={16} aria-hidden="true" />
         </button>
+
+        <span className="mx-1 h-5 w-px bg-linea" />
+
+        {/* Los dos nodos propios. Van juntos y al final de la barra: se usan
+            una o dos veces por nota, al revés que la negrita. */}
+        <button
+          type="button"
+          onClick={() => setPanel((p) => (p === 'imagen' ? null : 'imagen'))}
+          title="Insertar una imagen"
+          aria-label="Insertar una imagen"
+          aria-pressed={panel === 'imagen'}
+          className={`tactil flex min-w-11 items-center justify-center px-2 ${
+            panel === 'imagen' ? 'bg-verde-900 text-white' : 'hover:bg-papel-alt'
+          }`}
+        >
+          <ImagePlus size={16} aria-hidden="true" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setPanel((p) => (p === 'planilla' ? null : 'planilla'))}
+          title="Embeber la planilla de un partido"
+          aria-label="Embeber la planilla de un partido"
+          aria-pressed={panel === 'planilla'}
+          className={`tactil flex min-w-11 items-center justify-center px-2 ${
+            panel === 'planilla' ? 'bg-verde-900 text-white' : 'hover:bg-papel-alt'
+          }`}
+        >
+          <ClipboardList size={16} aria-hidden="true" />
+        </button>
       </div>
 
-      {enlazando && (
+      {panel === 'enlazar' && (
         <EnlazarNota
           notas={notas}
           idActual={idActual}
-          onCerrar={() => setEnlazando(false)}
+          onCerrar={() => setPanel(null)}
           onElegir={(href) => {
             editor.chain().focus().extendMarkRange('link').setLink({ href }).run()
-            setEnlazando(false)
+            setPanel(null)
+          }}
+        />
+      )}
+
+      {panel === 'imagen' && (
+        <InsertarImagen
+          onCerrar={() => setPanel(null)}
+          onInsertar={(imagen) => {
+            editor.chain().focus().insertContent({ type: 'imagen', attrs: imagen }).run()
+            setPanel(null)
+          }}
+        />
+      )}
+
+      {panel === 'planilla' && (
+        <InsertarPlanilla
+          partidos={partidos}
+          onCerrar={() => setPanel(null)}
+          onElegir={(partidoId) => {
+            editor.chain().focus().insertContent({ type: 'planilla', attrs: { partidoId } }).run()
+            setPanel(null)
           }}
         />
       )}

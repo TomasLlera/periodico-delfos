@@ -54,9 +54,8 @@ partido sin formación abre la planilla sin ninguna jugadora que tocar.
   offline cortando los datos a mitad de partido. El encargo dice que ése es el
   entregable de verdad: si pasa de tres minutos, iterar. Es lo único del panel
   que no se puede verificar desde esta máquina.
-- **Los nodos `imagen` y `planilla` en el editor.** El renderer ya los dibuja;
-  falta la extensión de TipTap que los inserta.
-- **Reintentar posteos fallidos** desde el panel, leyendo `social_posts`.
+- **Reintentar posteos fallidos** desde el panel, leyendo `social_posts`. Hoy
+  no hay nada que reintentar: Inngest no está cableado.
 - **Una quita de puntos en la tabla.** Hoy `puntos` es derivado —se calcula con
   ganados y empatados— porque el CHECK `puntos_cuadran` de `0004` lo exige. El
   día que haga falta hay que tocar el CHECK **y** el `refine` de
@@ -93,6 +92,7 @@ partido sin formación abre la planilla sin ninguna jugadora que tocar.
 | Estado del formulario | `src/components/admin/usarFormulario.ts` | El hook que comparten los cuatro formularios |
 | Revalidación | `src/lib/revalidar.ts` | Qué rutas públicas caen con cada cambio |
 | Cola offline | `src/lib/cola.ts` · `cola-idb.ts` · `usarCola.ts` | La lógica con test, el IndexedDB y el hook |
+| Nodos del editor | `src/lib/tiptap/extensiones.tsx` | `imagen` y `planilla`, con los atributos que fija `esquema.ts` |
 
 **La lógica de cada entidad está partida en dos archivos a propósito.**
 `src/lib/partido.ts` es la de lectura —lados, minutos, agrupación de eventos— y

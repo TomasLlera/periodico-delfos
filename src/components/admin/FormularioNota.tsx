@@ -244,6 +244,7 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
           onCambio={(d) => cambiar('cuerpo', d)}
           notas={enlazables}
           idActual={nota?.id ?? null}
+          partidos={partidos}
         />
       </div>
 

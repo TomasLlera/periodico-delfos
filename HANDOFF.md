@@ -2747,3 +2747,67 @@ colgado hasta el timeout— no pueda perder nada.
   molesta, el lugar es `preocupa()`.
 
 Verificado: `tsc --noEmit` limpio, 552 tests en 34 archivos, `next build` exit 0.
+
+## Los nodos `imagen` y `planilla` del editor
+
+> Rama `fase/19-nodos-del-editor`, misma sesión del 20/09, encadenado a la cola
+> offline. Cierra lo que le faltaba al Step 19 y el último pendiente del
+> Step 7.
+
+**El editor ya puede meter una foto y una planilla en el medio del texto.** El
+renderer (`render.tsx`) las dibujaba y el validador (`esquema.ts`) las aceptaba
+desde hacía semanas; lo que no existía era la extensión de TipTap que las
+inserta, así que hasta ahora sólo llegaban al cuerpo de una nota por la
+migración desde WordPress o escribiendo el JSON a mano.
+
+**El de planilla es el que cierra la regla no negociable 2.** Hasta acá la
+planilla salía sola al pie de las notas con `partido_id`; ahora se puede poner
+donde va en una crónica, después del relato del primer tiempo. El nodo guarda
+**sólo el id del partido**: un gol corregido después en la planilla aparece
+corregido en la nota ya publicada, sin tocarla.
+
+### Lo que hay que saber antes de tocarlo
+
+- **Los nombres de los atributos están escritos una sola vez.** `esquema.ts`
+  exporta `ATRIBUTOS_IMAGEN` y `ATRIBUTOS_PLANILLA` y `extensiones.tsx` arma su
+  `addAttributes()` con eso. Antes el contrato estaba en un comentario y nada
+  impedía que el editor guardara `epigrafe` mientras el renderer leyera otra
+  cosa: el nodo se habría dibujado sin pie de foto y nadie se enteraba.
+  `esquema.test.ts` lo prueba desde los dos lados.
+- **`imagen` no usa `ReactNodeViewRenderer` y `planilla` sí.** La imagen se
+  dibuja sola con `renderHTML` —un `<figure>` con su `<img>`, o sea la foto de
+  verdad mientras se escribe, gratis—. La planilla necesita mostrar contra
+  quién se jugó, y eso **no está en los atributos del nodo**: viaja como opción
+  de la extensión (`etiquetaDePartido`), que `EditorCuerpo` arma con la lista
+  de partidos que la página ya tenía.
+- **La imagen del cuerpo se sube al insertar, no al guardar la nota**, al revés
+  que la portada. El nodo guarda una URL y un `blob:` local metido en el JSON
+  quedaría en la base apuntando a un objeto que sólo existe en ese navegador
+  (regla no negociable 6). El costo, dicho para que no sorprenda: insertar y
+  después borrar el nodo deja el archivo huérfano en el bucket.
+- **El `alt` es obligatorio y el botón de insertar no se habilita sin él.**
+- Los tres paneles de la barra —enlazar, imagen, planilla— son un solo estado
+  `panel`, no tres booleanos: son excluyentes y con tres banderas se abrían de
+  a dos.
+
+### Una trampa que costó media hora y conviene tener anotada
+
+**Varios archivos del repo están en CRLF** y otros en LF (hay `.gitattributes`).
+Un script que busca y reemplaza un bloque de varias líneas con `\n` **falla en
+silencio** contra un archivo CRLF: no tira, no cambia nada, y el error aparece
+recién cuando `tsc` se queja de otra cosa. `FormularioNota.tsx` es uno de los
+CRLF. Si un reemplazo "no hace nada", mirar eso antes que el patrón.
+
+### Lo que falta
+
+- **Nada de esto se probó a mano en el navegador.** `tsc --noEmit` limpio, 558
+  tests en 34 archivos y `next build` exit 0, pero insertar una imagen de
+  verdad, verla en la vista previa y publicarla es algo que hay que hacer con
+  la base arriba.
+- **No hay forma de editar un nodo ya insertado**: se borra y se vuelve a
+  poner. Para un epígrafe mal escrito es un paso de más. Si molesta, el lugar
+  es un NodeView para `imagen` también.
+- **Inngest sigue sin existir** (`src/lib/inngest/`, `app/api/inngest/`). Es lo
+  único grande que queda del Build Order que no depende de credenciales de
+  Meta ni de X: `compose.ts` y `limites.ts` ya están escritos y testeados, y el
+  blueprint pide armarlo primero en modo dry-run.

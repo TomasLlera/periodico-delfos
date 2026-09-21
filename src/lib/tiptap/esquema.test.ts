@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ATRIBUTOS_IMAGEN,
+  ATRIBUTOS_PLANILLA,
   atributosImagen,
   esExterno,
   hrefDeMarcas,
@@ -330,5 +332,69 @@ describe('partidoIdsDelCuerpo', () => {
     for (let i = 0; i < 400; i += 1) nodo = { type: 'blockquote', content: [nodo] }
 
     expect(() => partidoIdsDelCuerpo({ type: 'doc', content: [nodo] })).not.toThrow()
+  })
+})
+
+/**
+ * El contrato de los nodos propios, mirado desde los dos lados.
+ *
+ * `extensiones.tsx` arma sus `addAttributes()` con estas constantes, así que si
+ * alguien le agrega un atributo al editor sin enseñárselo al validador, o le
+ * cambia el nombre a uno, esto se cae acá y no en una nota publicada sin pie
+ * de foto.
+ */
+describe('el contrato de atributos de los nodos propios', () => {
+  it('un nodo imagen armado con los atributos del contrato pasa la validación', () => {
+    const attrs = {
+      ...ATRIBUTOS_IMAGEN,
+      src: 'https://ejemplo.supabase.co/media/foto.webp',
+      alt: 'Las jugadoras festejando el gol',
+    }
+
+    const imagen = atributosImagen(attrs)
+    expect(imagen).not.toBeNull()
+    expect(imagen?.alt).toBe('Las jugadoras festejando el gol')
+  })
+
+  it('el epígrafe y el crédito nacen en null y siguen siendo opcionales', () => {
+    expect(ATRIBUTOS_IMAGEN.epigrafe).toBe(null)
+    expect(ATRIBUTOS_IMAGEN.credito).toBe(null)
+
+    const imagen = atributosImagen({
+      ...ATRIBUTOS_IMAGEN,
+      src: 'https://ejemplo.supabase.co/media/foto.webp',
+      alt: 'Algo',
+    })
+    expect(imagen?.epigrafe).toBe(null)
+  })
+
+  /**
+   * El nodo recién insertado nace con `alt: ''` porque TipTap necesita un
+   * default. El que no lo deja publicar es esto.
+   */
+  it('una imagen recién insertada, sin alt todavía, no se renderiza', () => {
+    expect(
+      atributosImagen({ ...ATRIBUTOS_IMAGEN, src: 'https://ejemplo.supabase.co/media/f.webp' }),
+    ).toBe(null)
+  })
+
+  it('un nodo planilla armado con el contrato devuelve su partidoId', () => {
+    const attrs = { ...ATRIBUTOS_PLANILLA, partidoId: '0e5f7a10-0000-4000-8000-000000000001' }
+    expect(partidoIdDeNodo(attrs)).toBe('0e5f7a10-0000-4000-8000-000000000001')
+  })
+
+  it('una planilla sin partido elegido no se renderiza', () => {
+    expect(partidoIdDeNodo({ ...ATRIBUTOS_PLANILLA })).toBe(null)
+  })
+
+  it('el cuerpo junta los partidos de las planillas que insertó el editor', () => {
+    const cuerpo = {
+      type: 'doc',
+      content: [
+        { type: 'paragraph', content: [{ type: 'text', text: 'El primer tiempo.' }] },
+        { type: 'planilla', attrs: { ...ATRIBUTOS_PLANILLA, partidoId: 'p-1' } },
+      ],
+    }
+    expect(partidoIdsDelCuerpo(cuerpo)).toEqual(['p-1'])
   })
 })

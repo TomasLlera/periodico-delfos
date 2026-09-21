@@ -188,6 +188,31 @@ export function atributosImagen(attrs: unknown): AtributosImagen | null {
   }
 }
 
+/**
+ * Los atributos de cada nodo propio, con el valor con el que nacen.
+ *
+ * **Es el contrato, y vive acá porque acá es donde se valida.** `extensiones.tsx`
+ * arma su `addAttributes()` con esto en vez de repetir los nombres: el editor
+ * podía guardar `epigrafe` mientras el renderer leía `epígrafe` y nadie se
+ * enteraba —el nodo se dibujaba sin pie y listo—, que es la clase de error que
+ * no se ve hasta que sale publicado.
+ *
+ * Los defaults son los que pide TipTap, no los que pide la base: `alt` nace
+ * vacío porque el nodo tiene que poder existir un instante antes de que se
+ * escriba, y quien no deja publicarlo así es `atributosImagen()`, que descarta
+ * el nodo entero, más el CHECK `alt_requerido`.
+ */
+export const ATRIBUTOS_IMAGEN = {
+  src: null,
+  alt: '',
+  epigrafe: null,
+  credito: null,
+} as const
+
+export const ATRIBUTOS_PLANILLA = {
+  partidoId: null,
+} as const
+
 const esquemaPlanilla = z.object({
   partidoId: z.string().trim().min(1),
 })
