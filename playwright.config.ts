@@ -118,6 +118,19 @@ export default defineConfig({
      * contrario de la de accesibilidad, donde los cuatro son la razón de que
      * encuentre lo que encuentra.
      */
+    /**
+     * La auditoría de performance, en un celular y en un proyecto propio.
+     *
+     * A 375 px porque es donde se lee este sitio y donde el LCP duele, y
+     * aparte de los demás porque estrangula la red a 4G: mezclarla con los
+     * otros proyectos los haría lentos a todos.
+     */
+    {
+      name: 'rendimiento',
+      testMatch: /rendimiento.spec.ts/,
+      use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 375, height: 900 } },
+    },
+
     {
       name: 'seo',
       testMatch: /seo.spec.ts/,
@@ -126,22 +139,22 @@ export default defineConfig({
 
     {
       name: 'escritorio-claro',
-      testIgnore: /(admin|seo)\./,
+      testIgnore: /(admin|seo|rendimiento)\./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 1280, height: 900 }, colorScheme: 'light' },
     },
     {
       name: 'escritorio-oscuro',
-      testIgnore: /(admin|seo)\./,
+      testIgnore: /(admin|seo|rendimiento)\./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 1280, height: 900 }, colorScheme: 'dark' },
     },
     {
       name: 'celular-claro',
-      testIgnore: /(admin|seo)\./,
+      testIgnore: /(admin|seo|rendimiento)\./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 375, height: 900 }, colorScheme: 'light' },
     },
     {
       name: 'celular-oscuro',
-      testIgnore: /(admin|seo)\./,
+      testIgnore: /(admin|seo|rendimiento)\./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 375, height: 900 }, colorScheme: 'dark' },
     },
   ],
