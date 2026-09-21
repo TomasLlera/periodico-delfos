@@ -21,10 +21,11 @@ import { getPartidosPorIds } from '@/lib/supabase/queries/partidos'
 import { haySupabase } from '@/lib/supabase/server'
 import { mapaDePartidos } from '@/lib/tiptap/render'
 import { partidoIdsDelCuerpo } from '@/lib/tiptap/esquema'
+import { urlDelSitio } from '@/lib/sitio'
 
 export const revalidate = 60
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const SITE_URL = urlDelSitio()
 
 /**
  * Sin proyecto de Supabase no se prerenderiza ninguna nota y cada una se

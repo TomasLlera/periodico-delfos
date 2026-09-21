@@ -4,8 +4,9 @@ import { getSlugsNotas } from '@/lib/supabase/queries/notas'
 import { getSlugsPartidos } from '@/lib/supabase/queries/partidos'
 import { getSlugsTemporadas } from '@/lib/supabase/queries/temporadas'
 import { haySupabase } from '@/lib/supabase/server'
+import { urlDelSitio } from '@/lib/sitio'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const SITE_URL = urlDelSitio()
 
 /**
  * Las rutas que existen aunque la base esté vacía. No llevan `lastModified`:

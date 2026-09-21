@@ -10,6 +10,7 @@ import { getNotasDePartido } from '@/lib/supabase/queries/notas'
 import { getPartidoPorSlug, getSlugsPartidos } from '@/lib/supabase/queries/partidos'
 import { haySupabase } from '@/lib/supabase/server'
 import type { PartidoCompleto } from '@/types'
+import { urlDelSitio } from '@/lib/sitio'
 
 /**
  * La ficha de un partido. Step 14 del Build Order.
@@ -26,7 +27,7 @@ import type { PartidoCompleto } from '@/types'
  */
 export const revalidate = 60
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const SITE_URL = urlDelSitio()
 
 /** Sin proyecto de Supabase no se prerenderiza ninguna ficha, como en `/nota`. */
 export async function generateStaticParams() {

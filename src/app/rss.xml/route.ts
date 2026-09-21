@@ -1,8 +1,9 @@
 import { feedRss } from '@/lib/rss'
 import { getUltimasNotas } from '@/lib/supabase/queries/notas'
 import { haySupabase } from '@/lib/supabase/server'
+import { urlDelSitio } from '@/lib/sitio'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const SITE_URL = urlDelSitio()
 
 /**
  * El feed, en `/rss.xml`.

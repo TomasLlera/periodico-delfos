@@ -8,6 +8,7 @@ import { contarPaginas, paginaPedida, POR_PAGINA } from '@/lib/paginacion'
 import { openGraphBase } from '@/lib/seo'
 import { getNotasPorCategoria } from '@/lib/supabase/queries/notas'
 import { haySupabase } from '@/lib/supabase/server'
+import { urlDelSitio } from '@/lib/sitio'
 
 /**
  * El listado de análisis. Segunda mitad del Step 9 del Build Order.
@@ -27,7 +28,7 @@ const TITULO = 'Análisis'
 const DESCRIPCION =
   'Los números, la táctica y las cuentas del torneo, más allá del resultado de la fecha.'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const SITE_URL = urlDelSitio()
 
 type Params = { searchParams: Promise<{ pagina?: string | string[] }> }
 

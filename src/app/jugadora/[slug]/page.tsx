@@ -23,6 +23,7 @@ import { getNotasDeJugadora } from '@/lib/supabase/queries/notas'
 import { getTemporadaActiva, getTemporadas } from '@/lib/supabase/queries/temporadas'
 import { haySupabase } from '@/lib/supabase/server'
 import type { Temporada } from '@/types'
+import { urlDelSitio } from '@/lib/sitio'
 
 /**
  * La ficha de una jugadora (blueprint 7.5). Step 14.
@@ -37,7 +38,7 @@ import type { Temporada } from '@/types'
  */
 export const revalidate = 60
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const SITE_URL = urlDelSitio()
 
 type Params = { params: Promise<{ slug: string }> }
 

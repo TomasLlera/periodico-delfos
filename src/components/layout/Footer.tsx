@@ -30,13 +30,25 @@ const SECCIONES = [
       { href: '/fixture', label: 'Fixture y tabla' },
     ],
   },
+  /**
+   * Acá faltan Contacto y Privacidad, y es a propósito.
+   *
+   * Las dos rutas no existen, así que los dos links daban **404 desde el pie de
+   * todas las páginas del sitio**. Un 404 en el pie de cada pantalla es peor
+   * que un pie con una sección más corta, y en una URL pública lo ve cualquiera.
+   *
+   * No se escriben las páginas porque dependen de cuatro datos que sólo tiene
+   * Charlie: el mail del medio, los handles de las redes, el responsable de
+   * datos y si el sitio va a usar analítica —de eso depende si la política
+   * tiene que hablar de cookies—. **Una política de privacidad inventada es un
+   * documento legal falso.**
+   *
+   * Cuando estén los datos, esto se revierte agregando las dos líneas de vuelta
+   * y creando las rutas. Está contado en `docs/encargos/accesibilidad-y-pie.md`.
+   */
   {
     titulo: 'El medio',
-    links: [
-      { href: '/quienes-somos', label: 'Quiénes somos' },
-      { href: '/contacto', label: 'Contacto' },
-      { href: '/privacidad', label: 'Privacidad' },
-    ],
+    links: [{ href: '/quienes-somos', label: 'Quiénes somos' }],
   },
 ] as const
 

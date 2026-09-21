@@ -13,6 +13,7 @@ import { getEstadoDelSitio } from '@/lib/supabase/queries/estado'
 import { getNotaPrincipal, getUltimasNotas } from '@/lib/supabase/queries/notas'
 import { haySupabase } from '@/lib/supabase/server'
 import type { NotaResumen } from '@/types'
+import { urlDelSitio } from '@/lib/sitio'
 
 /**
  * La portada. Step 9 del Build Order, dibujada según `boceto-portada.html`.
@@ -44,7 +45,7 @@ import type { NotaResumen } from '@/types'
  */
 export const revalidate = 60
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const SITE_URL = urlDelSitio()
 
 /**
  * El canónico de la portada es la raíz y nada más. Sin esto, cualquier variante

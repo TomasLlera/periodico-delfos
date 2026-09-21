@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { urlDelSitio } from '@/lib/sitio'
 
 /**
  * Entrar y salir del admin.
@@ -80,7 +81,7 @@ export async function enviarMagicLink(
   if (!email) return { error: 'Falta el mail' }
 
   const supabase = await createClient()
-  const sitio = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+  const sitio = urlDelSitio()
 
   const { error } = await supabase.auth.signInWithOtp({
     email,

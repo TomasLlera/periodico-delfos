@@ -46,7 +46,7 @@ const RUTAS = [
  * **Se filtran por URL y no por el texto del mensaje**, que no la trae: filtrar
  * por texto tapaba errores de verdad que decían lo mismo.
  */
-const RUIDO = /_rsc=|\/jugadora\/|\/partido\/|\/contacto|\/privacidad|favicon/
+const RUIDO = /_rsc=|\/jugadora\/|\/partido\/|favicon/
 
 /**
  * El texto del mensaje **más la URL del recurso** que falló.

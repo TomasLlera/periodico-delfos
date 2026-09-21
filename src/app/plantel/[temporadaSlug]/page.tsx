@@ -8,6 +8,7 @@ import { openGraphBase } from '@/lib/seo'
 import { getPlantel } from '@/lib/supabase/queries/jugadoras'
 import { getSlugsTemporadas, getTemporadaPorSlug } from '@/lib/supabase/queries/temporadas'
 import { haySupabase } from '@/lib/supabase/server'
+import { urlDelSitio } from '@/lib/sitio'
 
 /**
  * El plantel de una temporada, agrupado por puesto (blueprint 7.5). Step 14.
@@ -22,7 +23,7 @@ import { haySupabase } from '@/lib/supabase/server'
  */
 export const revalidate = 60
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const SITE_URL = urlDelSitio()
 
 type Params = { params: Promise<{ temporadaSlug: string }> }
 

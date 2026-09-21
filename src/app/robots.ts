@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
+import { urlDelSitio } from '@/lib/sitio'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const SITE_URL = urlDelSitio()
 
 /**
  * `/admin` y `/demo` quedan fuera del índice.

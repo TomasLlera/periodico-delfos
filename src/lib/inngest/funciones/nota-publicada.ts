@@ -12,6 +12,7 @@ import { publicadorDe, tieneCredenciales } from '@/lib/social/redes'
 import { getNotaParaPostear } from '@/lib/supabase/queries/notas'
 import { getPartidosPorIds } from '@/lib/supabase/queries/partidos'
 import type { Red } from '@/types'
+import { urlDelSitio } from '@/lib/sitio'
 
 /**
  * El fan-out: una nota publicada se postea a Facebook, Instagram y X.
@@ -122,7 +123,7 @@ export const postearNota = inngest.createFunction(
         const copy = componerCopy(item.red, {
           nota,
           partido: null,
-          urlSitio: process.env.NEXT_PUBLIC_SITE_URL ?? '',
+          urlSitio: urlDelSitio(),
         })
 
         if (!copy.entra) {

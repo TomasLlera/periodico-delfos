@@ -4,6 +4,7 @@ import { BarraEstado } from '@/components/layout/BarraEstado'
 import { urlOg } from '@/lib/seo'
 import { getEstadoDelSitio } from '@/lib/supabase/queries/estado'
 import './globals.css'
+import { urlDelSitio } from '@/lib/sitio'
 
 /**
  * Archivo en su eje expandido: titulares con peso de portada deportiva sin
@@ -31,7 +32,7 @@ const plexMono = IBM_Plex_Mono({
   variable: '--fuente-data',
 })
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const SITE_URL = urlDelSitio()
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

@@ -3,6 +3,7 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { CabeceraBloque } from '@/components/portada/CabeceraBloque'
 import { openGraphBase } from '@/lib/seo'
+import { urlDelSitio } from '@/lib/sitio'
 
 /**
  * Quiénes somos. Step 10 del Build Order.
@@ -14,7 +15,7 @@ import { openGraphBase } from '@/lib/seo'
  * existe el medio, por qué lo empezó y su biografía. Está anotado en
  * `HANDOFF.md`; mientras tanto la página dice lo cierto y no rellena.
  */
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const SITE_URL = urlDelSitio()
 
 const DESCRIPCION =
   'Periódico Delfos cubre el fútbol femenino de Aldosivi desde Mar del Plata. Lo escribe Charlie Redondo.'
