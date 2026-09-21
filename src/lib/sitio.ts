@@ -8,15 +8,23 @@
  * entero** con un mensaje que habla de `/_not-found` y no nombra la variable
  * por ningún lado. Acá se trata el string vacío como lo que es: no cargada.
  *
- * `VERCEL_URL` es la red de contención. Un deploy sin la variable cargada sale
- * igual, con su propia URL, en vez de publicar `http://localhost:3000` adentro
- * de cada canonical, del `sitemap.xml`, del `robots.txt` y de cada `og:image`.
- * Ese es el peor de los dos fracasos posibles: la página se ve perfecta y el
- * SEO está roto, así que nadie lo mira hasta que es tarde.
+ * Las dos de Vercel son la red de contención. Un deploy sin la variable cargada
+ * sale igual, con su propia URL, en vez de publicar `http://localhost:3000`
+ * adentro de cada canonical, del `sitemap.xml`, del `robots.txt` y de cada
+ * `og:image`. Ese es el peor de los dos fracasos posibles: la página se ve
+ * perfecta y el SEO está roto, así que nadie lo mira hasta que es tarde.
  *
- * El orden importa: lo que diga `NEXT_PUBLIC_SITE_URL` le gana siempre a
- * `VERCEL_URL`, porque el día que haya dominio propio la URL de Vercel sigue
- * existiendo y sigue respondiendo.
+ * **`VERCEL_PROJECT_PRODUCTION_URL` va antes que `VERCEL_URL`, y no es un
+ * detalle.** `VERCEL_URL` es la URL *de ese deploy*
+ * —`periodico-delfos-pmyw34e8y-tomaslleras-projects.vercel.app`— y cambia en
+ * cada push: las canonical apuntarían a una URL distinta cada vez, y lo que
+ * Google o WhatsApp hayan cacheado quedaría colgado de una que ya no es la
+ * buena. La otra es el dominio estable del proyecto. Se vio en el primer
+ * deploy que anduvo, el 21/09.
+ *
+ * El orden importa: lo que diga `NEXT_PUBLIC_SITE_URL` le gana siempre a las
+ * dos, porque el día que haya dominio propio las de Vercel siguen existiendo y
+ * siguen respondiendo.
  */
 export function urlDelSitio(): string {
   // `process.env.NEXT_PUBLIC_SITE_URL` no es una lectura: Next reemplaza la
@@ -25,9 +33,10 @@ export function urlDelSitio(): string {
   const declarada = process.env.NEXT_PUBLIC_SITE_URL?.trim()
   if (declarada) return declarada.replace(/\/+$/, '')
 
-  const vercel = process.env.VERCEL_URL?.trim()
-  // `VERCEL_URL` viene sin protocolo: `mi-proyecto-abc123.vercel.app`.
-  if (vercel) return `https://${vercel.replace(/\/+$/, '')}`
+  // Las dos vienen sin protocolo: `mi-proyecto.vercel.app`.
+  const deVercel =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() || process.env.VERCEL_URL?.trim()
+  if (deVercel) return `https://${deVercel.replace(/\/+$/, '')}`
 
   return 'http://localhost:3000'
 }

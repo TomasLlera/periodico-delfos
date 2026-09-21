@@ -9,16 +9,22 @@ import { urlDelSitio } from '@/lib/sitio'
  * Vercel.
  */
 describe('urlDelSitio', () => {
-  const previo = { sitio: process.env.NEXT_PUBLIC_SITE_URL, vercel: process.env.VERCEL_URL }
+  const previo = {
+    sitio: process.env.NEXT_PUBLIC_SITE_URL,
+    vercel: process.env.VERCEL_URL,
+    produccion: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+  }
 
   beforeEach(() => {
     delete process.env.NEXT_PUBLIC_SITE_URL
     delete process.env.VERCEL_URL
+    delete process.env.VERCEL_PROJECT_PRODUCTION_URL
   })
 
   afterEach(() => {
     process.env.NEXT_PUBLIC_SITE_URL = previo.sitio
     process.env.VERCEL_URL = previo.vercel
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = previo.produccion
   })
 
   it('usa la variable cuando está cargada', () => {
@@ -51,6 +57,16 @@ describe('urlDelSitio', () => {
     process.env.VERCEL_URL = 'periodico-delfos-abc123.vercel.app'
 
     expect(urlDelSitio()).toBe('https://periodico-delfos-abc123.vercel.app')
+  })
+
+  it('el dominio estable del proyecto le gana a la URL del deploy', () => {
+    // `VERCEL_URL` cambia en cada push: si ganara ella, cada deploy publicaría
+    // canonical distintas y lo que Google cacheó quedaría colgado de una URL
+    // que ya no existe. Pasó en el primer deploy que anduvo.
+    process.env.VERCEL_URL = 'periodico-delfos-pmyw34e8y-tomaslleras-projects.vercel.app'
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = 'periodico-delfos.vercel.app'
+
+    expect(urlDelSitio()).toBe('https://periodico-delfos.vercel.app')
   })
 
   it('la variable propia le gana a VERCEL_URL', () => {
