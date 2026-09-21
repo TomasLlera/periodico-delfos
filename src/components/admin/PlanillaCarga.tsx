@@ -8,8 +8,10 @@ import { ListaEventos } from '@/components/admin/ListaEventos'
 import { SelectorMinuto } from '@/components/admin/SelectorMinuto'
 import { BotonesTipoEvento } from '@/components/admin/BotonesTipoEvento'
 import { BotonLado } from '@/components/admin/BotonLado'
+import { CargaRival } from '@/components/admin/CargaRival'
 import { BarraCola } from '@/components/admin/BarraCola'
 import { PieMarcador } from '@/components/admin/PieMarcador'
+import { VentanaRecordatorio } from '@/components/admin/VentanaRecordatorio'
 import { usarCola } from '@/components/admin/usarCola'
 import { estadoDeLaCola, eventosVisibles } from '@/lib/cola'
 import { chequearMarcador, enCancha, enElBanco, minutoSugerido } from '@/lib/planilla'
@@ -32,10 +34,9 @@ import type { PartidoCompleto, TipoEvento } from '@/types'
  *   Amarilla → jugadora                 (se guarda solo)
  *   Cambio → quién sale → quién entra    (se guarda solo)
  *
- * **Se guarda al tocar la jugadora, sin botón de confirmar.** Un "Guardar" al
- * final de cada evento es un toque más por evento, o sea treinta toques por
- * partido, y es lo que separa los tres minutos de los seis. Si algo sale mal,
- * borrarlo de la lista es un toque.
+ * **Se guarda al tocar la jugadora, sin botón de confirmar.** Un "Guardar" por
+ * evento son treinta toques por partido, y es lo que separa los tres minutos de
+ * los seis. Si algo sale mal, borrarlo de la lista es un toque.
  *
  * El minuto arranca en el del último evento cargado —ver `minutoSugerido()`—
  * porque entre dos eventos pasan pocos minutos.
@@ -56,12 +57,21 @@ import type { PartidoCompleto, TipoEvento } from '@/types'
 
 interface Props {
   partido: PartidoCompleto
+  /**
+   * La fecha que hay que cargar en la tabla de posiciones, o `null` si ya está
+   * cargada o el partido no tiene número de fecha.
+   *
+   * Lo calcula la página, que es la que puede consultar la base. Se pasa como
+   * número y no como booleano porque el atajo de la ventana va apuntado a esa
+   * fecha.
+   */
+  fechaSinTabla: number | null
 }
 
 /** Lo que el rival necesita: sólo un nombre escrito a mano. */
 const SIN_JUGADORA = ''
 
-export function PlanillaCarga({ partido }: Props) {
+export function PlanillaCarga({ partido, fechaSinTabla }: Props) {
   const router = useRouter()
   const [guardando, empezar] = useTransition()
 
@@ -73,6 +83,7 @@ export function PlanillaCarga({ partido }: Props) {
   const [sale, setSale] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
   const [borrando, setBorrando] = useState<string | null>(null)
+  const [recordarTabla, setRecordarTabla] = useState(false)
 
   // `useCallback` porque el hook la tiene en una dependencia: sin esto, cada
   // render rearmaría el efecto que escucha "volvió la conexión".
@@ -163,8 +174,16 @@ export function PlanillaCarga({ partido }: Props) {
   function alFinalizar() {
     empezar(async () => {
       const r = await finalizarPartido(partido.id, marcador.cargado)
-      if (r.error) setAviso(r.error)
-      else router.refresh()
+      if (r.error) {
+        setAviso(r.error)
+        return
+      }
+
+      // El resultado ya está escrito y todo lo demás se movió solo. Lo único
+      // que queda a mano es la tabla, y es el paso que se olvida justamente
+      // porque nada más lo pide.
+      if (fechaSinTabla !== null) setRecordarTabla(true)
+      router.refresh()
     })
   }
 
@@ -231,29 +250,12 @@ export function PlanillaCarga({ partido }: Props) {
             )}
 
             {esRival ? (
-              <div className="flex flex-wrap items-end gap-2">
-                <div className="flex flex-1 flex-col gap-1">
-                  <label htmlFor="rival" className="meta text-gris">
-                    Quién, del rival
-                  </label>
-                  <input
-                    id="rival"
-                    type="text"
-                    value={nombreRival}
-                    onChange={(e) => setNombreRival(e.target.value)}
-                    placeholder="Apellido"
-                    className="tactil border border-linea-fuerte bg-tarjeta px-3 font-display text-[0.95rem]"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => guardar(null)}
-                  disabled={guardando}
-                  className="tactil bg-verde-900 px-5 font-display text-[0.9rem] font-extrabold text-white disabled:opacity-60"
-                >
-                  Cargar
-                </button>
-              </div>
+              <CargaRival
+                nombre={nombreRival}
+                onNombre={setNombreRival}
+                onCargar={() => guardar(null)}
+                ocupado={guardando}
+              />
             ) : (
               <div className="flex flex-col gap-2">
                 <p className="meta text-gris">
@@ -278,6 +280,14 @@ export function PlanillaCarga({ partido }: Props) {
           </div>
         )}
       </section>
+
+      {recordarTabla && fechaSinTabla !== null && (
+        <VentanaRecordatorio
+          temporadaId={partido.temporada_id}
+          fecha={fechaSinTabla}
+          onCerrar={() => setRecordarTabla(false)}
+        />
+      )}
 
       <PieMarcador
         marcador={marcador}

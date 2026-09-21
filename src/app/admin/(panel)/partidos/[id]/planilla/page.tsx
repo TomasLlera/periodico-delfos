@@ -34,6 +34,14 @@ export default async function Planilla({ params }: Params) {
   const cargadas = await getFechasConTabla(partido.temporada_id)
   const pendientes = fechasSinTabla([partido], cargadas)
 
+  // Para la ventana: si esta fecha todavía no está en la tabla, hay algo que
+  // recordar al finalizar. Se mira la tabla y no el estado del partido, porque
+  // en el momento de abrir la pantalla el partido todavía no está finalizado.
+  const fechaSinTabla =
+    partido.fecha_numero !== null && !cargadas.includes(partido.fecha_numero)
+      ? partido.fecha_numero
+      : null
+
   return (
     <main className="mx-auto max-w-[900px] px-4 py-6">
       <h1 className="titular mb-1 text-[1.4rem]">{etiquetaDePartido(partido)}</h1>
@@ -45,7 +53,7 @@ export default async function Planilla({ params }: Params) {
         </div>
       )}
 
-      <PlanillaCarga partido={partido} />
+      <PlanillaCarga partido={partido} fechaSinTabla={fechaSinTabla} />
     </main>
   )
 }
