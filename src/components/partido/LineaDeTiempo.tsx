@@ -67,7 +67,25 @@ export function LineaDeTiempo({ partido }: Props) {
           página, en la planilla, en la nota y en la ficha de partido. Con esto
           el contenedor con scroll pasa a ser su bloque contenedor y quedan
           adentro. */}
-      <div className="relative -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+      {/* `tabIndex={0}` y `role="group"`: un contenedor que scrollea tiene que
+          poder recorrerse con el teclado.
+
+          Adentro no hay nada enfocable —los eventos son iconos con su texto en
+          un `sr-only`, no links— así que sin esto la línea de tiempo se puede
+          arrastrar con el dedo y con el mouse y **no** con las flechas: quien
+          navega sin mouse no llega a los goles del segundo tiempo. Es la regla
+          `scrollable-region-focusable` de WCAG, y la encontró la auditoría de
+          axe del Step 20.
+
+          El `role` con nombre va junto con el `tabIndex` y no es adorno: una
+          parada de tabulación sin nombre se anuncia como "grupo" y no dice
+          dónde está parado el foco. */}
+      <div
+        tabIndex={0}
+        role="group"
+        aria-label="Línea de tiempo del partido, minuto a minuto"
+        className="relative -mx-4 overflow-x-auto px-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-600 sm:mx-0 sm:px-0"
+      >
         <ol className="grid w-max min-w-full auto-cols-[minmax(4.75rem,1fr)] grid-flow-col grid-rows-[1fr_auto_1fr]">
           {grupos.map((grupo) => (
             <li key={grupo.clave} className="row-span-3 grid grid-rows-subgrid">

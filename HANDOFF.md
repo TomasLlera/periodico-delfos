@@ -3029,3 +3029,57 @@ el error que más cuesta diagnosticar de todo el panel.
 - Recordatorio, porque ya pasó tres veces en una sesión: **`next dev` pisa el
   build de producción**. Antes de correr la suite, o se apaga el dev y se
   rebuildea, o se usa `E2E_BASE_URL=http://localhost:3000`.
+
+## La auditoría de accesibilidad, y dos bugs que encontró
+
+> Rama `fase/19-nodos-del-editor`, sesión del 20/09. Cierra el ítem de
+> accesibilidad del Step 20; faltan los de SEO y performance.
+
+`e2e/accesibilidad.spec.ts` corre **axe-core** sobre doce rutas × las cuatro
+combinaciones de viewport y tema: 48 tests, todos en verde. Mide WCAG 2.1 A y
+AA, que es a lo que el proyecto se comprometió.
+
+**Los dos temas no son repetición.** El contraste se calcula sobre los colores
+que se están pintando, así que un token que falla AA sólo en oscuro aparece
+únicamente en esas dos corridas. Era la razón de tener los dos temas en la
+suite y recién ahora se usa para algo.
+
+**Se deja afuera `best-practice`**, el criterio propio de axe: tiene reglas
+razonables y otras discutibles, y mezclarlas haría que un rojo no distinga
+"incumple WCAG" de "a axe no le gusta".
+
+### Los dos bugs
+
+Los dos son la misma regla, `scrollable-region-focusable`, y los dos son
+reales: **un contenedor que scrollea a lo ancho y no se puede recorrer con el
+teclado**.
+
+- `LineaDeTiempo` — la línea de tiempo de la planilla. Adentro no hay nada
+  enfocable: los eventos son iconos con su texto en un `sr-only`, no links. Se
+  arrastraba con el dedo y con el mouse, y con las flechas no: quien navega sin
+  mouse no llegaba a los goles del segundo tiempo.
+- `TablaPosiciones` — mide 520px y a 375 se desplaza. Las columnas de goles
+  quedaban fuera del alcance. **Este sólo aparecía en los dos proyectos de
+  375px**, que es exactamente el argumento de correr la suite en los cuatro.
+
+Los dos se arreglaron igual: `tabIndex={0}`, un `role` con nombre —una parada
+de tabulación sin nombre se anuncia como "grupo" y no dice dónde quedó el
+foco— y un anillo de foco visible.
+
+### Lo que esto NO cubre
+
+**Una auditoría automática detecta alrededor de la mitad de los problemas
+reales.** axe no sabe si el texto alternativo de una foto la describe o dice
+"imagen1", ni si el orden de tabulación tiene sentido, ni si un `aria-label`
+está bien redactado. Eso se mira a mano y sigue pendiente.
+
+Y faltan los otros dos ítems del Step 20: **la auditoría de SEO** y la de
+**performance** (LCP < 2.5s en 4G simulado).
+
+### Una trampa del dev server
+
+La primera corrida acusó `document-title` y `html-has-lang` en `/demo/partido`,
+que es imposible —el layout raíz pone los dos—. Era **ruido de compilación**:
+el dev server compila la ruta al pedirla y axe analizó un documento
+intermedio. Desapareció en la segunda corrida. Si aparece una violación que no
+tiene sentido, correrla de nuevo antes de buscarla en el código.
