@@ -65,12 +65,17 @@ function esRuido(mensaje: { text(): string; location(): { url: string } }): bool
 /**
  * Las que hoy no tienen `<h1>`. Ver "bugs conocidos" abajo.
  *
- * La lista salió del encargo, escrita cuando la base estaba vacía, y **se
- * achicó sola**: con datos cargados `/buscar` dibuja su titular. Lo descubrió
- * el propio `test.fail()`, que empezó a fallar diciendo "esperaba fallar y
- * pasó". Esa es toda la gracia del mecanismo.
+ * **Está vacía, y ése es el punto.** Salió del encargo con cinco rutas
+ * adentro y se fue achicando: primero `/buscar`, que con datos cargados
+ * dibujaba su titular y el propio `test.fail()` lo avisó; después las otras
+ * cuatro, que eran bugs de verdad y se arreglaron —`/quienes-somos`,
+ * `/cronicas` y `/analisis` pasaban su cabecera como `h2`, y la portada no
+ * tenía ninguno—.
+ *
+ * El mecanismo queda montado aunque no haya nada adentro: la próxima ruta que
+ * nazca sin `<h1>` no tiene dónde esconderse.
  */
-const SIN_H1_CONOCIDO = new Set(['/', '/cronicas', '/analisis', '/quienes-somos'])
+const SIN_H1_CONOCIDO = new Set<string>([])
 
 /**
  * Las dos demos que tiran errores de consola, de la rama

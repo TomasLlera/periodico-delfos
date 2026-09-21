@@ -67,6 +67,7 @@ export default async function Cronicas({ searchParams }: Params) {
         <ListadoNotas
           id="listado-cronicas"
           titulo={TITULO}
+          nivel={1}
           descripcion={DESCRIPCION}
           notas={notas}
           base={BASE}

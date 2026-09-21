@@ -31,7 +31,7 @@ export default function QuienesSomos() {
       <Header />
 
       <main className="mx-auto max-w-[1200px] px-4 py-10">
-        <CabeceraBloque id="quienes-somos" titulo="Quiénes somos" />
+        <CabeceraBloque id="quienes-somos" titulo="Quiénes somos" nivel={1} />
 
         <div className="prose-nota">
           <p>

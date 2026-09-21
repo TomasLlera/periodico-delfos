@@ -67,6 +67,7 @@ export default async function Analisis({ searchParams }: Params) {
         <ListadoNotas
           id="listado-analisis"
           titulo={TITULO}
+          nivel={1}
           descripcion={DESCRIPCION}
           notas={notas}
           base={BASE}
