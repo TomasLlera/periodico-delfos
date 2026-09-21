@@ -128,6 +128,11 @@ export default defineConfig({
     {
       name: 'rendimiento',
       testMatch: /rendimiento.spec.ts/,
+      // De a una por vez, y no es preferencia: tres cargas estranguladas en
+      // paralelo compiten por el mismo `next start` y por la misma máquina, y
+      // el número que sale es el de la contención y no el de la página. Medido:
+      // en paralelo la portada da 3264 ms y de a una, 1800.
+      fullyParallel: false,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 375, height: 900 } },
     },
 

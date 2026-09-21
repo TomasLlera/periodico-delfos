@@ -59,7 +59,28 @@ const RUTAS_FIJAS = ['/', '/cronicas']
  * es la única que tiene alguien que llega desde Google o desde un link de
  * Instagram. Con cache los números son de otra cosa.
  */
-async function medirLCP(page: import('@playwright/test').Page, ruta: string): Promise<number> {
+interface Medicion {
+  /** Milisegundos hasta el Largest Contentful Paint. */
+  lcp: number
+  /** Qué elemento fue, para saber qué optimizar si el número sube. */
+  elemento: string
+}
+
+async function medirLCP(page: import('@playwright/test').Page, ruta: string): Promise<Medicion> {
+  // Una carga de calentamiento, sin estrangular y sin medir.
+  //
+  // **La primera navegación de un navegador recién abierto cuesta un segundo y
+  // medio más que las siguientes**, y no es la página: es el arranque del
+  // proceso y la primera conexión. Medido el 21/09 contra el build: la ruta que
+  // tocara correr primera daba 2100-2200 ms y las dos siguientes, 730. O sea
+  // que el primer test medía Edge, no el sitio.
+  //
+  // Calentar es además lo más parecido a la verdad: quien entra al sitio ya
+  // tiene el navegador abierto. Lo que sigue midiéndose en frío es la red —el
+  // cache se apaga abajo—, que es lo que importa de una primera visita.
+  await page.goto(ruta, { waitUntil: 'load' })
+  await page.goto('about:blank')
+
   const cdp = await page.context().newCDPSession(page)
   await cdp.send('Network.enable')
   await cdp.send('Network.setCacheDisabled', { cacheDisabled: true })
@@ -69,23 +90,29 @@ async function medirLCP(page: import('@playwright/test').Page, ruta: string): Pr
 
   // `buffered: true` entrega las entradas que ya ocurrieron antes de que el
   // observer existiera, que son todas: el LCP pasa durante la carga.
-  const lcp = await page.evaluate<number>(
+  const medicion = await page.evaluate<Medicion>(
     () =>
-      new Promise<number>((resolve) => {
+      new Promise<Medicion>((resolve) => {
         new PerformanceObserver((lista) => {
-          const entradas = lista.getEntries()
+          const entradas = lista.getEntries() as LargestContentfulPaint[]
           const ultima = entradas[entradas.length - 1]
-          if (ultima) resolve(ultima.startTime)
+          if (!ultima) return
+
+          const nodo = ultima.element
+          resolve({
+            lcp: ultima.startTime,
+            elemento: ultima.url || (nodo ? `<${nodo.tagName.toLowerCase()}> ${nodo.textContent?.trim().slice(0, 40) ?? ''}` : '?'),
+          })
         }).observe({ type: 'largest-contentful-paint', buffered: true })
 
         // Una página sin ningún elemento que califique —no pasa en este sitio,
         // pero pasaría en una pantalla vacía— no emite nunca la entrada.
-        setTimeout(() => resolve(-1), 15_000)
+        setTimeout(() => resolve({ lcp: -1, elemento: 'ninguno' }), 15_000)
       }),
   )
 
   await cdp.detach()
-  return lcp
+  return medicion
 }
 
 /**
@@ -108,7 +135,12 @@ for (const ruta of RUTAS_FIJAS) {
     // Con la red estrangulada una carga son varios segundos, y son tres.
     test.setTimeout(120_000)
 
-    const lcp = await medirLCP(page, ruta)
+    const { lcp, elemento } = await medirLCP(page, ruta)
+
+    // El número va al log siempre y no sólo cuando falla: lo que interesa de
+    // una medición es la tendencia entre corridas, y un verde mudo no la deja
+    // ver acercarse al umbral.
+    console.log(`  LCP ${ruta} → ${Math.round(lcp)} ms · ${elemento}`)
 
     expect(lcp, `${ruta} no emitió LCP`).toBeGreaterThan(0)
     expect(Math.round(lcp), `${ruta} tardó ${Math.round(lcp)} ms en pintar`).toBeLessThan(
@@ -136,7 +168,9 @@ test(`el partido más reciente pinta en menos de ${LCP_MAXIMO} ms en 4G`, async 
 
   test.skip(!partido, 'La base no tiene ningún partido cargado todavía.')
 
-  const lcp = await medirLCP(page, partido as string)
+  const { lcp, elemento } = await medirLCP(page, partido as string)
+
+  console.log(`  LCP ${partido} → ${Math.round(lcp)} ms · ${elemento}`)
 
   expect(lcp, `${partido} no emitió LCP`).toBeGreaterThan(0)
   expect(Math.round(lcp), `${partido} tardó ${Math.round(lcp)} ms en pintar`).toBeLessThan(
