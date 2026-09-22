@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { FormularioNota } from '@/components/admin/FormularioNota'
-import { getAutorDeLaSesion } from '@/lib/supabase/queries/autores'
 import { getNotaPorId, getNotasParaEnlazar } from '@/lib/supabase/queries/notas'
 import { getPartidosParaEditor } from '@/lib/supabase/queries/partidos'
 import { getTemporadas } from '@/lib/supabase/queries/temporadas'
@@ -28,23 +27,24 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function EditarNota({ params }: Params) {
   const { id } = await params
-  const [nota, temporadas, autor, partidos, enlazables] = await Promise.all([
+  const [nota, temporadas, partidos, enlazables] = await Promise.all([
     getNotaPorId(id),
     getTemporadas(),
-    getAutorDeLaSesion(),
     getPartidosParaEditor(),
     getNotasParaEnlazar(),
   ])
 
   if (!nota) notFound()
 
-  // El layout del panel ya redirigió si no hay autor; esto es para el tipo.
-  if (!autor) return null
-
   return (
     <main className="mx-auto max-w-[900px] px-4 py-8">
       <h1 className="titular mb-6 text-[1.6rem]">Editar nota</h1>
-      <FormularioNota nota={nota} temporadas={temporadas} partidos={partidos} enlazables={enlazables} autor={autor} />
+      {/*
+        El autor de la nota, no el de la sesión: editar no reasigna la firma
+        (ver `src/actions/notas.ts`), así que la vista previa tiene que seguir
+        mostrando a quien la escribió aunque la esté corrigiendo otro.
+      */}
+      <FormularioNota nota={nota} temporadas={temporadas} partidos={partidos} enlazables={enlazables} autor={nota.autor} />
     </main>
   )
 }

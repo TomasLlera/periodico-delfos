@@ -21,10 +21,15 @@
 --
 -- `autores.id` es FK a `auth.users(id)`, así que **no se puede inventar**: es
 -- el UUID del usuario de Authentication → Users (paso 4), ya escrito abajo.
+-- Es el de la cuenta de Charlie, redondocarlosrogelio@gmail.com.
 --
 -- Si ese usuario se borra y se vuelve a crear, el UUID cambia y hay que
--- actualizarlo acá. Cambiarle el mail, en cambio, **no** lo cambia: es la
--- maniobra prevista para cuando Charlie tenga casilla propia.
+-- actualizarlo acá. Cambiarle el mail, en cambio, **no** lo cambia.
+--
+-- Acá va **sólo el autor del medio**. Las otras cuentas con acceso al panel
+-- —la del operador técnico, la de `scripts/usuario-e2e.ts`— también necesitan
+-- fila en `autores`, porque es lo que el panel exige, pero no son parte del
+-- estado base del proyecto y no se recrean desde este archivo.
 --
 -- Si el usuario no existiera, este archivo falla entero en el primer insert y
 -- no escribe nada — que es lo que tiene que pasar.
@@ -44,7 +49,7 @@ begin;
 
 insert into autores (id, nombre, slug)
 values (
-  '780bfef5-2987-4e4f-af2d-c6f6d5bf6a21',  -- UUID del usuario de Auth (paso 4)
+  'edea49e8-c628-4d29-b623-1febd6adde95',  -- UUID del usuario de Auth (paso 4)
   'Charlie Redondo',
   'charlie-redondo'
 )

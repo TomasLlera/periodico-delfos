@@ -26,3 +26,30 @@ export async function getAutorDeLaSesion(): Promise<Autor | null> {
 
   return (data as Autor | null) ?? null
 }
+
+/**
+ * El autor que va a **figurar** en una nota nueva de esta sesión, que no
+ * siempre es el de la sesión.
+ *
+ * Existe para que la vista previa no mienta. Quien escribe desde una cuenta
+ * que no es del medio —la técnica, la de la suite— ve la nota como la va a ver
+ * el lector: firmada por el titular, que es lo que `firmaDe()` va a grabar en
+ * `autor_id` (ver `src/actions/notas.ts` y `0011_firma_autor.sql`).
+ *
+ * Devuelve el autor de la sesión si `firma_como` está en null, que es el caso
+ * normal, y también si la fila apuntada no existe: preferimos una firma de más
+ * a una pantalla en blanco.
+ */
+export async function getAutorQueFirma(): Promise<Autor | null> {
+  const autor = await getAutorDeLaSesion()
+  if (!autor?.firma_como) return autor
+
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('autores')
+    .select('*')
+    .eq('id', autor.firma_como)
+    .maybeSingle()
+
+  return (data as Autor | null) ?? autor
+}

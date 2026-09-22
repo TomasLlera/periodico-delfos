@@ -31,6 +31,7 @@ const AUTOR: Autor = {
   foto_url: null,
   instagram: 'periodicodelfos',
   x_handle: 'periodicodelfos',
+  firma_como: null,
 }
 
 const NOTA: NotaConRelaciones = {

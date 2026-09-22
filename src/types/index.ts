@@ -79,6 +79,14 @@ export interface Autor {
   foto_url: string | null
   instagram: string | null
   x_handle: string | null
+  /**
+   * Quién queda firmando lo que escribe esta cuenta, si no es ella misma.
+   *
+   * Null es el caso normal. Lo usan las cuentas que entran al panel sin ser
+   * del medio —la del operador técnico, la de la suite— para que sus notas
+   * salgan con la firma del titular. Ver `0011_firma_autor.sql`.
+   */
+  firma_como: string | null
 }
 
 // ============================================

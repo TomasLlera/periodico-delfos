@@ -77,6 +77,7 @@ const AUTOR: Autor = {
   foto_url: null,
   instagram: null,
   x_handle: null,
+  firma_como: null,
 }
 
 interface EventoParcial {

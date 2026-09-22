@@ -5,6 +5,7 @@ import {
   documentoVacio,
   entradaDesdeNota,
   esquemaNota,
+  firmaDe,
   redesAPostear,
   slugDesdeTitulo,
   type EntradaNota,
@@ -142,6 +143,23 @@ describe('redesAPostear', () => {
 
   it('con auto_post prendido devuelve las elegidas', () => {
     expect(redesAPostear({ auto_post: true, redes: ['x'] })).toEqual(['x'])
+  })
+})
+
+describe('firmaDe', () => {
+  it('quien escribe firma lo suyo', () => {
+    expect(firmaDe({ id: 'charlie', firma_como: null })).toBe('charlie')
+  })
+
+  it('una cuenta que no es del medio firma con el titular', () => {
+    expect(firmaDe({ id: 'tecnica', firma_como: 'charlie' })).toBe('charlie')
+  })
+
+  it('no sigue la cadena: firma con quien apunta y ahí termina', () => {
+    // Si la cuenta apuntada a su vez apunta a otra, no se resuelve dos veces.
+    // Es lo mismo que hace la base y lo que dice `0011_firma_autor.sql`: la
+    // alternativa es un trigger para un caso que requiere dos updates a mano.
+    expect(firmaDe({ id: 'a', firma_como: 'b' })).toBe('b')
   })
 })
 

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { FormularioNota } from '@/components/admin/FormularioNota'
-import { getAutorDeLaSesion } from '@/lib/supabase/queries/autores'
+import { getAutorQueFirma } from '@/lib/supabase/queries/autores'
 import { getNotasParaEnlazar } from '@/lib/supabase/queries/notas'
 import { getPartidosParaEditor } from '@/lib/supabase/queries/partidos'
 import { getTemporadas } from '@/lib/supabase/queries/temporadas'
@@ -15,9 +15,13 @@ export const metadata: Metadata = { title: 'Nota nueva' }
 export const dynamic = 'force-dynamic'
 
 export default async function NotaNueva() {
-  const [temporadas, autor, partidos, enlazables] = await Promise.all([getTemporadas(), getAutorDeLaSesion(), getPartidosParaEditor(), getNotasParaEnlazar()])
+  const [temporadas, autor, partidos, enlazables] = await Promise.all([getTemporadas(), getAutorQueFirma(), getPartidosParaEditor(), getNotasParaEnlazar()])
 
-  // El layout del panel ya redirigió si no hay autor; esto es para el tipo.
+  // `autor` es quien va a **figurar** en la nota, que no siempre es quien la
+  // escribe: desde una cuenta técnica firma el titular. La vista previa tiene
+  // que mostrar eso y no el nombre de quien está sentado acá.
+  //
+  // El layout del panel ya redirigió si no hay sesión; esto es para el tipo.
   if (!autor) return null
 
   return (
