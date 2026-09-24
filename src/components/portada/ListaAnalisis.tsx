@@ -18,18 +18,21 @@ interface Props {
   titulo: string
   notas: readonly NotaResumen[]
   enlace?: { href: string; texto: string }
-  vacio: string
+  /** El texto del estado vacío. Sin esto, un bloque sin notas no se dibuja. */
+  vacio?: string
 }
 
+/** El mismo criterio que `<GrillaNotas />`: ver su comentario. */
 export function ListaAnalisis({ id, titulo, notas, enlace, vacio }: Props) {
+  if (notas.length === 0 && !vacio) return null
+
   return (
     <section aria-labelledby={id}>
       <CabeceraBloque id={id} titulo={titulo} enlace={enlace} />
 
-      {notas.length === 0 ? (
-        <p className="font-body text-gris">{vacio}</p>
-      ) : (
-        <ul>
+      {notas.length === 0 && <p className="font-body text-gris">{vacio}</p>}
+
+      <ul>
           {notas.map((nota) => (
             <li
               key={nota.id}
@@ -57,8 +60,7 @@ export function ListaAnalisis({ id, titulo, notas, enlace, vacio }: Props) {
               </div>
             </li>
           ))}
-        </ul>
-      )}
+      </ul>
     </section>
   )
 }

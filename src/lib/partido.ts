@@ -402,3 +402,64 @@ export function etiquetaDePartido(partido: PartidoConEquipos): string {
 
   return `${fecha} · ${centro}`
 }
+
+// ============================================
+// El último resultado de la portada
+// ============================================
+
+export interface LineaGol {
+  /** `key` de React: dos goles pueden caer en el mismo minuto. */
+  clave: string
+  /** "31'" o "45+2'" */
+  minuto: string
+  /** "Larea", "Larea (p)" — apellido solo, como una planilla impresa. */
+  quien: string
+  /** El equipo que lo convirtió, en corto. */
+  equipo: string
+  /** La frase entera, para el lector de pantalla. */
+  accesible: string
+  esDeAldosivi: boolean
+}
+
+export interface GolesResumidos {
+  lineas: LineaGol[]
+  /** Los que no entraron en el corte. 0 cuando entraron todos. */
+  restantes: number
+}
+
+/**
+ * Los goles de un partido, recortados, para el bloque de la portada.
+ *
+ * **El corte existe por el partido que hay cargado**, no por prolijidad: el
+ * boceto dibuja tres líneas al lado del marcador y la fecha 4 contra Claypole
+ * terminó 6-1. Sin recorte esa columna mide el doble que el marcador y el
+ * bloque queda desbalanceado justo con el partido más vistoso de la temporada.
+ * Los que sobran se cuentan y el bloque los manda a la ficha.
+ *
+ * `esDeAldosivi` sale de `ladoDelEvento()` y no de comparar el equipo del gol:
+ * un gol en contra lo convierte una jugadora del otro equipo y suma para
+ * Aldosivi, y la función ya tiene esa vuelta resuelta con sus tests.
+ */
+export function golesResumidos(
+  partido: PartidoResumible,
+  limite: number,
+): GolesResumidos {
+  const goles = [...(partido.eventos ?? [])]
+    .filter((evento) => esGol(evento.tipo))
+    .sort((a, b) => a.minuto - b.minuto || a.adicionado - b.adicionado)
+
+  const lineas = goles.slice(0, Math.max(0, limite)).map((evento, indice) => {
+    const sufijo = SUFIJO_EVENTO[evento.tipo]
+
+    return {
+      clave: `${claveMinuto(evento)}-${indice}`,
+      minuto: `${claveMinuto(evento)}'`,
+      quien: `${apellidoDeEvento(evento)}${sufijo ? ` ${sufijo}` : ''}`,
+      equipo: equipoDelEvento(evento, partido).nombre_corto,
+      accesible: `${minutoAccesible(evento)}. ${describirEvento(evento, partido)}`,
+      esDeAldosivi: ladoDelEvento(evento, partido) === 'aldosivi',
+    }
+  })
+
+  return { lineas, restantes: Math.max(0, goles.length - lineas.length) }
+}

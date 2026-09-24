@@ -42,6 +42,11 @@
 
   /* Layout */
   --spacing-medida: 68ch; /* medida de lectura */
+  /* El aire entre bloques de la portada. Era `mt-14` fijo: 56px, que en un
+     celular de 360px son dos renglones y medio de nada entre una sección y la
+     siguiente, y en un monitor de 1440 se quedan cortos. Como token de
+     `@theme`, Tailwind genera `mt-bloque` y `gap-bloque` solos. */
+  --spacing-bloque: clamp(2.5rem, 5vw, 4rem);
   --container-sitio: 1200px;
 
   /* Esquinas casi rectas: estética impresa */
@@ -123,6 +128,29 @@ body {
    a ~140 caracteres por línea y es el problema número uno de
    legibilidad. No ampliar por razones de layout.
    ============================================================ */
+
+/* ============================================================
+   Contenedor
+   El ancho del sitio, en un solo lugar. Antes eran 29 copias de
+   `mx-auto max-w-[1200px] px-4` escritas a mano —22 `<main>`, el
+   chrome entero y `ArticuloNota`—, así que cambiar el ancho era
+   un buscar y reemplazar y quedaba desalineado el que se
+   olvidara.
+
+   1240 y no 1200: entra una columna más de aire en la grilla de
+   la portada sin tocar la medida de lectura, que la fija
+   `.prose-nota` adentro y no este contenedor.
+
+   El padding es fluido a propósito. Con `px-4` fijo, un monitor
+   de 1440 dejaba 16px de margen igual que un celular, y el
+   contenido arrancaba pegado al borde de la pantalla.
+   ============================================================ */
+
+.contenedor {
+  margin-inline: auto;
+  max-width: 1240px;
+  padding-inline: clamp(1rem, 4vw, 2rem);
+}
 
 .prose-nota {
   max-width: var(--spacing-medida);

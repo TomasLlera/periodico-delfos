@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 
 /**
  * La navegación de secciones, con el filete amarillo abajo de la activa.
@@ -37,13 +38,56 @@ const BASE =
 
 export function NavPrincipal() {
   const pathname = usePathname()
+  const lista = useRef<HTMLUListElement>(null)
+  const [hayMas, setHayMas] = useState(false)
+
+  /**
+   * Dos cosas que sólo se saben midiendo, y por eso no se pueden resolver con
+   * una media query: si la tira desborda —para dibujar el degradado— y dónde
+   * quedó la sección activa.
+   *
+   * **La activa se centra moviendo `scrollLeft` y no con `scrollIntoView()`.**
+   * `scrollIntoView` sube por todos los ancestros scrolleables hasta el
+   * documento: entrar a "Quiénes somos" en un celular dejaba la página
+   * arrancada unos píxeles más abajo del principio, que se lee como que el
+   * sitio carga mal. Tocando `scrollLeft` se mueve la tira y nada más.
+   */
+  useEffect(() => {
+    const ul = lista.current
+    if (!ul) return
+
+    const medir = () => setHayMas(ul.scrollWidth - ul.clientWidth - ul.scrollLeft > 1)
+    medir()
+
+    const activa = ul.querySelector<HTMLElement>('[aria-current="page"]')
+    if (activa) {
+      ul.scrollLeft = Math.max(0, activa.offsetLeft - (ul.clientWidth - activa.offsetWidth) / 2)
+      medir()
+    }
+
+    const observador = new ResizeObserver(medir)
+    observador.observe(ul)
+    ul.addEventListener('scroll', medir, { passive: true })
+
+    return () => {
+      observador.disconnect()
+      ul.removeEventListener('scroll', medir)
+    }
+  }, [pathname])
 
   return (
     // En 375px la nav scrollea en lugar de apilarse: no se come el alto del
     // viewport antes de que aparezca la primera nota.
     <nav aria-label="Secciones" className="border-t border-white/15">
-      <div className="mx-auto max-w-[1200px] px-4">
-        <ul className="-mx-4 flex overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* `relative` porque el degradado va posicionado contra esta caja. Es la
+          regla 5 de CLAUDE.md mirada del otro lado: un contenedor con scroll
+          horizontal y algo absoluto adentro necesita ser el ancestro
+          posicionado, o lo absoluto se mide contra el documento. */}
+      <div className="contenedor relative">
+        <ul
+          ref={lista}
+          className="-mx-[clamp(1rem,4vw,2rem)] flex overflow-x-auto px-[clamp(1rem,4vw,2rem)] scrollbar-none"
+        >
           {SECCIONES.map((seccion) => {
             // La portada matchea exacta; el resto también con sus hijas, para
             // que `/nota/x` no deje la nav entera apagada más adelante.
@@ -76,6 +120,17 @@ export function NavPrincipal() {
             )
           })}
         </ul>
+
+        {/* El aviso de que hay más secciones a la derecha. Sin esto la tira
+            parece terminar donde termina la pantalla y las dos últimas no las
+            busca nadie. `pointer-events-none` para no comerse el toque del
+            último ítem, que queda abajo. */}
+        {hayMas && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-linear-to-l from-verde-900 to-transparent"
+          />
+        )}
       </div>
     </nav>
   )
