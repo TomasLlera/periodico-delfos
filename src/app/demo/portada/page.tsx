@@ -39,7 +39,7 @@ export default function DemoPortada() {
 
       {/* Las mismas clases que `/`: sin padding arriba, porque la tapa abre la
           página y trae su propio margen. */}
-      <main className="mx-auto max-w-[1200px] px-4 pb-4">
+      <main className="contenedor pb-4">
         <NotaTapa nota={notaDeTapa} palabras={1180} />
 
         <GrillaNotas
@@ -47,16 +47,15 @@ export default function DemoPortada() {
           titulo="Crónicas"
           notas={cronicas}
           enlace={{ href: '/cronicas', texto: 'Todas las crónicas' }}
-          vacio="Todavía no hay crónicas publicadas."
         />
 
-        <div className="mt-14 grid gap-12 lg:grid-cols-[2fr_1fr]">
+        <div className="mt-bloque grid gap-bloque lg:grid-cols-[2fr_1fr]">
           <ListaAnalisis
             id="demo-analisis"
             titulo="Análisis"
             notas={analisis}
             enlace={{ href: '/analisis', texto: 'Ver más' }}
-            vacio="Todavía no hay análisis publicados."
+            
           />
 
           <TarjetaPlantel

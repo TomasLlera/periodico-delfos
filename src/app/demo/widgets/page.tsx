@@ -4,6 +4,8 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { FechaAFecha } from '@/components/partido/FechaAFecha'
 import { Goleadoras } from '@/components/portada/Goleadoras'
+import { UltimoResultado } from '@/components/portada/UltimoResultado'
+import { partidoCompleto } from '@/app/demo/planilla/datos-demo'
 import { estadoTemporada, filaDeAldosivi } from '@/lib/temporada'
 import {
   fixtureDemo,
@@ -54,7 +56,7 @@ export default function DemoWidgets() {
 
       <Header />
 
-      <main className="mx-auto max-w-[1200px] px-4 py-10">
+      <main className="contenedor py-10">
         <p className="meta">Banco de pruebas · Primera B 2026 real</p>
         <h1 className="mt-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
           Los widgets deportivos
@@ -69,6 +71,20 @@ export default function DemoWidgets() {
           sitio no publicó ninguno después de la fecha 12.
         </p>
 
+        {/* El bloque que va en la portada, abajo de la tapa. Los goles salen de
+            la planilla de `/demo/planilla` y no del fixture: las crónicas del
+            sitio viejo dicen quién convirtió pero no en qué minuto, y
+            `eventos.minuto` es obligatorio. */}
+        <UltimoResultado
+          id="demo-ultimo-resultado"
+          partido={partidoCompleto}
+          eventos={partidoCompleto.eventos}
+          rutaBase="/demo/fixture"
+        />
+
+        {/* La franja ya no va en la portada —ver `src/app/page.tsx`— pero sigue
+            en `/temporada/[slug]`, así que se mira acá al lado de lo que la
+            reemplazó. */}
         <FechaAFecha id="demo-fecha-a-fecha" partidos={fixtureDemo} temporada={temporadaDemo} />
 
         <div className="max-w-[560px]">
@@ -92,6 +108,15 @@ export default function DemoWidgets() {
             no hay nada&raquo; arriba de todas las páginas es ruido—, y los
             otros dos bloques explican de dónde van a salir los datos.
           </p>
+
+          {/* Sin planilla cargada: es el estado que tiene hoy la base, donde el
+              partido de la fecha 4 entró con su resultado y sin sus goles. */}
+          <UltimoResultado
+            id="demo-ultimo-resultado-vacio"
+            partido={partidoCompleto}
+            eventos={[]}
+            rutaBase="/demo/fixture"
+          />
 
           <FechaAFecha id="demo-fecha-a-fecha-vacia" partidos={[]} temporada={temporadaDemo} />
 

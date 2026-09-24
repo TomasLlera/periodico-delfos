@@ -1,5 +1,5 @@
 import { createClient, createStaticClient } from '@/lib/supabase/server'
-import type { PartidoCompleto, PartidoConEquipos } from '@/types'
+import type { EventoConJugadora, PartidoCompleto, PartidoConEquipos } from '@/types'
 
 /**
  * `partidos` tiene dos foreign keys a `equipos`, así que PostgREST necesita el
@@ -12,13 +12,16 @@ const CAMPOS_PARTIDO = `
   temporada:temporadas(*)
 `
 
+/** Los dos hints de `eventos` a `jugadoras`, en un solo lugar. */
+const CAMPOS_EVENTO = `
+  *,
+  jugadora:jugadoras!eventos_jugadora_id_fkey(id, nombre, apellido, slug),
+  jugadora_sale:jugadoras!eventos_jugadora_sale_id_fkey(id, nombre, apellido, slug)
+`
+
 const CAMPOS_COMPLETO = `
   ${CAMPOS_PARTIDO},
-  eventos(
-    *,
-    jugadora:jugadoras!eventos_jugadora_id_fkey(id, nombre, apellido, slug),
-    jugadora_sale:jugadoras!eventos_jugadora_sale_id_fkey(id, nombre, apellido, slug)
-  ),
+  eventos(${CAMPOS_EVENTO}),
   formaciones(*, jugadora:jugadoras(*))
 `
 
@@ -195,4 +198,35 @@ export async function getPartidosParaPanel(limite = 100): Promise<PartidoDelPane
       formaciones: p.formaciones[0]?.count ?? 0,
     },
   }))
+}
+
+/**
+ * Los eventos del último partido jugado, para el bloque de la portada.
+ *
+ * Recibe el id en lugar de buscar el partido: `getEstadoDelSitio()` ya devuelve
+ * `ultimo` —memoizado y compartido con la barra de estado— y volver a
+ * resolverlo acá abriría la puerta a que el bloque y la barra muestren partidos
+ * distintos.
+ *
+ * **Es una lectura aparte y no un campo más de `getEstadoDelSitio()`.** Esa
+ * función la llama el layout raíz para la barra, o sea todas las páginas del
+ * sitio: meterle los eventos haría que cada página lea la planilla de un
+ * partido que no dibuja. Los goles los necesita la portada y nadie más.
+ *
+ * **`createStaticClient()` y no `createClient()`**, por lo mismo que
+ * `getEstadoDelSitio()`: pedir las cookies desde la portada la volvería
+ * dinámica y se perdería el ISR de 60s.
+ */
+export async function getEventosDePartido(
+  partidoId: string,
+): Promise<EventoConJugadora[]> {
+  const supabase = createStaticClient()
+  const { data } = await supabase
+    .from('eventos')
+    .select(CAMPOS_EVENTO)
+    .eq('partido_id', partidoId)
+    .order('minuto', { ascending: true })
+    .order('adicionado', { ascending: true })
+
+  return (data ?? []) as unknown as EventoConJugadora[]
 }
