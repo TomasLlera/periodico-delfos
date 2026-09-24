@@ -17,6 +17,7 @@ export type Database = {
       autores: {
         Row: {
           bio: string | null
+          firma_como: string | null
           foto_url: string | null
           id: string
           instagram: string | null
@@ -26,6 +27,7 @@ export type Database = {
         }
         Insert: {
           bio?: string | null
+          firma_como?: string | null
           foto_url?: string | null
           id: string
           instagram?: string | null
@@ -35,6 +37,7 @@ export type Database = {
         }
         Update: {
           bio?: string | null
+          firma_como?: string | null
           foto_url?: string | null
           id?: string
           instagram?: string | null
@@ -42,7 +45,15 @@ export type Database = {
           slug?: string
           x_handle?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "autores_firma_como_fkey"
+            columns: ["firma_como"]
+            isOneToOne: false
+            referencedRelation: "autores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       equipos: {
         Row: {

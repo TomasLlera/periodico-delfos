@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { inngest, notaPublicada } from '@/lib/inngest/client'
-import { chequearPublicacion, esquemaNota, redesAPostear } from '@/lib/nota'
+import { chequearPublicacion, esquemaNota, firmaDe, redesAPostear } from '@/lib/nota'
 import { getAutorDeLaSesion } from '@/lib/supabase/queries/autores'
 import { createClient } from '@/lib/supabase/server'
 
@@ -21,7 +21,12 @@ import { createClient } from '@/lib/supabase/server'
  *
  * **La sesión decide quién escribe, no el formulario.** `autor_id` sale de
  * `getAutorDeLaSesion()` y nunca de lo que mandó el navegador; RLS lo vuelve a
- * exigir con `es_autor()`.
+ * exigir con `es_autor()`. Quién termina firmando puede no ser quien escribe
+ * —ver `firmaDe()`— pero eso también lo decide el servidor.
+ *
+ * **La firma se pone al crear y no se vuelve a tocar.** Editar una nota no la
+ * reasigna a quien la editó: quien corrige un error de tipeo en una nota ajena
+ * no pasa a ser su autor.
  */
 
 export interface ResultadoNota {
@@ -45,8 +50,16 @@ function revalidarRutasPublicas(slug: string): void {
   revalidatePath(`/nota/${slug}`)
 }
 
-/** Lo que va a la base, ya sin los campos que decide el servidor. */
-function filaDesde(entrada: ReturnType<typeof esquemaNota.parse>, autorId: string) {
+/**
+ * Lo que va a la base, ya sin los campos que decide el servidor.
+ *
+ * **Sin `autor_id`**, que no es un campo editable: al crear lo pone quien crea
+ * (ver `firmaDe()`) y al editar no se toca. Incluirlo acá hacía que cualquier
+ * corrección sobre una nota ajena se la reasignara a quien la abrió, que es la
+ * forma más silenciosa de robarle la firma a alguien: no hay nada en la
+ * pantalla que lo anuncie y la nota ya estaba publicada.
+ */
+function filaDesde(entrada: ReturnType<typeof esquemaNota.parse>) {
   return {
     titulo: entrada.titulo,
     slug: entrada.slug,
@@ -61,7 +74,6 @@ function filaDesde(entrada: ReturnType<typeof esquemaNota.parse>, autorId: strin
     destacada: entrada.destacada,
     auto_post: entrada.auto_post,
     redes: entrada.redes,
-    autor_id: autorId,
   }
 }
 
@@ -83,11 +95,15 @@ export async function guardarNota(datos: unknown, id: string | null): Promise<Re
   }
 
   const supabase = await createClient()
-  const fila = filaDesde(parseo.data, autor.id)
+  const fila = filaDesde(parseo.data)
 
   const { data, error } = id
     ? await supabase.from('notas').update(fila).eq('id', id).select('id, slug').single()
-    : await supabase.from('notas').insert(fila).select('id, slug').single()
+    : await supabase
+        .from('notas')
+        .insert({ ...fila, autor_id: firmaDe(autor) })
+        .select('id, slug')
+        .single()
 
   // El caso frecuente es el slug repetido: dos notas del mismo partido con el
   // mismo título. Decirlo con el nombre del campo evita que parezca un error
@@ -161,14 +177,18 @@ export async function publicarNota(datos: unknown, id: string | null): Promise<R
 
   const supabase = await createClient()
   const fila = {
-    ...filaDesde(parseo.data, autor.id),
+    ...filaDesde(parseo.data),
     estado: 'publicada' as const,
     publicada_en: new Date().toISOString(),
   }
 
   const { data, error } = id
     ? await supabase.from('notas').update(fila).eq('id', id).select('id, slug').single()
-    : await supabase.from('notas').insert(fila).select('id, slug').single()
+    : await supabase
+        .from('notas')
+        .insert({ ...fila, autor_id: firmaDe(autor) })
+        .select('id, slug')
+        .single()
 
   if (error) {
     return {

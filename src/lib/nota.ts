@@ -14,7 +14,7 @@
 
 import { z } from 'zod'
 import { slugificar, textoOpcional, textoRequerido } from '@/lib/entidades/campos'
-import type { Categoria, DocumentoTipTap, Nota, Red } from '@/types'
+import type { Autor, DocumentoTipTap, Nota, Red } from '@/types'
 
 // ============================================
 // Slug
@@ -144,6 +144,23 @@ export function chequearPublicacion(nota: EntradaNota): ChequeoPublicacion {
  */
 export function redesAPostear(nota: Pick<EntradaNota, 'auto_post' | 'redes'>): Red[] {
   return nota.auto_post ? nota.redes : []
+}
+
+/**
+ * Quién firma una nota nueva escrita desde esta cuenta.
+ *
+ * Normalmente ella misma. Pero el panel exige fila en `autores` para entrar
+ * —es lo que mira `es_autor()`— y eso convierte en autor a toda cuenta con
+ * acceso, incluidas las que no escriben en el medio: la del operador técnico y
+ * la de `scripts/usuario-e2e.ts`. Sus nombres no son firmas del diario, y una
+ * nota de prueba que quede publicada no puede salir con el nombre de quien la
+ * probó. Esas cuentas llevan `firma_como` apuntando al titular.
+ *
+ * Es **una sola indirección**, igual que en la base: si la cuenta apuntada a
+ * su vez apunta a otra, no se sigue. Ver `0011_firma_autor.sql`.
+ */
+export function firmaDe(autor: Pick<Autor, 'id' | 'firma_como'>): string {
+  return autor.firma_como ?? autor.id
 }
 
 /**

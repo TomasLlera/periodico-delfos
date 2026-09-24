@@ -1801,7 +1801,7 @@ estado     ACTIVE_HEALTHY, linkeado
 |---|---|---|
 | 1-2 | Proyecto creado, claves copiadas | `supabase projects list` |
 | 3 | `.env.local` con las tres claves | las tres cargadas |
-| 4 | Usuario de Auth de Charlie | UUID `780bfef5-2987-4e4f-af2d-c6f6d5bf6a21` |
+| 4 | Usuario de Auth de Charlie | `redondocarlosrogelio@gmail.com`, UUID `edea49e8-c628-4d29-b623-1febd6adde95` |
 | — | `supabase login` + `link` | `linked: true` |
 | 5 | **Las nueve migraciones aplicadas** | 11 tablas + 3 vistas + `es_autor()` |
 | 6 | `supabase/seed.sql` escrito | **correrlo/verificarlo — ver abajo** |
