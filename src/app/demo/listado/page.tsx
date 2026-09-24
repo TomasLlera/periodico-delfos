@@ -29,7 +29,7 @@ export default function DemoListado() {
     <>
       <Header />
 
-      <main className="mx-auto max-w-[1200px] px-4 py-10">
+      <main className="contenedor py-10">
         <p className="meta">Banco de pruebas · datos falsos</p>
         <h1 className="mt-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
           Los listados

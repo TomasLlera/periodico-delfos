@@ -141,8 +141,9 @@ export interface BalanceTemporada {
  *
  * **No es la tabla de posiciones**: la tabla se carga a mano y cubre el
  * campeonato entero (ver `0004_tabla_posiciones.sql`), y esto cuenta sólo los
- * partidos que el medio tiene cargados. Pueden no coincidir, y por eso se
- * titula "Lo cargado hasta acá" y no "Campaña".
+ * partidos que el medio tiene cargados. Pueden no coincidir, y la salvedad va
+ * escrita al pie del bloque que dibuja estos números (`<Balance />`, en
+ * `FixtureTemporada.tsx`).
  */
 export function balanceAldosivi(
   partidos: readonly PartidoConEquipos[],

@@ -41,7 +41,7 @@ export default async function Buscar({ searchParams }: Params) {
     <>
       <Header />
 
-      <main className="mx-auto max-w-[1200px] px-4 py-10">
+      <main className="contenedor py-10">
         <CabeceraBloque id="buscar" titulo="Buscar" nivel={1} />
 
         {/* `action` a esta misma ruta y `method="get"`: el término queda en la

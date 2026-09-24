@@ -73,7 +73,7 @@ export default async function PaginaPlantel({ params }: Params) {
     <>
       <Header />
 
-      <main className="mx-auto max-w-[1200px] px-4 py-10">
+      <main className="contenedor py-10">
         <div className="border-b-[3px] border-tinta pb-3">
           <p className="meta">
             {temporada.nombre}

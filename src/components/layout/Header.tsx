@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { Search } from 'lucide-react'
 import { etiquetaTemperatura, temperaturaAccesible } from '@/lib/clima'
+import { BuscadorHeader } from './BuscadorHeader'
 import { FechaDeHoy } from './FechaDeHoy'
 import { NavPrincipal } from './NavPrincipal'
 
@@ -12,6 +12,14 @@ import { NavPrincipal } from './NavPrincipal'
  * es Archivo en su eje `wdth` 110: el "eje expandido" que pide el blueprint, y
  * lo único que distingue la marca de un titular cualquiera.
  *
+ * **En celular la cabecera es una sola fila de unos 70px**: la marca a la
+ * izquierda y la lupa a la derecha. Antes eran tres bloques apilados —marca,
+ * campo de búsqueda y fecha— que medían más de 200px, o sea un tercio de la
+ * pantalla ocupado por chrome antes de la primera noticia. El campo se
+ * despliega tocando la lupa (ver `<BuscadorHeader />`) y la línea de fecha y
+ * clima se apaga: son datos de diario impreso, y en un celular le ganan el
+ * lugar al titular. De 768 para arriba vuelven las tres piezas del boceto.
+ *
  * **El texto va en blanco fijo y no en `text-tinta`.** `verde-900` es una
  * superficie oscura en los dos temas, así que acá el color lo manda el fondo y
  * no el tema. Antes de esto la cabecera era `.franja` con `text-tinta`, que en
@@ -20,9 +28,7 @@ import { NavPrincipal } from './NavPrincipal'
  *
  * **La tira de resultados que los dos bocetos tienen arriba no va acá adentro**:
  * es `<BarraEstado />`, y la pone el layout raíz, arriba de este componente, en
- * todas las páginas del sitio. Hoy no se dibuja en ninguna porque no hay base
- * —`getEstadoDelSitio()` devuelve todo en `null`—; con datos aparece sola. Se
- * la puede mirar con datos en `/demo/widgets`.
+ * todas las páginas del sitio.
  *
  * **La temperatura es opcional y la pasa la página.** El componente no la
  * consulta: si la leyera él, las diez rutas estáticas del sitio pasarían a
@@ -37,29 +43,23 @@ interface Props {
 export function Header({ temperatura = null }: Props) {
   return (
     <header className="bg-verde-900 text-white">
-      <div className="mx-auto grid max-w-[1200px] items-end gap-4 px-4 pb-[1.1rem] pt-[1.6rem] md:grid-cols-[auto_1fr_auto] md:gap-8">
-        <Link href="/" className="marca text-[2rem] md:text-[2.3rem]">
+      {/* `relative` para el panel del buscador, que en celular se despliega
+          posicionado contra esta caja en lugar de empujar la nav. */}
+      <div className="contenedor relative flex items-center justify-between gap-4 py-3 md:grid md:items-end md:gap-8 md:pb-[1.1rem] md:pt-[1.6rem] md:grid-cols-[auto_1fr_auto]">
+        <Link href="/" className="marca min-w-0 text-[1.7rem] md:text-[2.3rem]">
           Periódico <span className="text-amarillo">Delfos</span>
-          <span className="mt-[0.55rem] block text-[0.72rem] font-medium uppercase tracking-[0.14em] text-amarillo [font-variation-settings:'wdth'_100]">
+          <span className="mt-[0.3rem] block text-[0.6rem] font-medium uppercase tracking-[0.14em] text-amarillo [font-variation-settings:'wdth'_100] md:mt-[0.55rem] md:text-[0.72rem]">
             La voz de las Tiburonas
           </span>
         </Link>
 
-        {/* Un link y no un `<input>`: el buscador es un componente cliente del
-            Step 10 y `/buscar` todavía no existe. Un campo de texto que no
-            busca nada promete más de lo que hay. */}
-        <Link
-          href="/buscar"
-          className="tactil flex items-center gap-2 border border-white/20 bg-white/10 px-[0.9rem] font-display text-[0.85rem] text-white/70 hover:bg-white/15 hover:text-white"
-        >
-          <Search size={16} aria-hidden="true" className="shrink-0" />
-          Buscar crónicas, jugadoras…
-        </Link>
+        <BuscadorHeader />
 
         {/* La línea de fecha del diario: dónde se escribe, cuándo y qué tiempo
             hace. Las dos líneas van con interlineado corto para que se lean
-            como un bloque y no como dos datos sueltos. */}
-        <div className="dato text-[0.78rem] leading-snug text-white/60 md:text-right">
+            como un bloque y no como dos datos sueltos. Se apaga en celular: son
+            datos de diario impreso y ahí le ganan el lugar al titular. */}
+        <div className="dato hidden text-[0.78rem] leading-snug text-white/60 md:block md:text-right">
           <span className="block">
             Mar del Plata
             {temperatura !== null && (

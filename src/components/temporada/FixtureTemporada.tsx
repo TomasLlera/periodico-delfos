@@ -87,8 +87,13 @@ function Bloque({
  *
  * Se cuenta desde los partidos de esta página, que son los que cubrió el
  * medio, y la tabla de posiciones se carga aparte y cubre la zona entera. Los
- * dos números pueden no coincidir, y por eso el bloque se titula "Lo cargado
- * hasta acá" y no "Campaña".
+ * dos números pueden no coincidir.
+ *
+ * El bloque se llamaba "Lo cargado hasta acá" justamente para decir eso en el
+ * título. Se cambió a "Campaña" porque el título explicaba el mecanismo en
+ * lugar de nombrar el contenido: a un lector le dice más de cómo se carga el
+ * sitio que del equipo. La salvedad no se perdió, bajó al pie del bloque —ver
+ * el `<p>` del final—, que es donde va una nota al pie.
  */
 function Balance({ balance }: { balance: ReturnType<typeof balanceAldosivi> }) {
   const datos = [
@@ -103,22 +108,37 @@ function Balance({ balance }: { balance: ReturnType<typeof balanceAldosivi> }) {
   return (
     <section aria-labelledby="balance" className="bg-verde-900 p-6 text-white">
       <h2 id="balance" className="marca text-[1.3rem] uppercase">
-        Lo cargado hasta acá
+        Campaña
       </h2>
-      <p className="mt-1 font-body text-[0.9rem] leading-snug text-white/70">
-        Contado desde los partidos que cubrió el medio, no desde la tabla.
-      </p>
 
-      <dl className="mt-5 flex flex-wrap gap-x-7 gap-y-3">
+      {/* Grilla de columnas iguales y no `flex-wrap`. Envuelto, cada dato medía
+          lo que medía su palabra: "goles a favor" ocupaba el triple que
+          "ganado", las dos filas arrancaban en lugares distintos y el bloque se
+          veía torcido. En la grilla los seis caen en la misma cuadrícula, tres
+          y tres. */}
+      <dl className="mt-4 grid grid-cols-3 gap-x-4 gap-y-4 sm:grid-cols-6">
         {datos.map((dato) => (
           // `flex-col-reverse`: en un <dl> el <dt> va antes que su <dd>, pero
           // acá el número se lee arriba y la etiqueta abajo.
-          <div key={dato.etiqueta} className="flex flex-col-reverse">
-            <dt className="dato text-[0.75rem] text-white/60">{dato.etiqueta}</dt>
-            <dd className="marca text-[1.7rem] text-amarillo">{dato.valor}</dd>
+          <div key={dato.etiqueta} className="flex min-w-0 flex-col-reverse">
+            {/* `.meta` y no `.dato`: en minúscula y en monoespaciada las
+                etiquetas se leían como texto de debug al pie de cada número.
+                En caja alta con tracking son rótulos, que es lo que son. */}
+            <dt className="meta text-[0.6rem] leading-tight text-white/60">{dato.etiqueta}</dt>
+            <dd className="marca text-[1.5rem] leading-none text-amarillo sm:text-[1.7rem]">
+              {dato.valor}
+            </dd>
           </div>
         ))}
       </dl>
+
+      {/* La aclaración va al pie y en chico, no de bajada. Sigue siendo
+          necesaria —estos números y los de la pestaña "Tabla" pueden no
+          coincidir— pero es una nota al pie, no el encabezado del bloque: de
+          bajada pesaba más que los datos que venía a explicar. */}
+      <p className="mt-4 font-body text-[0.78rem] leading-snug text-white/50">
+        Contado desde los partidos que cubrió el medio, no desde la tabla.
+      </p>
     </section>
   )
 }
