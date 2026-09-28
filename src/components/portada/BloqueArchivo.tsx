@@ -25,15 +25,24 @@ const SECCIONES = [
 
 export function BloqueArchivo({ temporadas }: Props) {
   return (
-    <section aria-labelledby="archivo" className="mt-14 pb-4">
+    <section aria-labelledby="archivo" className="mt-bloque pb-4">
       <CabeceraBloque id="archivo" titulo="Archivo" />
 
-      <ul className="flex flex-wrap gap-3">
-        {SECCIONES.map((seccion) => (
-          <li key={seccion.href}>
+      {/* Grilla de dos columnas en celular y no `flex-wrap`: envueltos, los
+          tres botones caían 2 + 1 con el tercero a media pantalla y el resto
+          del renglón vacío, que se lee como un botón roto. En la grilla los dos
+          primeros quedan parejos y el tercero ocupa el ancho entero. De `sm`
+          para arriba vuelve el envoltorio, que es lo que deja entrar las
+          temporadas sin dejar huecos. */}
+      <ul className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
+        {SECCIONES.map((seccion, i) => (
+          <li
+            key={seccion.href}
+            className={i === SECCIONES.length - 1 ? 'col-span-2 sm:col-span-1' : undefined}
+          >
             <Link
               href={seccion.href}
-              className="tactil inline-flex items-center border border-linea-fuerte bg-tarjeta px-4 font-display text-[0.9rem] font-bold hover:border-verde-600 hover:text-verde-600"
+              className="tactil flex items-center justify-center border border-linea-fuerte bg-tarjeta px-4 text-center font-display text-[0.9rem] font-bold hover:border-verde-600 hover:text-verde-600 sm:inline-flex sm:justify-start sm:text-left"
             >
               {seccion.label}
             </Link>
@@ -44,7 +53,7 @@ export function BloqueArchivo({ temporadas }: Props) {
           <li key={temporada.slug}>
             <Link
               href={`/temporada/${temporada.slug}`}
-              className="tactil inline-flex items-center border border-linea-fuerte bg-tarjeta px-4 font-display text-[0.9rem] font-bold hover:border-verde-600 hover:text-verde-600"
+              className="tactil flex items-center justify-center border border-linea-fuerte bg-tarjeta px-4 text-center font-display text-[0.9rem] font-bold hover:border-verde-600 hover:text-verde-600 sm:inline-flex sm:justify-start sm:text-left"
             >
               {temporada.nombre}
             </Link>

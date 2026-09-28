@@ -116,8 +116,13 @@ function Equipo({
 
   // Aldosivi va en verde y más pesado. El verde 600 se aclara en modo oscuro
   // (token --color-verde-600), así que mantiene AA en los dos temas.
+  // `truncate` y no sólo `min-w-0` en el padre: `min-w-0` deja que la caja se
+  // encoja, pero el texto se sale igual si la palabra no tiene dónde cortarse.
+  // "DEFENSORES" y "COMUNICACIONES" cruzaban el borde de la tarjeta del fixture
+  // abajo de 375px —los nombres con espacio, como "Estrella del Sur", nunca lo
+  // hicieron porque envuelven— y estiraban el documento entero.
   const nombre = [
-    'font-display uppercase leading-tight tracking-[0.02em]',
+    'block truncate font-display uppercase leading-tight tracking-[0.02em]',
     medida.nombre,
     equipo.es_aldosivi
       ? 'font-bold text-verde-600'

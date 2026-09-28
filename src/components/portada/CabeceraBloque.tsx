@@ -26,15 +26,21 @@ export function CabeceraBloque({ id, titulo, enlace, nivel = 2 }: Props) {
   const Titulo = nivel === 1 ? 'h1' : 'h2'
 
   return (
-    <div className="mb-6 flex items-baseline justify-between gap-4 border-b-[3px] border-tinta pb-2">
-      <Titulo id={id} className="marca text-[1.6rem] uppercase md:text-[1.9rem]">
+    // `flex-wrap` y `min-w-0`, los dos, y ninguno es decorativo. Sin `min-w-0`
+    // el título no puede encogerse por debajo de su palabra más larga, y sin
+    // `flex-wrap` el link no tiene adónde ir: en la columna angosta del aside
+    // —donde vive `<Goleadoras />`— "La tabla completa" se salía del filete y
+    // quedaba cortado contra el borde. Se veía a 1024px y a 320px, que son los
+    // dos anchos donde esa columna se pone más flaca.
+    <div className="mb-6 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b-[3px] border-tinta pb-2">
+      <Titulo id={id} className="marca min-w-0 text-[1.6rem] uppercase md:text-[1.9rem]">
         {titulo}
       </Titulo>
 
       {enlace && (
         <Link
           href={enlace.href}
-          className="shrink-0 font-display text-[0.85rem] font-bold text-verde-600 underline underline-offset-[3px]"
+          className="font-display text-[0.85rem] font-bold text-verde-600 underline underline-offset-[3px]"
         >
           {enlace.texto}
         </Link>

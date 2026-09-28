@@ -27,7 +27,7 @@ interface Props {
 
 export function NotaTapa({ nota, palabras }: Props) {
   return (
-    <article className="mt-8 grid bg-verde-900 text-white md:grid-cols-[7fr_5fr]">
+    <article className="mt-8 grid bg-verde-900 text-white md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
       <FotoNota
         src={nota.imagen_portada}
         alt={nota.imagen_portada ? nota.imagen_alt : ''}

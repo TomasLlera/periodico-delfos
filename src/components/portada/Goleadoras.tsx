@@ -22,8 +22,10 @@ interface Props {
 }
 
 export function Goleadoras({ id, goleadoras, temporada }: Props) {
+  const hay = goleadoras.length > 0
+
   return (
-    <section aria-labelledby={id} className="mt-14">
+    <section aria-labelledby={id} className="mt-bloque">
       <CabeceraBloque
         id={id}
         titulo="Goleadoras"
@@ -33,10 +35,22 @@ export function Goleadoras({ id, goleadoras, temporada }: Props) {
         }}
       />
 
-      <ListaGoleadoras
-        goleadoras={goleadoras.slice(0, TOP)}
-        temporada={temporada.nombre}
-      />
+      {/* Éste es el único bloque de la portada que sí se dibuja vacío, y a
+          diferencia de las notas no es por terquedad: la lista se arma sola con
+          los goles de cada planilla, así que un vacío acá dice "todavía no se
+          cargó ninguna planilla", que es información de verdad. Va como una
+          línea de texto y no con el recuadro de `<ListaGoleadoras />`: un
+          cuadro con borde alrededor de una frase pesa como si hubiera datos. */}
+      {hay ? (
+        <ListaGoleadoras
+          goleadoras={goleadoras.slice(0, TOP)}
+          temporada={temporada.nombre}
+        />
+      ) : (
+        <p className="font-body text-[0.95rem] text-gris">
+          Todavía no hay goles cargados en {temporada.nombre}.
+        </p>
+      )}
     </section>
   )
 }

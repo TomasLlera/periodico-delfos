@@ -1,16 +1,17 @@
 import type { Metadata } from 'next'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
-import { FechaAFecha } from '@/components/partido/FechaAFecha'
 import { BloqueArchivo } from '@/components/portada/BloqueArchivo'
 import { Goleadoras } from '@/components/portada/Goleadoras'
 import { GrillaNotas } from '@/components/portada/GrillaNotas'
 import { ListaAnalisis } from '@/components/portada/ListaAnalisis'
 import { NotaTapa } from '@/components/portada/NotaTapa'
 import { TarjetaPlantel } from '@/components/portada/TarjetaPlantel'
+import { UltimoResultado } from '@/components/portada/UltimoResultado'
 import { getTemperatura } from '@/lib/clima'
 import { getEstadoDelSitio } from '@/lib/supabase/queries/estado'
 import { getNotaPrincipal, getUltimasNotas } from '@/lib/supabase/queries/notas'
+import { getEventosDePartido } from '@/lib/supabase/queries/partidos'
 import { haySupabase } from '@/lib/supabase/server'
 import type { NotaResumen } from '@/types'
 import { urlDelSitio } from '@/lib/sitio'
@@ -26,15 +27,22 @@ import { urlDelSitio } from '@/lib/sitio'
  * home de WordPress: muestra las mismas seis notas cuatro veces (blueprint
  * 7.2). Cada query excluye los ids que ya salieron.
  *
- * **Los tres widgets deportivos del Step 19 ya están enchufados** y los tres se
- * dibujan sólo si la base tiene con qué. `<BarraEstado />` va en el layout raíz
- * —aparece en todas las páginas, no sólo acá—; `<FechaAFecha />` y
- * `<Goleadoras />` salen de `getEstadoDelSitio()`, que sin temporada activa
- * devuelve todo vacío y los borra solos. En la ruta pública no aparece nunca un
- * marcador inventado (regla no negociable 1); para verlos dibujados está
- * `/demo/widgets`, que es su único banco de pruebas: `/demo/portada` no los
- * muestra a propósito, para que la demo de la portada siga siendo la de las
- * notas.
+ * **Los widgets deportivos se dibujan sólo si la base tiene con qué.**
+ * `<BarraEstado />` va en el layout raíz —aparece en todas las páginas, no sólo
+ * acá—; `<UltimoResultado />` y `<Goleadoras />` salen de
+ * `getEstadoDelSitio()`, que sin temporada activa devuelve todo vacío y los
+ * borra solos. En la ruta pública no aparece nunca un marcador inventado (regla
+ * no negociable 1); para verlos dibujados está `/demo/widgets`, que es su único
+ * banco de pruebas: `/demo/portada` no los muestra a propósito, para que la
+ * demo de la portada siga siendo la de las notas.
+ *
+ * **`<FechaAFecha />` salió de acá.** Estaba entre las crónicas y el análisis
+ * con un comentario que decía "como en el boceto", y en el boceto no está: la
+ * única aparición de "fecha a fecha" en `referencia/boceto-portada.html` es una
+ * frase del pie. Era además la tercera puerta a lo mismo —la barra de estado
+ * arriba, "Fixture y tabla" en la nav— y ocupaba menos de la mitad del ancho
+ * del bloque. En su lugar va la `.planilla` del boceto, que sí estaba y
+ * faltaba. La franja sigue viva en `/temporada/[slug]`.
  *
  * El bloque de plantel sigue dibujándose sin sus caras ni sus estadísticas:
  * salen de `plantel` y `estadisticas_jugadora`, que la portada todavía no
@@ -98,11 +106,24 @@ export default async function Portada() {
     getEstadoDelSitio(),
   ])
 
+  // Los goles van aparte y después, porque dependen de qué partido salió: el
+  // id lo da `getEstadoDelSitio()`, que es la misma lectura que alimenta la
+  // barra de estado. Sin último partido no se pide nada.
+  const golesDelUltimo = deportivo.ultimo
+    ? await getEventosDePartido(deportivo.ultimo.id)
+    : []
+
+  // Con la portada entera vacía —hoy, sin notas migradas— las secciones se
+  // dibujan con su estado escrito. Omitirlas deja cuatro bloques sueltos que no
+  // se parecen ni a un diario ni al boceto. Apenas haya una nota publicada, las
+  // que sigan vacías desaparecen solas.
+  const portadaVacia = !tapa && cronicas.length === 0 && analisis.length === 0
+
   return (
     <>
       <Header temperatura={temperatura} />
 
-      <main className="mx-auto max-w-[1200px] px-4 pb-4">
+      <main className="contenedor pb-4">
         {/* El `<h1>` de la portada, que no se ve y tiene que estar.
 
             La portada no tiene un titular propio: lo más grande de la página
@@ -127,32 +148,36 @@ export default async function Portada() {
           </p>
         )}
 
+        {/* Pegado abajo de la tapa, como en el boceto: lo último que pasó en la
+            cancha, con los goles y su minuto. Sin partido jugado no se dibuja. */}
+        {deportivo.ultimo && (
+          <UltimoResultado
+            id="ultimo-resultado"
+            partido={deportivo.ultimo}
+            eventos={golesDelUltimo}
+          />
+        )}
+
         <GrillaNotas
           id="cronicas"
           titulo="Crónicas"
           notas={cronicas}
           enlace={{ href: '/cronicas', texto: 'Todas las crónicas' }}
-          vacio="Todavía no hay crónicas publicadas. Las de cada fecha aparecen acá apenas salen."
+          vacio={
+            portadaVacia
+              ? 'Todavía no hay crónicas publicadas. Las de cada fecha aparecen acá apenas salen.'
+              : undefined
+          }
         />
 
-        {/* La franja va entre las crónicas y el análisis, como en el boceto: es
-            el resumen de la temporada, y lo que sigue abajo son las notas que
-            la cuentan. Sin temporada activa no hay nada que resumir. */}
-        {deportivo.temporada && (
-          <FechaAFecha
-            id="fecha-a-fecha"
-            partidos={deportivo.fixture}
-            temporada={deportivo.temporada}
-          />
-        )}
 
-        <div className="mt-14 grid gap-12 lg:grid-cols-[2fr_1fr]">
+        <div className="mt-bloque grid gap-bloque lg:grid-cols-[2fr_1fr]">
           <ListaAnalisis
             id="analisis"
             titulo="Análisis"
             notas={analisis}
             enlace={{ href: '/analisis', texto: 'Ver más' }}
-            vacio="Todavía no hay análisis publicados."
+            vacio={portadaVacia ? 'Todavía no hay análisis publicados.' : undefined}
           />
 
           <div>

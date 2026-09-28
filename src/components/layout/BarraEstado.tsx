@@ -52,7 +52,7 @@ export function BarraEstado({ temporada, ultimo, proximo, posicion }: Props) {
     >
       {/* En 375px scrollea esta tira y no el documento: los tres datos no
           entran en una línea y ninguno se puede abreviar más. */}
-      <div className="mx-auto flex max-w-[1200px] items-center gap-4 overflow-x-auto whitespace-nowrap px-4 py-2 text-[0.8rem] sm:gap-5">
+      <div className="contenedor flex items-center gap-4 overflow-x-auto whitespace-nowrap py-2 text-[0.8rem] sm:gap-5">
         {piezas.map((pieza, indice) => (
           <div key={pieza.id} className="flex shrink-0 items-center gap-4 sm:gap-5">
             {indice > 0 && (

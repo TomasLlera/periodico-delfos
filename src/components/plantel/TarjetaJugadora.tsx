@@ -27,7 +27,13 @@ export function TarjetaJugadora({ jugadora }: Props) {
       className="tarjeta group flex h-full flex-col overflow-hidden transition-colors hover:bg-tarjeta-hover"
     >
       <div className="relative">
-        <FotoJugadora jugadora={jugadora} />
+        {/* Cuadrada mientras la grilla va en dos columnas, y retrato recién
+            cuando pasa a tres. El `3/4` de `<FotoJugadora />` es el de la
+            ficha, donde la foto es el contenido; acá, con tarjetas de ~200px
+            de ancho, daba 270px de alto por jugadora y en un celular entraban
+            dos y media en toda la pantalla. `object-top` ya está puesto en el
+            componente, así que el recorte se come los pies y no la cara. */}
+        <FotoJugadora jugadora={jugadora} aspecto="aspect-square sm:aspect-[3/4]" />
 
         {jugadora.dorsal !== null && (
           <span

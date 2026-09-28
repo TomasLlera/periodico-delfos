@@ -6,6 +6,7 @@ import {
   describirEvento,
   ladoDelEvento,
   ladosDelPartido,
+  golesResumidos,
   resumenGoles,
   suplentes,
   titulares,
@@ -384,5 +385,83 @@ describe('etiquetaDePartido', () => {
   it('sin número de fecha usa el nombre de la temporada', () => {
     const p = { ...partido({ aldosiviDeLocal: true, golesAldosivi: 1, golesRival: 0 }), fecha_numero: null }
     expect(etiquetaDePartido(p)).toBe('Primera B 2026 · Aldosivi 1-0 All Boys')
+  })
+})
+
+describe('golesResumidos', () => {
+  it('deja sólo los goles, en orden, con el minuto y el apellido', () => {
+    const p = partido({
+      aldosiviDeLocal: true,
+      golesAldosivi: 2,
+      golesRival: 1,
+      eventos: [
+        { minuto: 70, tipo: 'gol', equipo: ALDOSIVI, jugadora: LAREA },
+        { minuto: 30, tipo: 'amarilla', equipo: ALDOSIVI, jugadora: CORTADI },
+        { minuto: 12, tipo: 'gol', equipo: RIVAL, nombre: 'L. Ferrari' },
+      ],
+    })
+
+    const { lineas, restantes } = golesResumidos(p, 5)
+
+    expect(restantes).toBe(0)
+    expect(lineas.map((l) => [l.minuto, l.quien, l.equipo, l.esDeAldosivi])).toEqual([
+      ["12'", 'L. Ferrari', 'All Boys', false],
+      ["70'", 'Larea', 'Aldosivi', true],
+    ])
+  })
+
+  it('cuenta los que no entran en el corte en lugar de tirarlos', () => {
+    const p = partido({
+      aldosiviDeLocal: true,
+      golesAldosivi: 6,
+      golesRival: 1,
+      eventos: [10, 20, 30, 40, 50, 60, 70].map((minuto) => ({
+        minuto,
+        tipo: 'gol' as TipoEvento,
+        equipo: ALDOSIVI,
+        jugadora: LAREA,
+      })),
+    })
+
+    const { lineas, restantes } = golesResumidos(p, 5)
+
+    expect(lineas).toHaveLength(5)
+    expect(lineas.at(-1)?.minuto).toBe("50'")
+    expect(restantes).toBe(2)
+  })
+
+  it('le suma el gol en contra a Aldosivi aunque lo haga una rival', () => {
+    const p = partido({
+      aldosiviDeLocal: false,
+      golesAldosivi: 1,
+      golesRival: 0,
+      eventos: [{ minuto: 44, tipo: 'gol_en_contra', equipo: RIVAL, nombre: 'C. Vera' }],
+    })
+
+    const [linea] = golesResumidos(p, 5).lineas
+    expect(linea.esDeAldosivi).toBe(true)
+    expect(linea.quien).toBe('C. Vera (e/c)')
+    expect(linea.equipo).toBe('All Boys')
+  })
+
+  it('suma el adicionado al minuto y describe el gol entero para el lector', () => {
+    const p = partido({
+      aldosiviDeLocal: true,
+      golesAldosivi: 1,
+      golesRival: 0,
+      eventos: [
+        { minuto: 45, adicionado: 2, tipo: 'gol_penal', equipo: ALDOSIVI, jugadora: CORTADI },
+      ],
+    })
+
+    const [linea] = golesResumidos(p, 5).lineas
+    expect(linea.minuto).toBe("45+2'")
+    expect(linea.quien).toBe('Cortadi (p)')
+    expect(linea.accesible).toBe('Minuto 45 más 2. Gol de penal de Aldosivi: Lucía Cortadi.')
+  })
+
+  it('no dibuja nada cuando el partido llegó sin eventos', () => {
+    const p = partido({ aldosiviDeLocal: true, golesAldosivi: 2, golesRival: 1 })
+    expect(golesResumidos(p, 5)).toEqual({ lineas: [], restantes: 0 })
   })
 })

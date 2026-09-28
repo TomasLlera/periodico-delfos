@@ -65,7 +65,7 @@ export default async function Cronicas({ searchParams }: Params) {
     <>
       <Header />
 
-      <main className="mx-auto max-w-[1200px] px-4 py-10">
+      <main className="contenedor py-10">
         <ListadoNotas
           id="listado-cronicas"
           titulo={TITULO}

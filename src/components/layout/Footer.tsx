@@ -56,10 +56,14 @@ export function Footer() {
   const anio = new Date().getFullYear()
 
   return (
-    <footer className="franja mt-14 border-t-[6px] border-amarillo text-white/70">
-      <div className="mx-auto max-w-[1200px] px-4">
-        <div className="grid gap-8 py-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr]">
-          <div>
+    <footer className="franja mt-bloque border-t-[6px] border-amarillo text-white/70">
+      <div className="contenedor">
+        {/* Dos columnas ya en celular, con la marca cruzada arriba. Apiladas de
+            a una, "El equipo" y "El medio" son dos listas cortas separadas por
+            un tirón de scroll cada una; al lado se leen de un vistazo y el pie
+            mide la mitad. */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-8 py-10 lg:grid-cols-[2fr_1fr_1fr]">
+          <div className="col-span-2 lg:col-span-1">
             <p className="marca text-[1.6rem] text-white">
               Periódico <span className="text-amarillo">Delfos</span>
             </p>
@@ -72,12 +76,16 @@ export function Footer() {
           {SECCIONES.map((seccion) => (
             <nav key={seccion.titulo} aria-label={seccion.titulo}>
               <h2 className="meta text-amarillo">{seccion.titulo}</h2>
-              <ul className="mt-3 space-y-[0.45rem]">
+              <ul className="mt-1 lg:mt-3 lg:space-y-[0.45rem]">
                 {seccion.links.map((link) => (
                   <li key={link.href}>
+                    {/* `min-h-11` en celular: estos links medían 16px de alto,
+                        muy por debajo de los 44 que pide el sistema de diseño.
+                        En escritorio, donde se apunta con el mouse, vuelven a
+                        su interlineado apretado. */}
                     <Link
                       href={link.href}
-                      className="font-display text-[0.9rem] underline-offset-4 hover:text-amarillo hover:underline"
+                      className="flex min-h-11 items-center font-display text-[0.9rem] underline-offset-4 hover:text-amarillo hover:underline lg:min-h-0"
                     >
                       {link.label}
                     </Link>

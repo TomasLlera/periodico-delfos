@@ -17,7 +17,7 @@ interface Props {
 
 export function SinTemporada({ titulo, explicacion }: Props) {
   return (
-    <main className="mx-auto max-w-[1200px] px-4 py-10">
+    <main className="contenedor py-10">
       <CabeceraBloque id="sin-temporada" titulo={titulo} nivel={1} />
 
       <div className="max-w-medida border-l-4 border-verde-600 bg-papel-alt py-6 pl-5">
