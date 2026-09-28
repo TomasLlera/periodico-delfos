@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ExternalLink, LogOut } from 'lucide-react'
 import { salir } from '@/actions/sesion'
+import { ToggleTema } from '@/components/layout/ToggleTema'
 import type { Autor } from '@/types'
 
 /**
@@ -14,7 +15,7 @@ import type { Autor } from '@/types'
  */
 export function BarraAdmin({ autor }: { autor: Autor }) {
   return (
-    <header className="sticky top-0 z-10 border-b border-linea bg-verde-900 text-white">
+    <header className="sticky top-0 z-10 border-b border-border bg-block-bg text-block-text">
       <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
         <Link href="/admin" className="marca text-[1.1rem]">
           Delfos
@@ -36,7 +37,9 @@ export function BarraAdmin({ autor }: { autor: Autor }) {
           <Seccion href="/admin/posteos">Posteos</Seccion>
         </nav>
 
-        <span className="ml-auto text-[0.85rem] text-white/70">{autor.nombre}</span>
+        <span className="ml-auto text-[0.85rem] text-block-text/70">{autor.nombre}</span>
+
+        <ToggleTema />
 
         <Link
           href="/"

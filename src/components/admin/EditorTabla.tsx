@@ -135,7 +135,7 @@ export function EditorTabla({ temporadaId, fechaNumero, equipos, filasGuardadas 
           const diferencia = diferenciaGol(fila)
 
           return (
-            <li key={indice} className="border border-linea bg-tarjeta p-3">
+            <li key={indice} className="border border-border bg-bg-elevated p-3">
               <div className="mb-3 flex flex-wrap items-end gap-3">
                 <div className="w-16">
                   <CampoNumero
@@ -161,7 +161,7 @@ export function EditorTabla({ temporadaId, fechaNumero, equipos, filasGuardadas 
                 <button
                   type="button"
                   onClick={() => sacar(indice)}
-                  className="tactil flex items-center gap-1 px-3 font-display text-[0.85rem] font-bold text-roja hover:underline"
+                  className="tactil flex items-center gap-1 px-3 font-display text-[0.85rem] font-bold text-danger hover:underline"
                 >
                   <X size={14} aria-hidden="true" />
                   Sacar
@@ -209,7 +209,7 @@ export function EditorTabla({ temporadaId, fechaNumero, equipos, filasGuardadas 
               {/* Lo que sale solo. Se muestra para poder cotejarlo contra la
                   tabla publicada: si los puntos no son los mismos, lo que está
                   mal es alguno de los tres resultados de arriba. */}
-              <p className="meta mt-3 text-gris">
+              <p className="meta mt-3 text-text-muted">
                 {puntos} puntos · {jugados} jugados · {etiquetaDiferencia(diferencia)} de
                 diferencia
               </p>
@@ -221,17 +221,17 @@ export function EditorTabla({ temporadaId, fechaNumero, equipos, filasGuardadas 
       <button
         type="button"
         onClick={agregar}
-        className="tactil flex items-center gap-2 self-start border border-linea-fuerte px-4 font-display text-[0.9rem] font-bold hover:bg-papel-alt"
+        className="tactil flex items-center gap-2 self-start border border-border-control px-4 font-display text-[0.9rem] font-bold hover:bg-bg-muted"
       >
         <Plus size={16} aria-hidden="true" />
         Agregar un equipo
       </button>
 
       {aviso && (
-        <div role="status" className="border-l-2 border-verde-600 bg-papel-alt px-3 py-2 text-[0.9rem]">
+        <div role="status" className="border-l-2 border-accent-text bg-bg-muted px-3 py-2 text-[0.9rem]">
           <p>{aviso}</p>
           {motivos.length > 0 && (
-            <ul className="mt-1 list-disc pl-5 text-roja">
+            <ul className="mt-1 list-disc pl-5 text-danger">
               {motivos.map((motivo) => (
                 <li key={motivo}>{motivo}</li>
               ))}
@@ -240,12 +240,12 @@ export function EditorTabla({ temporadaId, fechaNumero, equipos, filasGuardadas 
         </div>
       )}
 
-      <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-linea bg-papel py-3">
+      <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-border bg-bg py-3">
         <button
           type="button"
           onClick={guardar}
           disabled={ocupado}
-          className="tactil flex items-center gap-2 bg-verde-900 px-5 font-display text-[0.9rem] font-extrabold text-white hover:bg-verde-600 disabled:opacity-60"
+          className="tactil flex items-center gap-2 bg-text px-5 font-display text-[0.9rem] font-extrabold text-bg hover:bg-text/85 disabled:opacity-60"
         >
           <Save size={16} aria-hidden="true" />
           {ocupado ? 'Guardando…' : `Guardar la fecha ${fechaNumero}`}
@@ -253,7 +253,7 @@ export function EditorTabla({ temporadaId, fechaNumero, equipos, filasGuardadas 
 
         {/* La fecha se reemplaza entera al guardar, así que conviene decirlo
             antes y no después: es una foto del campeonato, no un parche. */}
-        <span className="text-[0.85rem] text-gris">
+        <span className="text-[0.85rem] text-text-muted">
           Reemplaza lo que haya cargado en esta fecha.
         </span>
       </div>

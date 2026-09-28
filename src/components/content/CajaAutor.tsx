@@ -11,7 +11,7 @@ import type { Autor } from '@/types'
 
 export function CajaAutor({ autor }: { autor: Autor }) {
   return (
-    <aside className="mt-12 flex gap-4 rounded-md border border-linea bg-papel-alt p-4 sm:p-5">
+    <aside className="mt-12 flex gap-4 rounded-md border border-border bg-bg-muted p-4 sm:p-5">
       {autor.foto_url && (
         <img
           src={autor.foto_url}
@@ -28,7 +28,7 @@ export function CajaAutor({ autor }: { autor: Autor }) {
         <p className="mt-1 font-display text-[17px] font-semibold">{autor.nombre}</p>
 
         {autor.bio && (
-          <p className="mt-2 max-w-[60ch] font-body text-[15px] leading-relaxed text-gris">
+          <p className="mt-2 max-w-[60ch] font-body text-[15px] leading-relaxed text-text-muted">
             {autor.bio}
           </p>
         )}
@@ -36,7 +36,7 @@ export function CajaAutor({ autor }: { autor: Autor }) {
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           <Link
             href="/quienes-somos"
-            className="meta text-verde-600 hover:underline"
+            className="meta text-accent-text hover:underline"
           >
             Quiénes somos
           </Link>
@@ -80,7 +80,7 @@ function EnlaceRed({
       href={href}
       rel="noopener noreferrer"
       aria-label={etiqueta}
-      className="flex items-center gap-1.5 text-gris hover:text-verde-600"
+      className="flex items-center gap-1.5 text-text-muted hover:text-accent-text"
     >
       {children}
     </a>

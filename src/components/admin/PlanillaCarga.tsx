@@ -190,7 +190,7 @@ export function PlanillaCarga({ partido, fechaSinTabla }: Props) {
   return (
     <div className="flex flex-col gap-5">
       <section>
-        <h2 className="meta mb-2 text-gris">Cargado hasta ahora</h2>
+        <h2 className="meta mb-2 text-text-muted">Cargado hasta ahora</h2>
         <ListaEventos
           eventos={eventos}
           equipoLocalId={partido.equipo_local_id}
@@ -212,12 +212,12 @@ export function PlanillaCarga({ partido, fechaSinTabla }: Props) {
           mismo lugar porque para quien carga son la misma cosa: algo salió mal
           y dice qué. */}
       {(aviso ?? cola.ultimoError) && (
-        <p role="alert" className="border-l-2 border-roja bg-papel-alt px-3 py-2 text-[0.9rem]">
+        <p role="alert" className="border-l-2 border-danger bg-bg-muted px-3 py-2 text-[0.9rem]">
           {aviso ?? cola.ultimoError}
         </p>
       )}
 
-      <section className="flex flex-col gap-4 border-t border-linea pt-4">
+      <section className="flex flex-col gap-4 border-t border-border pt-4">
         <BotonesTipoEvento
           elegido={tipo}
           onElegir={(t) => {
@@ -258,7 +258,7 @@ export function PlanillaCarga({ partido, fechaSinTabla }: Props) {
               />
             ) : (
               <div className="flex flex-col gap-2">
-                <p className="meta text-gris">
+                <p className="meta text-text-muted">
                   {tipo === 'cambio' && !sale
                     ? 'Quién sale'
                     : tipo === 'cambio'

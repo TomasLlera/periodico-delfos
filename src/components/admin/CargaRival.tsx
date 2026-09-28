@@ -28,7 +28,7 @@ export function CargaRival({ nombre, onNombre, onCargar, ocupado }: Props) {
   return (
     <div className="flex flex-wrap items-end gap-2">
       <div className="flex flex-1 flex-col gap-1">
-        <label htmlFor="rival" className="meta text-gris">
+        <label htmlFor="rival" className="meta text-text-muted">
           Quién, del rival
         </label>
         <input
@@ -37,7 +37,7 @@ export function CargaRival({ nombre, onNombre, onCargar, ocupado }: Props) {
           value={nombre}
           onChange={(e) => onNombre(e.target.value)}
           placeholder="Apellido"
-          className="tactil border border-linea-fuerte bg-tarjeta px-3 font-display text-[0.95rem]"
+          className="tactil border border-border-control bg-bg-elevated px-3 font-display text-[0.95rem]"
         />
       </div>
 
@@ -45,7 +45,7 @@ export function CargaRival({ nombre, onNombre, onCargar, ocupado }: Props) {
         type="button"
         onClick={onCargar}
         disabled={ocupado}
-        className="tactil bg-verde-900 px-5 font-display text-[0.9rem] font-extrabold text-white disabled:opacity-60"
+        className="tactil bg-text px-5 font-display text-[0.9rem] font-extrabold text-bg disabled:opacity-60"
       >
         Cargar
       </button>

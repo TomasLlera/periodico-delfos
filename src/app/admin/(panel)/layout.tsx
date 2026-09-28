@@ -29,7 +29,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   if (!autor) redirect('/admin/login')
 
   return (
-    <div className="min-h-dvh bg-papel">
+    <div className="min-h-dvh bg-bg">
       <BarraAdmin autor={autor} />
       {children}
     </div>

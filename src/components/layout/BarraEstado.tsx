@@ -19,11 +19,11 @@ import type { FilaTablaConEquipo, PartidoConEquipos, Temporada } from '@/types'
  * del documento: pegada al viewport se comería 40px de alto en 375px, que es
  * donde el titular de tapa ya entra justo.
  *
- * Los colores no dependen del tema: `negro-cancha` es oscuro en los dos, así
- * que acá el fondo manda sobre el tema, como en la cabecera. El amarillo del
- * marcador lleva texto `negro-cancha` y no `tinta`, que en oscuro es casi
- * blanco y sobre amarillo no llega a AA (medido: 8.02:1 en claro, 9.62:1 en
- * oscuro).
+ * Los colores no dependen del tema: `header-bg` es oscuro en los dos, así que
+ * acá el fondo manda sobre el tema, como en la cabecera. El marcador usa los
+ * tokens `score-*` (dorado sobre tinta en claro: 7.25:1; negro sobre crema en
+ * oscuro: 16.94:1) con un filete `block-accent`: en claro su fondo es el mismo
+ * que el de la barra, y sin el filete el recuadro no se vería.
  */
 interface Props {
   temporada: Temporada
@@ -48,7 +48,7 @@ export function BarraEstado({ temporada, ultimo, proximo, posicion }: Props) {
   return (
     <aside
       aria-label={`Aldosivi en ${temporada.nombre}`}
-      className="bg-negro-cancha text-white"
+      className="border-b border-header-text/15 bg-header-bg text-header-text"
     >
       {/* En 375px scrollea esta tira y no el documento: los tres datos no
           entran en una línea y ninguno se puede abreviar más. */}
@@ -56,7 +56,7 @@ export function BarraEstado({ temporada, ultimo, proximo, posicion }: Props) {
         {piezas.map((pieza, indice) => (
           <div key={pieza.id} className="flex shrink-0 items-center gap-4 sm:gap-5">
             {indice > 0 && (
-              <span aria-hidden="true" className="text-white/25">
+              <span aria-hidden="true" className="text-header-text/25">
                 |
               </span>
             )}
@@ -85,7 +85,7 @@ function Dato({ href, children, descripcion }: {
   return (
     <Link
       href={href}
-      className="relative flex shrink-0 items-center gap-2 hover:text-amarillo"
+      className="relative flex shrink-0 items-center gap-2 hover:text-block-accent"
     >
       <span className="sr-only">{descripcion}</span>
       <span aria-hidden="true" className="flex items-center gap-2">
@@ -96,7 +96,7 @@ function Dato({ href, children, descripcion }: {
 }
 
 function Etiqueta({ children }: { children: ReactNode }) {
-  return <span className="meta text-[0.65rem] text-white/60">{children}</span>
+  return <span className="meta text-[0.65rem] text-header-text/60">{children}</span>
 }
 
 function Ultimo({ partido }: { partido: PartidoConEquipos }) {
@@ -109,12 +109,12 @@ function Ultimo({ partido }: { partido: PartidoConEquipos }) {
     >
       <Etiqueta>{partido.fecha_numero ? `Fecha ${partido.fecha_numero}` : 'Último'}</Etiqueta>
       <span className="font-display font-semibold">{lados.izquierda.nombre_corto}</span>
-      <span className="dato bg-amarillo px-1.5 py-[0.1rem] font-bold text-negro-cancha">
+      <span className="dato border border-block-accent bg-score-bg px-1.5 py-[0.1rem] font-bold text-score-text">
         {lados.golesIzquierda} - {lados.golesDerecha}
       </span>
       <span className="font-display">{lados.derecha.nombre_corto}</span>
       {partido.estado !== 'finalizado' && (
-        <span className="meta text-[0.65rem] text-amarillo">
+        <span className="meta text-[0.65rem] text-block-accent">
           {ETIQUETA_ESTADO[partido.estado]}
         </span>
       )}
@@ -134,7 +134,7 @@ function Proximo({ partido }: { partido: PartidoConEquipos }) {
       <Etiqueta>Próximo</Etiqueta>
       <span className="font-display font-semibold">vs. {otro.nombre_corto}</span>
       <Etiqueta>{condicion}</Etiqueta>
-      <span className="dato text-white/70">{fechaHoraPartido(partido.fecha_hora)}</span>
+      <span className="dato text-header-text/70">{fechaHoraPartido(partido.fecha_hora)}</span>
     </Dato>
   )
 }
@@ -155,7 +155,7 @@ function Posicion({
     >
       <Etiqueta>Tabla</Etiqueta>
       <span className="dato font-bold">{fila.posicion}°</span>
-      <span className="dato text-white/70">{fila.puntos} pts</span>
+      <span className="dato text-header-text/70">{fila.puntos} pts</span>
     </Dato>
   )
 }

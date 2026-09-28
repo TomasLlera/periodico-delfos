@@ -50,14 +50,14 @@ export function BotonReintentar({ notaId, titulo }: Props) {
             router.refresh()
           })
         }
-        className="tactil flex items-center gap-2 border border-linea-fuerte px-3 font-display text-[0.85rem] font-bold hover:bg-papel-alt disabled:opacity-60"
+        className="tactil flex items-center gap-2 border border-border-control px-3 font-display text-[0.85rem] font-bold hover:bg-bg-muted disabled:opacity-60"
       >
         <RefreshCw size={14} aria-hidden="true" />
         {ocupado ? 'Pidiendo…' : 'Reintentar'}
       </button>
 
       {aviso && (
-        <span role="status" className="text-[0.8rem] text-gris">
+        <span role="status" className="text-[0.8rem] text-text-muted">
           {aviso}
         </span>
       )}

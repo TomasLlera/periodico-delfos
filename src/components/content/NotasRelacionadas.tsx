@@ -35,7 +35,7 @@ export function NotasRelacionadas({
       {/* El filete vertical verde antes del título es el marcador de sección
           del rediseño, en lugar de la línea horizontal de arriba. */}
       <div className="flex items-center gap-3">
-        <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-verde-600" />
+        <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-accent" />
         <h2 id="relacionadas" className="titular text-[22px]">
           {titulo}
         </h2>
@@ -61,7 +61,7 @@ function TarjetaNota({ nota }: { nota: NotaResumen }) {
   return (
     <Link
       href={`/nota/${nota.slug}`}
-      className="tarjeta group flex h-full flex-col overflow-hidden transition-colors hover:bg-tarjeta-hover"
+      className="tarjeta group flex h-full flex-col overflow-hidden transition-colors hover:bg-bg-muted"
     >
       {nota.imagen_portada && (
         <div className="relative overflow-hidden">
@@ -73,7 +73,7 @@ function TarjetaNota({ nota }: { nota: NotaResumen }) {
           />
           {/* La categoría va sobre la foto, como badge, y no arriba del título:
               es el patrón del rediseño. */}
-          <span className="absolute left-3 top-3 rounded-sm bg-amarillo px-2 py-0.5 font-display text-[12px] font-bold uppercase tracking-[0.08em] text-negro-cancha">
+          <span className="absolute left-3 top-3 rounded-sm bg-accent px-2 py-0.5 font-display text-[12px] font-bold uppercase tracking-[0.08em] text-accent-contrast">
             {etiquetaCategoria(nota.categoria)}
           </span>
         </div>
@@ -85,18 +85,18 @@ function TarjetaNota({ nota }: { nota: NotaResumen }) {
           {nota.publicada_en && fechaCorta(nota.publicada_en)}
         </p>
 
-        <h3 className="titular mt-2 text-[17px] leading-[1.15] group-hover:text-verde-600">
+        <h3 className="titular mt-2 text-[17px] leading-[1.15] group-hover:text-accent-text">
           {nota.titulo}
         </h3>
 
-        <p className="mt-2 line-clamp-2 font-body text-[15px] leading-snug text-gris">
+        <p className="mt-2 line-clamp-2 font-body text-[15px] leading-snug text-text-muted">
           {nota.bajada}
         </p>
 
-        {/* Va en verde y no en amarillo como el mockup: el amarillo del
-            rediseño sobre una tarjeta clara da 2.6:1 y no llega a AA. El verde
-            pasa en los dos temas (5.1:1 oscuro, 5.4:1 claro). */}
-        <span className="meta mt-auto pt-3 text-verde-600">Leer nota →</span>
+        {/* `accent-text` y no `accent`: el dorado claro sobre la tarjeta da
+            2.9:1 y no llega a AA. El oscuro pasa en los dos temas (5.69:1
+            claro, 8.61:1 oscuro). */}
+        <span className="meta mt-auto pt-3 text-accent-text">Leer nota →</span>
       </div>
     </Link>
   )

@@ -18,10 +18,10 @@ import type { PosteoConNota } from '@/lib/supabase/queries/social'
  */
 
 const ESTILO_ESTADO = {
-  pending: 'bg-papel-alt text-gris',
-  processing: 'bg-amarillo text-negro-cancha',
-  success: 'bg-verde-900 text-white',
-  failed: 'bg-roja text-white',
+  pending: 'bg-bg-muted text-text-muted',
+  processing: 'bg-accent text-accent-contrast',
+  success: 'bg-text text-bg',
+  failed: 'bg-danger text-bg',
 } as const
 
 const NOMBRE_ESTADO = {
@@ -39,12 +39,12 @@ export function FilaPosteo({ posteo }: { posteo: PosteoConNota }) {
   const simulado = esSimulado(posteo)
 
   return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-linea py-3">
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border py-3">
       <span className={`meta px-2 py-0.5 ${ESTILO_ESTADO[posteo.status]}`}>
         {NOMBRE_ESTADO[posteo.status]}
       </span>
 
-      <span className="meta text-gris">{NOMBRE_RED[posteo.platform]}</span>
+      <span className="meta text-text-muted">{NOMBRE_RED[posteo.platform]}</span>
 
       {posteo.nota ? (
         <Link
@@ -57,16 +57,16 @@ export function FilaPosteo({ posteo }: { posteo: PosteoConNota }) {
       ) : (
         // La nota se borró y el registro quedó: por eso `social_posts` guarda
         // el slug además del id.
-        <span className="font-display text-[0.95rem] font-bold text-gris">
+        <span className="font-display text-[0.95rem] font-bold text-text-muted">
           {posteo.nota_slug} (nota borrada)
         </span>
       )}
 
       {simulado && (
-        <span className="meta border border-linea-fuerte px-2 py-0.5 text-gris">Simulado</span>
+        <span className="meta border border-border-control px-2 py-0.5 text-text-muted">Simulado</span>
       )}
 
-      <span className="ml-auto flex items-center gap-3 text-[0.85rem] text-gris">
+      <span className="ml-auto flex items-center gap-3 text-[0.85rem] text-text-muted">
         {posteo.attempts > 1 && <span>{posteo.attempts} intentos</span>}
         <span>{hace(posteo.updated_at)}</span>
 
@@ -85,7 +85,7 @@ export function FilaPosteo({ posteo }: { posteo: PosteoConNota }) {
       {/* El motivo ocupa su propia línea: en un fallo es lo que hay que leer, y
           al costado de tres badges no se lee. */}
       {posteo.error_message && !simulado && (
-        <p className="w-full text-[0.85rem] text-roja">{posteo.error_message}</p>
+        <p className="w-full text-[0.85rem] text-danger">{posteo.error_message}</p>
       )}
     </li>
   )

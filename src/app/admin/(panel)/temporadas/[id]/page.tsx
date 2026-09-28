@@ -30,7 +30,7 @@ export default async function EditarTemporada({ params }: Params) {
         anioDeHoy={new Date().getFullYear()}
       />
 
-      <div className="mt-8 border-t border-linea pt-4">
+      <div className="mt-8 border-t border-border pt-4">
         <BotonBorrar
           que={`la temporada ${temporada.nombre}`}
           consecuencia="Se lleva su plantel y su tabla de posiciones. Si ya tiene partidos cargados, no se va a poder."

@@ -76,7 +76,7 @@ export function PlanillaPartido({
       <section
         aria-labelledby={idTitulo}
         className={`planilla font-display text-[15px] ${
-          plegable ? 'px-4 py-4' : `border-y-2 border-verde-600 py-4 ${className}`
+          plegable ? 'px-4 py-4' : `border-y-2 border-accent-text py-4 ${className}`
         }`}
       >
         <p className="meta text-center">
@@ -89,14 +89,14 @@ export function PlanillaPartido({
           <LineaDeTiempo partido={partido} />
         </div>
 
-        <div className="mt-4 border-t border-linea pt-3">
+        <div className="mt-4 border-t border-border pt-3">
           <FormacionesPartido partido={partido} denso />
         </div>
 
         <p className="mt-3 text-center">
           <Link
             href={`/partido/${partido.slug}`}
-            className="link-planilla text-[13px] font-medium text-verde-600 hover:underline"
+            className="link-planilla text-[13px] font-medium text-accent-text hover:underline"
           >
             Ficha completa del partido →
           </Link>
@@ -106,10 +106,10 @@ export function PlanillaPartido({
       <section
         aria-labelledby={idTitulo}
         className={`planilla ${
-          plegable ? '' : `overflow-hidden rounded-md border border-linea bg-papel ${className}`
+          plegable ? '' : `overflow-hidden rounded-md border border-border bg-bg ${className}`
         }`}
       >
-        <div className="border-b border-linea px-4 py-5 sm:px-6">
+        <div className="border-b border-border px-4 py-5 sm:px-6">
           <p className="meta text-center">{etiquetaFecha(partido)}</p>
           {titulo}
           <p className="mt-4 flex justify-center">
@@ -123,14 +123,14 @@ export function PlanillaPartido({
           <LineaDeTiempo partido={partido} />
         </div>
 
-        <div className="border-t border-linea px-4 py-5 sm:px-6">
+        <div className="border-t border-border px-4 py-5 sm:px-6">
           <FormacionesPartido
             partido={partido}
             nivelTitulo={Math.min(nivelTitulo + 1, 5) as 3 | 4 | 5}
           />
         </div>
 
-        <div className="border-t border-linea bg-papel-alt px-4 py-4 sm:px-6">
+        <div className="border-t border-border bg-bg-muted px-4 py-4 sm:px-6">
           <DatosPartido partido={partido} />
         </div>
       </section>
@@ -141,22 +141,22 @@ export function PlanillaPartido({
   return (
     <details
       open={abierta}
-      className={`planilla group overflow-hidden rounded-md border border-linea bg-papel ${className}`}
+      className={`planilla group overflow-hidden rounded-md border border-border bg-bg ${className}`}
     >
       {/* `<details>` nativo y no un componente con estado: funciona sin
           JavaScript, es accesible por teclado de fábrica y deja la planilla
           como Server Component. `"use client"` va sólo donde hace falta. */}
-      <summary className="tactil flex cursor-pointer list-none items-center gap-2 px-4 py-3 hover:bg-papel-alt [&::-webkit-details-marker]:hidden">
+      <summary className="tactil flex cursor-pointer list-none items-center gap-2 px-4 py-3 hover:bg-bg-muted [&::-webkit-details-marker]:hidden">
         <ChevronRight
           size={16}
           aria-hidden="true"
-          className="shrink-0 text-verde-600 transition-transform group-open:rotate-90"
+          className="shrink-0 text-accent-text transition-transform group-open:rotate-90"
         />
-        <span className="meta text-tinta">Planilla del partido</span>
-        <span className="dato ml-auto text-[13px] text-gris">{resumenDeCabecera(partido)}</span>
+        <span className="meta text-text">Planilla del partido</span>
+        <span className="dato ml-auto text-[13px] text-text-muted">{resumenDeCabecera(partido)}</span>
       </summary>
 
-      <div className="border-t border-linea">{contenido}</div>
+      <div className="border-t border-border">{contenido}</div>
     </details>
   )
 }
@@ -194,7 +194,7 @@ function ChipResultado({ partido }: { partido: PartidoCompleto }) {
 
   if (!resultado) {
     return (
-      <span className="meta rounded-sm border border-linea px-2 py-1 text-gris">
+      <span className="meta rounded-sm border border-border px-2 py-1 text-text-muted">
         {ETIQUETA_ESTADO[partido.estado]}
       </span>
     )
@@ -202,10 +202,10 @@ function ChipResultado({ partido }: { partido: PartidoCompleto }) {
 
   const color =
     resultado === 'ganado'
-      ? 'border-verde-600 text-verde-600'
+      ? 'border-accent-text text-accent-text'
       : resultado === 'perdido'
-        ? 'border-roja text-roja'
-        : 'border-linea text-gris'
+        ? 'border-border-strong text-text'
+        : 'border-border text-text-muted'
 
   return (
     <span className={`meta rounded-sm border px-2 py-1 ${color}`}>

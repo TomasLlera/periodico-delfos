@@ -103,14 +103,14 @@ export function InsertarImagen({ onInsertar, onCerrar }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-3 border-b border-linea bg-papel-alt p-3">
+    <div className="flex flex-col gap-3 border-b border-border bg-bg-muted p-3">
       <div className="flex items-center gap-2">
-        <p className="meta text-gris">Insertar una imagen</p>
+        <p className="meta text-text-muted">Insertar una imagen</p>
         <button
           type="button"
           onClick={onCerrar}
           aria-label="Cerrar"
-          className="tactil ml-auto flex items-center justify-center px-2 hover:text-roja"
+          className="tactil ml-auto flex items-center justify-center px-2 hover:text-danger"
         >
           <X size={16} aria-hidden="true" />
         </button>
@@ -118,12 +118,12 @@ export function InsertarImagen({ onInsertar, onCerrar }: Props) {
 
       {urlLocal && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={urlLocal} alt="" className="max-h-48 w-full border border-linea object-contain" />
+        <img src={urlLocal} alt="" className="max-h-48 w-full border border-border object-contain" />
       )}
 
       <label
         htmlFor="imagen-cuerpo"
-        className="tactil flex cursor-pointer items-center gap-2 self-start border border-linea-fuerte bg-tarjeta px-4 font-display text-[0.9rem] font-bold hover:bg-papel"
+        className="tactil flex cursor-pointer items-center gap-2 self-start border border-border-control bg-bg-elevated px-4 font-display text-[0.9rem] font-bold hover:bg-bg"
       >
         <ImagePlus size={16} aria-hidden="true" />
         {archivo ? 'Cambiar la imagen' : 'Elegir una imagen'}
@@ -161,7 +161,7 @@ export function InsertarImagen({ onInsertar, onCerrar }: Props) {
       />
 
       {error && (
-        <p role="alert" className="text-[0.85rem] text-roja">
+        <p role="alert" className="text-[0.85rem] text-danger">
           {error}
         </p>
       )}
@@ -170,13 +170,13 @@ export function InsertarImagen({ onInsertar, onCerrar }: Props) {
         type="button"
         onClick={insertar}
         disabled={subiendo || !archivo || alt.trim() === ''}
-        className="tactil flex items-center gap-2 self-start bg-verde-900 px-5 font-display text-[0.9rem] font-extrabold text-white hover:bg-verde-600 disabled:opacity-60"
+        className="tactil flex items-center gap-2 self-start bg-text px-5 font-display text-[0.9rem] font-extrabold text-bg hover:bg-text/85 disabled:opacity-60"
       >
         {subiendo ? 'Subiendo…' : 'Insertar'}
       </button>
 
       {!archivo && (
-        <p className="text-[0.8rem] text-gris">Elegí una imagen y escribí el texto alternativo.</p>
+        <p className="text-[0.8rem] text-text-muted">Elegí una imagen y escribí el texto alternativo.</p>
       )}
     </div>
   )

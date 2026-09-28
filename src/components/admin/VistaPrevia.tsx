@@ -47,15 +47,15 @@ export function VistaPrevia({ nota, sobrePublicada, onVolver, onPublicar, public
   const [viewport, setViewport] = useState<Viewport>('escritorio')
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-papel">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-linea bg-papel-alt px-4 py-3">
+    <div className="fixed inset-0 z-50 flex flex-col bg-bg">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border bg-bg-muted px-4 py-3">
         <p className="flex items-center gap-2 font-display text-[0.9rem] font-bold">
           <Eye size={16} aria-hidden="true" />
           Vista previa — todavía no está publicado
         </p>
 
         {sobrePublicada && (
-          <p className="meta bg-amarillo px-2 py-0.5 text-negro-cancha">
+          <p className="meta bg-accent px-2 py-0.5 text-accent-contrast">
             Cambios sobre una nota publicada
           </p>
         )}
@@ -67,7 +67,7 @@ export function VistaPrevia({ nota, sobrePublicada, onVolver, onPublicar, public
             type="button"
             onClick={onVolver}
             disabled={publicando}
-            className="tactil flex items-center gap-2 border border-linea-fuerte px-4 font-display text-[0.9rem] font-bold hover:bg-papel disabled:opacity-60"
+            className="tactil flex items-center gap-2 border border-border-control px-4 font-display text-[0.9rem] font-bold hover:bg-bg disabled:opacity-60"
           >
             <ArrowLeft size={16} aria-hidden="true" />
             Volver a editar
@@ -77,7 +77,7 @@ export function VistaPrevia({ nota, sobrePublicada, onVolver, onPublicar, public
             type="button"
             onClick={onPublicar}
             disabled={publicando}
-            className="tactil flex items-center gap-2 bg-verde-900 px-5 font-display text-[0.9rem] font-extrabold text-white hover:bg-verde-600 disabled:opacity-60"
+            className="tactil flex items-center gap-2 bg-text px-5 font-display text-[0.9rem] font-extrabold text-bg hover:bg-text/85 disabled:opacity-60"
           >
             <Send size={16} aria-hidden="true" />
             {publicando ? 'Publicando…' : 'Publicar'}
@@ -95,7 +95,7 @@ export function VistaPrevia({ nota, sobrePublicada, onVolver, onPublicar, public
       >
         <div
           style={{ maxWidth: ANCHO_VIEWPORT[viewport] }}
-          className="mx-auto min-h-full border-x border-linea bg-papel"
+          className="mx-auto min-h-full border-x border-border bg-bg"
         >
           <ArticuloNota
             nota={nota}

@@ -29,7 +29,7 @@ export default async function EditarEquipo({ params }: Params) {
       {/* El borrado va abajo del formulario y no adentro de su barra: es una
           acción de otra naturaleza, y las foreign keys de `partidos` y
           `tabla_posiciones` lo van a rechazar apenas el equipo haya jugado. */}
-      <div className="mt-8 border-t border-linea pt-4">
+      <div className="mt-8 border-t border-border pt-4">
         <BotonBorrar
           que={`el equipo ${equipo.nombre_corto}`}
           consecuencia="Sólo se puede si todavía no jugó ningún partido ni está en la tabla."

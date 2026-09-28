@@ -19,11 +19,11 @@ import type { PartidoConEquipos } from '@/types'
  */
 
 const ESTILO_ESTADO = {
-  programado: 'bg-papel-alt text-gris',
-  en_curso: 'bg-amarillo text-negro-cancha',
-  finalizado: 'bg-verde-900 text-white',
-  suspendido: 'bg-roja text-white',
-  postergado: 'bg-papel-alt text-gris',
+  programado: 'bg-bg-muted text-text-muted',
+  en_curso: 'bg-accent text-accent-contrast',
+  finalizado: 'bg-text text-bg',
+  suspendido: 'bg-danger text-bg',
+  postergado: 'bg-bg-muted text-text-muted',
 } as const
 
 interface Props {
@@ -36,7 +36,7 @@ export function FilaPartido({ partido, cargado }: Props) {
   const hayResultado = partido.goles_local !== null && partido.goles_visitante !== null
 
   return (
-    <li className="border-b border-linea py-3">
+    <li className="border-b border-border py-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className={`meta px-2 py-0.5 ${ESTILO_ESTADO[partido.estado]}`}>
           {ETIQUETA_ESTADO[partido.estado]}
@@ -58,23 +58,23 @@ export function FilaPartido({ partido, cargado }: Props) {
           {partido.equipo_visitante.nombre_corto}
         </Link>
 
-        <span className="meta text-gris">
+        <span className="meta text-text-muted">
           {partido.fecha_numero ? `Fecha ${partido.fecha_numero}` : 'Sin fecha'}
         </span>
 
-        <span className="ml-auto text-[0.85rem] text-gris">
+        <span className="ml-auto text-[0.85rem] text-text-muted">
           {fechaHoraPartido(partido.fecha_hora)}
         </span>
       </div>
 
-      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2 text-[0.8rem] text-gris">
+      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2 text-[0.8rem] text-text-muted">
         <span>{partido.temporada.nombre}</span>
         <span>{partido.cancha ?? 'Sin cancha'}</span>
         {partido.arbitra && <span>Arbitra {partido.arbitra}</span>}
 
         {/* Lo que falta cargar, dicho en la fila: sin formación la planilla
             abre con la grilla vacía, y eso no se ve hasta entrar. */}
-        <span className={cargado.formaciones === 0 ? 'text-roja' : undefined}>
+        <span className={cargado.formaciones === 0 ? 'text-danger' : undefined}>
           {cargado.formaciones === 0
             ? 'Sin formación'
             : `${cargado.formaciones} en la formación`}
@@ -85,7 +85,7 @@ export function FilaPartido({ partido, cargado }: Props) {
       <div className="mt-2 flex flex-wrap gap-2">
         <Link
           href={`/admin/partidos/${partido.id}`}
-          className="tactil flex items-center gap-2 border border-linea-fuerte px-3 font-display text-[0.85rem] font-bold hover:bg-papel-alt"
+          className="tactil flex items-center gap-2 border border-border-control px-3 font-display text-[0.85rem] font-bold hover:bg-bg-muted"
         >
           <Pencil size={14} aria-hidden="true" />
           Ficha
@@ -93,7 +93,7 @@ export function FilaPartido({ partido, cargado }: Props) {
 
         <Link
           href={`/admin/partidos/${partido.id}/formacion`}
-          className="tactil flex items-center gap-2 border border-linea-fuerte px-3 font-display text-[0.85rem] font-bold hover:bg-papel-alt"
+          className="tactil flex items-center gap-2 border border-border-control px-3 font-display text-[0.85rem] font-bold hover:bg-bg-muted"
         >
           <Users size={14} aria-hidden="true" />
           Formación
@@ -101,7 +101,7 @@ export function FilaPartido({ partido, cargado }: Props) {
 
         <Link
           href={`/admin/partidos/${partido.id}/planilla`}
-          className="tactil flex items-center gap-2 bg-verde-900 px-3 font-display text-[0.85rem] font-extrabold text-white hover:bg-verde-600"
+          className="tactil flex items-center gap-2 bg-text px-3 font-display text-[0.85rem] font-extrabold text-bg hover:bg-text/85"
         >
           <ClipboardList size={14} aria-hidden="true" />
           Planilla

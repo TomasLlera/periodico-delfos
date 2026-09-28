@@ -28,7 +28,7 @@ export default function DemoPlantel() {
         <h1 className="mt-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
           El plantel
         </h1>
-        <p className="prose-nota mt-4 text-gris">
+        <p className="prose-nota mt-4 text-text-muted">
           Esta página no se indexa y no llega a producción, pero las jugadoras
           son <strong>las de verdad</strong>: las 32 del plantel 2026 publicado
           en el sitio viejo, más el DT. Ninguna tiene dorsal porque el número

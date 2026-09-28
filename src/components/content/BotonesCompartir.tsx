@@ -181,7 +181,7 @@ const ENLACES: Record<
 }
 
 /**
- * Círculos con anillo verde y el icono solo: 40px en móvil, 44 desde `sm`.
+ * Círculos con anillo dorado y el icono solo: 40px en móvil, 44 desde `sm`.
  *
  * Con los cuatro rótulos al lado del icono la barra no entraba en 390px y se
  * partía en dos o tres filas. Lo primero que se sacó fue el texto, que en
@@ -205,12 +205,13 @@ const ENLACES: Record<
  * y el rótulo va en un `sr-only`, así que el árbol de accesibilidad queda igual
  * que cuando el texto se veía.
  *
- * El hover invierte a `verde-900`, que es una superficie del sistema y lleva
- * texto blanco en los dos temas.
+ * El hover invierte los colores —fondo `text`, icono `bg`—, que contrasta en
+ * los dos temas sin declarar un color propio. El anillo va en `accent-text` y
+ * no en `accent`: el límite de un control pide 3:1 y el dorado claro da 2.68:1.
  */
 // Sin `.tactil`: esa clase fija `min-width: 44px` y le ganaría a `size-10`.
 const ESTILO_BOTON =
-  'flex size-10 shrink-0 items-center justify-center rounded-full border border-verde-600 text-tinta transition-colors hover:bg-verde-900 hover:text-white sm:size-11'
+  'flex size-10 shrink-0 items-center justify-center rounded-full border border-accent-text text-text transition-colors hover:bg-text hover:text-bg sm:size-11'
 
 /** El rótulo de cada botón: sólo para lectores de pantalla. */
 function Rotulo({ children }: { children: React.ReactNode }) {

@@ -56,7 +56,7 @@ export function BuscadorHeader() {
       {/* Celular: la lupa, y el campo desplegado abajo de la cabecera. */}
       <details ref={caja} className="group md:hidden">
         <summary
-          className="tactil flex w-11 cursor-pointer items-center justify-center rounded-sm border border-white/20 bg-white/10 text-white marker:content-none [&::-webkit-details-marker]:hidden"
+          className="tactil flex w-11 cursor-pointer items-center justify-center rounded-sm border border-header-text/20 bg-header-text/10 text-header-text marker:content-none [&::-webkit-details-marker]:hidden"
           aria-label="Buscar"
         >
           <Search size={18} aria-hidden="true" className="group-open:hidden" />
@@ -65,13 +65,13 @@ export function BuscadorHeader() {
 
         {/* `absolute` contra la cabecera y no en el flujo: empujar la nav hacia
             abajo al abrir mueve la página entera debajo del dedo. */}
-        <div className="absolute inset-x-0 top-full z-20 bg-verde-900 px-[clamp(1rem,4vw,2rem)] pb-3 pt-1">
+        <div className="absolute inset-x-0 top-full z-20 bg-header-bg px-[clamp(1rem,4vw,2rem)] pb-3 pt-1">
           <Formulario refCampo={campo} />
         </div>
       </details>
 
       {/* Escritorio: el campo, siempre visible. */}
-      <div className="hidden md:block">
+      <div className="hidden md:block md:flex-1">
         <Formulario />
       </div>
     </>
@@ -91,20 +91,20 @@ function Formulario({ refCampo }: { refCampo?: React.RefObject<HTMLInputElement 
       <label htmlFor={refCampo ? 'q-movil' : 'q-cabecera'} className="sr-only">
         Buscar crónicas y jugadoras
       </label>
-      <div className="flex min-w-0 flex-1 items-center gap-2 rounded-sm border border-white/20 bg-white/10 px-[0.9rem]">
-        <Search size={16} aria-hidden="true" className="shrink-0 text-white/70" />
+      <div className="flex min-w-0 flex-1 items-center gap-2 rounded-sm border border-header-text/20 bg-header-text/10 px-[0.9rem]">
+        <Search size={16} aria-hidden="true" className="shrink-0 text-header-text/70" />
         <input
           ref={refCampo}
           id={refCampo ? 'q-movil' : 'q-cabecera'}
           name="q"
           type="search"
           placeholder="Buscar crónicas, jugadoras…"
-          className="tactil w-full min-w-0 bg-transparent font-display text-[0.85rem] text-white placeholder:text-white/70 focus:outline-none"
+          className="tactil w-full min-w-0 bg-transparent font-display text-[0.85rem] text-header-text placeholder:text-header-text/70 focus:outline-none"
         />
       </div>
       <button
         type="submit"
-        className="tactil shrink-0 rounded-sm bg-amarillo px-3 font-display text-[0.8rem] font-bold text-tinta md:hidden"
+        className="tactil shrink-0 rounded-sm bg-accent px-3 font-display text-[0.8rem] font-bold text-accent-contrast md:hidden"
       >
         Buscar
       </button>

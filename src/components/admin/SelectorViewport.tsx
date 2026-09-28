@@ -48,7 +48,7 @@ export function SelectorViewport({ valor, onCambio }: Props) {
           aria-pressed={valor === clave}
           title={nombre}
           className={`tactil flex min-w-11 items-center justify-center gap-1 px-2 text-[0.8rem] ${
-            valor === clave ? 'bg-verde-900 text-white' : 'hover:bg-papel-alt'
+            valor === clave ? 'bg-text text-bg' : 'hover:bg-bg-muted'
           }`}
         >
           <Icono size={16} aria-hidden="true" />

@@ -26,12 +26,12 @@ export function CampoTexto({ id, etiqueta, valor, onCambio, error, ayuda, largo 
   const idAyuda = ayuda ? `${id}-ayuda` : undefined
   const idError = error ? `${id}-error` : undefined
   const clases =
-    'tactil w-full border bg-tarjeta px-3 py-2 font-display text-[0.95rem] outline-none focus-visible:border-verde-600 ' +
-    (error ? 'border-roja' : 'border-linea-fuerte')
+    'tactil w-full border bg-bg-elevated px-3 py-2 font-display text-[0.95rem] outline-none focus-visible:border-accent-text ' +
+    (error ? 'border-danger' : 'border-border-control')
 
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="meta text-gris">
+      <label htmlFor={id} className="meta text-text-muted">
         {etiqueta}
       </label>
 
@@ -58,13 +58,13 @@ export function CampoTexto({ id, etiqueta, valor, onCambio, error, ayuda, largo 
       )}
 
       {error && (
-        <p id={idError} className="text-[0.85rem] text-roja">
+        <p id={idError} className="text-[0.85rem] text-danger">
           {error}
         </p>
       )}
 
       {ayuda && (
-        <p id={idAyuda} className="text-[0.8rem] text-gris">
+        <p id={idAyuda} className="text-[0.8rem] text-text-muted">
           {ayuda}
         </p>
       )}

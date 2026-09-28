@@ -238,7 +238,7 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
       />
 
       <div className="flex flex-col gap-1">
-        <span className="meta text-gris">Cuerpo</span>
+        <span className="meta text-text-muted">Cuerpo</span>
         <EditorCuerpo
           valor={entrada.cuerpo}
           onCambio={(d) => cambiar('cuerpo', d)}

@@ -21,7 +21,7 @@ import type { PartidoConEquipos } from '@/types'
  */
 interface Props {
   partido: PartidoConEquipos
-  /** El próximo partido de la temporada va destacado en amarillo. */
+  /** El próximo partido de la temporada va destacado en dorado. */
   destacado?: boolean
   /**
    * De dónde cuelga el link del chip. Por omisión `/partido`, que es la ruta
@@ -36,9 +36,9 @@ interface Props {
 }
 
 const FILETE: Record<NonNullable<ResultadoAldosivi>, string> = {
-  ganado: 'border-t-verde-600',
-  empatado: 'border-t-linea-fuerte',
-  perdido: 'border-t-roja',
+  ganado: 'border-t-accent',
+  empatado: 'border-t-border-control',
+  perdido: 'border-t-border-strong',
 }
 
 export function ChipResultado({
@@ -52,10 +52,10 @@ export function ChipResultado({
   const hayMarcador = lados.golesIzquierda !== null && lados.golesDerecha !== null
 
   const filete = destacado
-    ? 'border-t-amarillo bg-papel-alt'
+    ? 'border-t-accent bg-bg-muted'
     : resultado
       ? FILETE[resultado]
-      : 'border-t-linea'
+      : 'border-t-border'
 
   return (
     // `relative` no es decorativo: el `sr-only` de abajo es `position:absolute`
@@ -64,7 +64,7 @@ export function ChipResultado({
     // 375px de viewport contra 939px de documento, medido.
     <Link
       href={`${rutaBase}/${partido.slug}`}
-      className={`tarjeta relative flex h-full w-[8.75rem] flex-col gap-1.5 border-t-[3px] p-2.5 transition-colors hover:bg-tarjeta-hover ${filete}`}
+      className={`tarjeta relative flex h-full w-[8.75rem] flex-col gap-1.5 border-t-[3px] p-2.5 transition-colors hover:bg-bg-muted ${filete}`}
     >
       <span className="sr-only">{tituloAccesible(partido)}</span>
 
@@ -76,7 +76,7 @@ export function ChipResultado({
             ? `Fecha ${partido.fecha_numero}`
             : fechaCorta(partido.fecha_hora)}
         </span>
-        {destacado && <span className="meta text-[0.6rem] text-verde-600">Próximo</span>}
+        {destacado && <span className="meta text-[0.6rem] text-accent-text">Próximo</span>}
       </span>
 
       <span aria-hidden="true" className="flex min-w-0 items-center gap-1.5">
@@ -90,17 +90,17 @@ export function ChipResultado({
         {hayMarcador ? (
           <span className="dato text-[1.15rem] font-bold leading-none">
             {lados.golesIzquierda}
-            <span className="px-1 font-normal text-gris">–</span>
+            <span className="px-1 font-normal text-text-muted">–</span>
             {lados.golesDerecha}
           </span>
         ) : (
-          <span className="dato text-[0.8rem] leading-none text-gris">
+          <span className="dato text-[0.8rem] leading-none text-text-muted">
             {fechaCorta(partido.fecha_hora)}
           </span>
         )}
 
         {partido.estado !== 'finalizado' && partido.estado !== 'programado' && (
-          <span className="meta text-[0.55rem] text-roja">
+          <span className="meta text-[0.55rem] text-text-muted">
             {ETIQUETA_ESTADO[partido.estado]}
           </span>
         )}

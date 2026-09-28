@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
 /**
- * La navegación de secciones, con el filete amarillo abajo de la activa.
+ * La navegación de secciones, con el filete dorado abajo de la activa.
  *
  * **Por qué es un componente cliente**, siendo que el resto del chrome no lo
  * es: `aria-current` necesita saber en qué ruta estamos, y el App Router no le
@@ -78,7 +78,7 @@ export function NavPrincipal() {
   return (
     // En 375px la nav scrollea en lugar de apilarse: no se come el alto del
     // viewport antes de que aparezca la primera nota.
-    <nav aria-label="Secciones" className="border-t border-white/15">
+    <nav aria-label="Secciones" className="border-t border-header-text/15">
       {/* `relative` porque el degradado va posicionado contra esta caja. Es la
           regla 5 de CLAUDE.md mirada del otro lado: un contenedor con scroll
           horizontal y algo absoluto adentro necesita ser el ancestro
@@ -110,8 +110,8 @@ export function NavPrincipal() {
                   aria-current={activa ? 'page' : undefined}
                   className={
                     activa
-                      ? `${BASE} border-amarillo text-amarillo`
-                      : `${BASE} border-transparent text-white hover:bg-white/10`
+                      ? `${BASE} border-block-accent text-block-accent`
+                      : `${BASE} border-transparent text-header-text hover:bg-header-text/10`
                   }
                 >
                   {seccion.label}
@@ -128,7 +128,7 @@ export function NavPrincipal() {
         {hayMas && (
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-linear-to-l from-verde-900 to-transparent"
+            className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-linear-to-l from-header-bg to-transparent"
           />
         )}
       </div>

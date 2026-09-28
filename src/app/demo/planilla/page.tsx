@@ -30,7 +30,7 @@ export default function DemoPlanilla() {
         <h1 className="mt-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
           &lt;PlanillaPartido /&gt;
         </h1>
-        <p className="prose-nota mt-4 text-gris">
+        <p className="prose-nota mt-4 text-text-muted">
           Esta página no se indexa y no llega a producción. Está para mirar las
           tres variantes juntas, probar el ancho de 375px y escuchar cómo se lee
           la línea de tiempo con un lector de pantalla.
@@ -107,10 +107,10 @@ function Seccion({
 }) {
   return (
     <section className="mt-14">
-      <h2 className="border-t-[3px] border-verde-600 pt-2 font-display text-[22px] font-semibold">
+      <h2 className="border-t-[3px] border-accent-text pt-2 font-display text-[22px] font-semibold">
         {titulo}
       </h2>
-      <p className="mt-1 max-w-[68ch] font-display text-[13px] leading-relaxed text-gris">
+      <p className="mt-1 max-w-[68ch] font-display text-[13px] leading-relaxed text-text-muted">
         {nota}
       </p>
       <div className="mt-5">{children}</div>

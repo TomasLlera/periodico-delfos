@@ -52,12 +52,12 @@ export function ListadoNotas({
     <section aria-labelledby={id}>
       <CabeceraBloque id={id} titulo={titulo} nivel={nivel} />
 
-      <p className="max-w-medida font-body text-[1.05rem] leading-relaxed text-tinta-suave">
+      <p className="max-w-medida font-body text-[1.05rem] leading-relaxed text-text-soft">
         {descripcion}
       </p>
 
       {notas.length === 0 ? (
-        <p className="mt-8 border-l-4 border-verde-600 bg-papel-alt py-6 pl-5 font-body text-gris">
+        <p className="mt-8 border-l-4 border-accent bg-bg-muted py-6 pl-5 font-body text-text-muted">
           {vacio}
         </p>
       ) : (

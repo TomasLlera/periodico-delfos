@@ -42,7 +42,7 @@ export function BloqueArchivo({ temporadas }: Props) {
           >
             <Link
               href={seccion.href}
-              className="tactil flex items-center justify-center border border-linea-fuerte bg-tarjeta px-4 text-center font-display text-[0.9rem] font-bold hover:border-verde-600 hover:text-verde-600 sm:inline-flex sm:justify-start sm:text-left"
+              className="tactil flex items-center justify-center border border-border-control bg-bg-elevated px-4 text-center font-display text-[0.9rem] font-bold hover:border-accent-text hover:text-accent-text sm:inline-flex sm:justify-start sm:text-left"
             >
               {seccion.label}
             </Link>
@@ -53,7 +53,7 @@ export function BloqueArchivo({ temporadas }: Props) {
           <li key={temporada.slug}>
             <Link
               href={`/temporada/${temporada.slug}`}
-              className="tactil flex items-center justify-center border border-linea-fuerte bg-tarjeta px-4 text-center font-display text-[0.9rem] font-bold hover:border-verde-600 hover:text-verde-600 sm:inline-flex sm:justify-start sm:text-left"
+              className="tactil flex items-center justify-center border border-border-control bg-bg-elevated px-4 text-center font-display text-[0.9rem] font-bold hover:border-accent-text hover:text-accent-text sm:inline-flex sm:justify-start sm:text-left"
             >
               {temporada.nombre}
             </Link>

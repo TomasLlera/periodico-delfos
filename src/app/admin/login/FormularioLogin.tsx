@@ -27,7 +27,7 @@ export function FormularioLogin({ volver }: { volver: string }) {
       <input type="hidden" name="volver" value={volver} />
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="meta text-gris">
+        <label htmlFor="email" className="meta text-text-muted">
           Mail
         </label>
         <input
@@ -36,12 +36,12 @@ export function FormularioLogin({ volver }: { volver: string }) {
           type="email"
           autoComplete="email"
           required
-          className="tactil border border-linea-fuerte bg-tarjeta px-3 py-2 font-display text-[0.95rem] outline-none focus-visible:border-verde-600"
+          className="tactil border border-border-control bg-bg-elevated px-3 py-2 font-display text-[0.95rem] outline-none focus-visible:border-accent-text"
         />
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="password" className="meta text-gris">
+        <label htmlFor="password" className="meta text-text-muted">
           Contraseña
         </label>
         <input
@@ -49,21 +49,21 @@ export function FormularioLogin({ volver }: { volver: string }) {
           name="password"
           type="password"
           autoComplete="current-password"
-          className="tactil border border-linea-fuerte bg-tarjeta px-3 py-2 font-display text-[0.95rem] outline-none focus-visible:border-verde-600"
+          className="tactil border border-border-control bg-bg-elevated px-3 py-2 font-display text-[0.95rem] outline-none focus-visible:border-accent-text"
         />
-        <p className="text-[0.8rem] text-gris">
+        <p className="text-[0.8rem] text-text-muted">
           Si preferís no escribirla, dejala vacía y pedí el link por mail.
         </p>
       </div>
 
       {estado.error && (
-        <p role="alert" className="border-l-2 border-roja bg-papel-alt px-3 py-2 text-[0.9rem]">
+        <p role="alert" className="border-l-2 border-danger bg-bg-muted px-3 py-2 text-[0.9rem]">
           {estado.error}
         </p>
       )}
 
       {estado.aviso && (
-        <p role="status" className="border-l-2 border-verde-600 bg-papel-alt px-3 py-2 text-[0.9rem]">
+        <p role="status" className="border-l-2 border-accent-text bg-bg-muted px-3 py-2 text-[0.9rem]">
           {estado.aviso}
         </p>
       )}
@@ -74,7 +74,7 @@ export function FormularioLogin({ volver }: { volver: string }) {
           name="accion"
           value="contrasena"
           disabled={pendiente}
-          className="tactil flex flex-1 items-center justify-center gap-2 bg-verde-900 px-5 font-display text-[0.9rem] font-extrabold text-white hover:bg-verde-600 disabled:opacity-60"
+          className="tactil flex flex-1 items-center justify-center gap-2 bg-text px-5 font-display text-[0.9rem] font-extrabold text-bg hover:bg-text/85 disabled:opacity-60"
         >
           <KeyRound size={16} aria-hidden="true" />
           Entrar
@@ -85,7 +85,7 @@ export function FormularioLogin({ volver }: { volver: string }) {
           name="accion"
           value="link"
           disabled={pendiente}
-          className="tactil flex flex-1 items-center justify-center gap-2 border border-linea-fuerte px-5 font-display text-[0.9rem] font-bold hover:bg-papel-alt disabled:opacity-60"
+          className="tactil flex flex-1 items-center justify-center gap-2 border border-border-control px-5 font-display text-[0.9rem] font-bold hover:bg-bg-muted disabled:opacity-60"
         >
           <Mail size={16} aria-hidden="true" />
           Mandame un link

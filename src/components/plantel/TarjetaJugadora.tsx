@@ -24,7 +24,7 @@ export function TarjetaJugadora({ jugadora }: Props) {
   return (
     <Link
       href={`/jugadora/${jugadora.slug}`}
-      className="tarjeta group flex h-full flex-col overflow-hidden transition-colors hover:bg-tarjeta-hover"
+      className="tarjeta group flex h-full flex-col overflow-hidden transition-colors hover:bg-bg-muted"
     >
       <div className="relative">
         {/* Cuadrada mientras la grilla va en dos columnas, y retrato recién
@@ -38,14 +38,14 @@ export function TarjetaJugadora({ jugadora }: Props) {
         {jugadora.dorsal !== null && (
           <span
             aria-hidden="true"
-            className="dato absolute left-0 top-0 bg-verde-900 px-2 py-1 text-[0.95rem] font-bold leading-none text-white"
+            className="dato absolute left-0 top-0 bg-score-bg px-2 py-1 text-[0.95rem] font-bold leading-none text-score-text"
           >
             {jugadora.dorsal}
           </span>
         )}
 
         {jugadora.capitana && (
-          <span className="absolute right-0 top-0 bg-amarillo px-2 py-1 font-display text-[0.7rem] font-extrabold uppercase leading-none tracking-[0.08em] text-negro-cancha">
+          <span className="absolute right-0 top-0 bg-accent px-2 py-1 font-display text-[0.7rem] font-extrabold uppercase leading-none tracking-[0.08em] text-accent-contrast">
             Capitana
           </span>
         )}
@@ -61,10 +61,10 @@ export function TarjetaJugadora({ jugadora }: Props) {
           {NOMBRE_PUESTO[puesto]}
         </p>
 
-        <p className="font-display text-[0.85rem] leading-tight text-gris">
+        <p className="font-display text-[0.85rem] leading-tight text-text-muted">
           {jugadora.nombre}
         </p>
-        <h3 className="titular text-[1.05rem] leading-[1.1] group-hover:text-verde-600">
+        <h3 className="titular text-[1.05rem] leading-[1.1] group-hover:text-accent-text">
           {jugadora.apellido}
         </h3>
       </div>

@@ -16,9 +16,9 @@ import type { NotaResumen } from '@/types'
  */
 
 const ESTILO_ESTADO = {
-  borrador: 'bg-amarillo text-negro-cancha',
-  publicada: 'bg-verde-900 text-white',
-  archivada: 'bg-papel-alt text-gris',
+  borrador: 'bg-accent text-accent-contrast',
+  publicada: 'bg-text text-bg',
+  archivada: 'bg-bg-muted text-text-muted',
 } as const
 
 const NOMBRE_ESTADO = {
@@ -29,7 +29,7 @@ const NOMBRE_ESTADO = {
 
 export function FilaNota({ nota }: { nota: NotaResumen }) {
   return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-linea py-3">
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border py-3">
       <span className={`meta px-2 py-0.5 ${ESTILO_ESTADO[nota.estado]}`}>
         {NOMBRE_ESTADO[nota.estado]}
       </span>
@@ -41,9 +41,9 @@ export function FilaNota({ nota }: { nota: NotaResumen }) {
         {nota.titulo}
       </Link>
 
-      <span className="meta text-gris">{etiquetaCategoria(nota.categoria)}</span>
+      <span className="meta text-text-muted">{etiquetaCategoria(nota.categoria)}</span>
 
-      <span className="ml-auto flex items-center gap-3 text-[0.85rem] text-gris">
+      <span className="ml-auto flex items-center gap-3 text-[0.85rem] text-text-muted">
         {/* La fecha que importa en el panel es la del último cambio: un
             borrador nunca tiene fecha de publicación. */}
         <span>{fechaCorta(nota.updated_at)}</span>

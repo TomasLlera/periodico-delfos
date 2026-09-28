@@ -4,13 +4,13 @@ import { etiquetaCategoria, hace, tiempoLectura } from '@/lib/formato'
 import type { NotaResumen } from '@/types'
 
 /**
- * La nota de tapa: un bloque verde a dos columnas, foto a la izquierda y texto
- * a la derecha, alineado abajo.
+ * La nota de tapa: un bloque oscuro a dos columnas, foto a la izquierda y
+ * texto a la derecha, alineado abajo.
  *
- * Es el único lugar de la portada donde el titular va sobre fondo verde, así
- * que el texto es blanco fijo y no `text-tinta`: la superficie es oscura en los
- * dos temas. Medido, blanco sobre `verde-900`: 12.51:1 en claro, 15.32:1 en
- * oscuro.
+ * Es el único lugar de la portada donde el titular va sobre fondo oscuro, así
+ * que el texto es `block-text` y no `text-text`: la superficie es oscura en
+ * los dos temas. Medido, `block-text` sobre `block-bg`: 15.27:1 en claro,
+ * 15.58:1 en oscuro.
  *
  * **La bajada respeta la medida de lectura** (`max-w-medida`, 68ch) aunque no
  * sea el cuerpo de una nota: es el párrafo más largo de la portada y la regla
@@ -27,7 +27,7 @@ interface Props {
 
 export function NotaTapa({ nota, palabras }: Props) {
   return (
-    <article className="mt-8 grid bg-verde-900 text-white md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+    <article className="mt-8 grid border border-block-border bg-block-bg text-block-text md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
       <FotoNota
         src={nota.imagen_portada}
         alt={nota.imagen_portada ? nota.imagen_alt : ''}
@@ -38,22 +38,22 @@ export function NotaTapa({ nota, palabras }: Props) {
       />
 
       <div className="flex flex-col justify-end p-6 md:p-10">
-        <p className="w-fit border-l-4 border-amarillo pl-[0.6rem] font-display text-[0.78rem] font-extrabold uppercase leading-none tracking-[0.1em] text-amarillo">
+        <p className="w-fit border-l-4 border-accent pl-[0.6rem] font-display text-[0.78rem] font-extrabold uppercase leading-none tracking-[0.1em] text-block-accent">
           {etiquetaCategoria(nota.categoria)}
         </p>
 
         <h1 className="marca mt-[1.1rem] text-[clamp(2rem,3.6vw,3.4rem)] uppercase leading-[0.98] tracking-[-0.02em]">
-          <Link href={`/nota/${nota.slug}`} className="hover:text-amarillo">
+          <Link href={`/nota/${nota.slug}`} className="hover:text-block-accent">
             {nota.titulo}
           </Link>
         </h1>
 
-        <p className="mt-4 max-w-medida font-body text-[1.05rem] leading-relaxed text-white/80">
+        <p className="mt-4 max-w-medida font-body text-[1.05rem] leading-relaxed text-block-text/80">
           {nota.bajada}
         </p>
 
-        <p className="mt-[1.4rem] flex flex-wrap items-center gap-x-4 gap-y-1 font-display text-[0.8rem] text-white/60">
-          <span className="font-semibold text-white">{nota.autor.nombre}</span>
+        <p className="mt-[1.4rem] flex flex-wrap items-center gap-x-4 gap-y-1 font-display text-[0.8rem] text-block-text/60">
+          <span className="font-semibold text-block-text">{nota.autor.nombre}</span>
           {nota.publicada_en && <span className="dato">{hace(nota.publicada_en)}</span>}
           {palabras !== undefined && (
             <span className="dato">{tiempoLectura(palabras)}</span>

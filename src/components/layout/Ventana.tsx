@@ -59,11 +59,11 @@ export function Ventana({ titulo, children }: Props) {
       onClick={(evento) => {
         if (evento.target === ref.current) ref.current?.close()
       }}
-      className="m-0 max-h-dvh max-w-none bg-transparent p-0 backdrop:bg-negro-cancha/70 sm:max-h-dvh"
+      className="m-0 max-h-dvh max-w-none bg-transparent p-0 backdrop:bg-overlay/70 sm:max-h-dvh"
     >
       <div className="flex min-h-dvh w-dvw items-end justify-center sm:items-center sm:p-6">
-        <div className="tarjeta relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-lg border border-linea sm:max-h-[85dvh] sm:max-w-[680px] sm:rounded-lg">
-          <div className="flex items-center justify-between gap-4 border-b border-linea px-4 py-3">
+        <div className="tarjeta relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-lg border border-border sm:max-h-[85dvh] sm:max-w-[680px] sm:rounded-lg">
+          <div className="flex items-center justify-between gap-4 border-b border-border px-4 py-3">
             <h2 id="titulo-ventana" className="titular text-[1.05rem] leading-tight">
               {titulo}
             </h2>
@@ -72,7 +72,7 @@ export function Ventana({ titulo, children }: Props) {
             <button
               type="button"
               onClick={() => ref.current?.close()}
-              className="tactil -mr-2 flex shrink-0 items-center justify-center rounded text-gris transition-colors hover:text-tinta"
+              className="tactil -mr-2 flex shrink-0 items-center justify-center rounded text-text-muted transition-colors hover:text-text"
             >
               <X aria-hidden="true" size={20} />
               <span className="sr-only">Cerrar</span>

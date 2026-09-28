@@ -31,7 +31,7 @@ export default function DemoPartido() {
         <h1 className="mt-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
           La ficha de un partido
         </h1>
-        <p className="prose-nota mt-4 text-gris">
+        <p className="prose-nota mt-4 text-text-muted">
           Esta página no se indexa y no llega a producción. El marcador y los
           eventos son inventados: la ficha real se dibuja con lo que se cargue
           en la planilla.

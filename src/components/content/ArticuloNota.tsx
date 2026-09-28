@@ -150,7 +150,7 @@ export function ArticuloNota({
         </div>
       )}
 
-      <div className="mt-10 max-w-[68ch] border-t border-linea pt-5">
+      <div className="mt-10 max-w-[68ch] border-t border-border pt-5">
         <BotonesCompartir url={url} titulo={nota.titulo} etiqueta="Compartí esta nota" />
       </div>
 

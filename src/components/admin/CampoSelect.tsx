@@ -49,7 +49,7 @@ export function CampoSelect({
 
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="meta text-gris">
+      <label htmlFor={id} className="meta text-text-muted">
         {etiqueta}
       </label>
 
@@ -61,8 +61,8 @@ export function CampoSelect({
         aria-describedby={[idError, idAyuda].filter(Boolean).join(' ') || undefined}
         aria-invalid={error ? true : undefined}
         className={
-          'tactil w-full border bg-tarjeta px-3 font-display text-[0.95rem] disabled:opacity-60 ' +
-          (error ? 'border-roja' : 'border-linea-fuerte')
+          'tactil w-full border bg-bg-elevated px-3 font-display text-[0.95rem] disabled:opacity-60 ' +
+          (error ? 'border-danger' : 'border-border-control')
         }
       >
         {vacio !== undefined && <option value="">{vacio}</option>}
@@ -74,13 +74,13 @@ export function CampoSelect({
       </select>
 
       {error && (
-        <p id={idError} className="text-[0.85rem] text-roja">
+        <p id={idError} className="text-[0.85rem] text-danger">
           {error}
         </p>
       )}
 
       {ayuda && (
-        <p id={idAyuda} className="text-[0.8rem] text-gris">
+        <p id={idAyuda} className="text-[0.8rem] text-text-muted">
           {ayuda}
         </p>
       )}

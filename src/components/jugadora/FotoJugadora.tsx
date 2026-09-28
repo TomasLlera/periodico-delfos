@@ -57,8 +57,8 @@ export function FotoJugadora({
       aria-hidden="true"
       className={`${aspecto} flex w-full items-center justify-center ${
         variante === 'oscuro'
-          ? 'bg-verde-600/25 text-white/45'
-          : 'bg-papel-alt text-gris-tenue'
+          ? 'bg-block-text/10 text-block-text/45'
+          : 'bg-bg-muted text-text-muted'
       } ${className}`}
     >
       <span className="marca text-[2rem] leading-none">{iniciales(jugadora)}</span>

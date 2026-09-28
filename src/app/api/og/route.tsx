@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { COLORES_OG } from '@/lib/colores'
 import { NOMBRE_SITIO } from '@/lib/seo'
 
 /**
@@ -8,8 +9,9 @@ import { NOMBRE_SITIO } from '@/lib/seo'
  * y sin esto se comparten como un rectángulo gris con el dominio. Con esto, al
  * menos salen con el titular y la marca.
  *
- * Los colores van en hexadecimal y no en tokens del tema: esto es una imagen,
- * no una página. No hay `prefers-color-scheme` en una tarjeta de Twitter.
+ * Los colores salen de `COLORES_OG` y no de las clases del tema: esto es una
+ * imagen, no una página, y no hay `prefers-color-scheme` en una tarjeta de
+ * Twitter. Son los `--block-*` del tema claro: la tarjeta es un bloque oscuro.
  *
  * El titular se recorta a 110 caracteres, que es cerca de donde cortan tanto
  * Google como las tarjetas de redes. El sitio viejo tiene títulos de 75+
@@ -18,8 +20,6 @@ import { NOMBRE_SITIO } from '@/lib/seo'
  */
 export const runtime = 'edge'
 
-const VERDE = '#0F3B2A'
-const AMARILLO = '#F2A900'
 const LARGO_MAXIMO = 110
 
 /** Recorta por palabra, no por carácter: cortar al medio se lee como un error. */
@@ -45,9 +45,9 @@ export function GET(request: Request): ImageResponse {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          background: VERDE,
+          background: COLORES_OG.fondo,
           padding: '72px 80px',
-          color: '#FFFFFF',
+          color: COLORES_OG.texto,
         }}
       >
         {volanta ? (
@@ -58,8 +58,8 @@ export function GET(request: Request): ImageResponse {
               fontWeight: 700,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              color: AMARILLO,
-              borderLeft: `8px solid ${AMARILLO}`,
+              color: COLORES_OG.acento,
+              borderLeft: `8px solid ${COLORES_OG.acento}`,
               paddingLeft: 20,
             }}
           >
@@ -82,7 +82,7 @@ export function GET(request: Request): ImageResponse {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <div style={{ display: 'flex', width: 64, height: 8, background: AMARILLO }} />
+          <div style={{ display: 'flex', width: 64, height: 8, background: COLORES_OG.acento }} />
           <div style={{ display: 'flex', fontSize: 32, fontWeight: 700 }}>
             {NOMBRE_SITIO}
           </div>

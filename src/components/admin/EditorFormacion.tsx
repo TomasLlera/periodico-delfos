@@ -80,7 +80,7 @@ export function EditorFormacion({ partidoId, plantel, formacion }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="meta text-gris">
+      <p className="meta text-text-muted">
         {titulares} titulares · {suplentes} suplentes
       </p>
 
@@ -94,9 +94,9 @@ export function EditorFormacion({ partidoId, plantel, formacion }: Props) {
         {filas.map((fila) => (
           <li
             key={fila.jugadora_id}
-            className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-linea py-2"
+            className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border py-2"
           >
-            <span className="w-8 font-mono text-[0.9rem] text-gris">
+            <span className="w-8 font-mono text-[0.9rem] text-text-muted">
               {fila.dorsal ?? '—'}
             </span>
 
@@ -105,7 +105,7 @@ export function EditorFormacion({ partidoId, plantel, formacion }: Props) {
             </span>
 
             {fila.fueraDelPlantel && (
-              <span className="meta bg-papel-alt px-2 py-0.5 text-gris">Ya no está en el plantel</span>
+              <span className="meta bg-bg-muted px-2 py-0.5 text-text-muted">Ya no está en el plantel</span>
             )}
 
             {/* Un grupo de radios y no tres botones: es una sola elección de
@@ -127,8 +127,8 @@ export function EditorFormacion({ partidoId, plantel, formacion }: Props) {
                     className={
                       'tactil flex cursor-pointer items-center px-3 font-display text-[0.8rem] font-bold ' +
                       (elegido
-                        ? 'bg-verde-900 text-white'
-                        : 'border border-linea-fuerte hover:bg-papel-alt')
+                        ? 'bg-text text-bg'
+                        : 'border border-border-control hover:bg-bg-muted')
                     }
                   >
                     <input
@@ -149,17 +149,17 @@ export function EditorFormacion({ partidoId, plantel, formacion }: Props) {
       </ul>
 
       {aviso && (
-        <p role="status" className="border-l-2 border-verde-600 bg-papel-alt px-3 py-2 text-[0.9rem]">
+        <p role="status" className="border-l-2 border-accent-text bg-bg-muted px-3 py-2 text-[0.9rem]">
           {aviso}
         </p>
       )}
 
-      <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-linea bg-papel py-3">
+      <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-border bg-bg py-3">
         <button
           type="button"
           onClick={guardar}
           disabled={guardando}
-          className="tactil flex items-center gap-2 bg-verde-900 px-5 font-display text-[0.9rem] font-extrabold text-white hover:bg-verde-600 disabled:opacity-60"
+          className="tactil flex items-center gap-2 bg-text px-5 font-display text-[0.9rem] font-extrabold text-bg hover:bg-text/85 disabled:opacity-60"
         >
           <Save size={16} aria-hidden="true" />
           {guardando ? 'Guardando…' : 'Guardar la formación'}

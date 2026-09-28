@@ -40,7 +40,7 @@ export default async function Formacion({ params }: Params) {
   return (
     <main className="mx-auto max-w-[700px] px-4 py-6">
       <h1 className="titular mb-1 text-[1.4rem]">Formación</h1>
-      <p className="meta mb-5 text-gris">{etiquetaDePartido(partido)}</p>
+      <p className="meta mb-5 text-text-muted">{etiquetaDePartido(partido)}</p>
 
       <EditorFormacion
         partidoId={id}
@@ -48,7 +48,7 @@ export default async function Formacion({ params }: Params) {
         formacion={partido.formaciones}
       />
 
-      <div className="mt-8 border-t border-linea pt-4">
+      <div className="mt-8 border-t border-border pt-4">
         <Link
           href={`/admin/partidos/${id}/planilla`}
           className="tactil inline-flex items-center gap-2 font-display text-[0.9rem] font-bold underline-offset-4 hover:underline"

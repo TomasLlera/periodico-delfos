@@ -52,7 +52,7 @@ export default async function Partidos() {
 
         <Link
           href="/admin/partidos/nuevo"
-          className="tactil ml-auto flex items-center gap-2 bg-amarillo px-4 font-display text-[0.9rem] font-extrabold text-negro-cancha hover:bg-amarillo/90"
+          className="tactil ml-auto flex items-center gap-2 bg-accent px-4 font-display text-[0.9rem] font-extrabold text-accent-contrast hover:bg-accent/90"
         >
           <Plus size={16} aria-hidden="true" />
           Partido nuevo

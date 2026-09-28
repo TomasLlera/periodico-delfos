@@ -28,7 +28,7 @@ export function PlanillaCompacta({ partido, className = '' }: Props) {
   return (
     <Link
       href={`/partido/${partido.slug}`}
-      className={`block rounded-md border border-linea p-3 transition-colors duration-150 hover:border-verde-600 hover:bg-papel-alt ${className}`}
+      className={`block rounded-md border border-border p-3 transition-colors duration-150 hover:border-accent-text hover:bg-bg-muted ${className}`}
     >
       <span className="sr-only">{tituloAccesible(partido)}</span>
 
@@ -43,7 +43,7 @@ export function PlanillaCompacta({ partido, className = '' }: Props) {
         </span>
 
         {hayGoles && (
-          <span className="mt-2 grid grid-cols-2 gap-4 border-t border-linea pt-2 text-[11px] leading-snug text-gris">
+          <span className="mt-2 grid grid-cols-2 gap-4 border-t border-border pt-2 text-[11px] leading-snug text-text-muted">
             <span className="block text-right">
               {goles.aldosivi.map((texto) => (
                 <span key={texto} className="block">

@@ -50,14 +50,14 @@ export function EnlazarNota({ notas, idActual, onElegir, onCerrar }: Props) {
     .slice(0, 12)
 
   return (
-    <div className="flex flex-col gap-3 border-b border-linea bg-papel-alt p-3">
+    <div className="flex flex-col gap-3 border-b border-border bg-bg-muted p-3">
       <div className="flex items-center gap-2">
-        <p className="meta text-gris">Anclar una nota</p>
+        <p className="meta text-text-muted">Anclar una nota</p>
         <button
           type="button"
           onClick={onCerrar}
           aria-label="Cerrar"
-          className="tactil ml-auto flex items-center justify-center px-2 hover:text-roja"
+          className="tactil ml-auto flex items-center justify-center px-2 hover:text-danger"
         >
           <X size={16} aria-hidden="true" />
         </button>
@@ -69,11 +69,11 @@ export function EnlazarNota({ notas, idActual, onElegir, onCerrar }: Props) {
         onChange={(e) => setFiltro(e.target.value)}
         placeholder="Buscar por título…"
         aria-label="Buscar una nota por título"
-        className="tactil border border-linea-fuerte bg-tarjeta px-3 font-display text-[0.9rem]"
+        className="tactil border border-border-control bg-bg-elevated px-3 font-display text-[0.9rem]"
       />
 
       {notas.length === 0 ? (
-        <p className="text-[0.85rem] text-gris">
+        <p className="text-[0.85rem] text-text-muted">
           Todavía no hay notas publicadas para enlazar. Un borrador no se puede anclar: para el
           lector sería un 404.
         </p>
@@ -84,24 +84,24 @@ export function EnlazarNota({ notas, idActual, onElegir, onCerrar }: Props) {
               <button
                 type="button"
                 onClick={() => onElegir(`/nota/${n.slug}`)}
-                className="tactil flex w-full flex-col items-start gap-0.5 border-b border-linea px-2 py-2 text-left hover:bg-papel"
+                className="tactil flex w-full flex-col items-start gap-0.5 border-b border-border px-2 py-2 text-left hover:bg-bg"
               >
                 <span className="font-display text-[0.9rem] font-bold leading-tight">
                   {n.titulo}
                 </span>
-                <span className="meta text-gris">{etiquetaCategoria(n.categoria)}</span>
+                <span className="meta text-text-muted">{etiquetaCategoria(n.categoria)}</span>
               </button>
             </li>
           ))}
           {candidatas.length === 0 && (
-            <li className="px-2 py-2 text-[0.85rem] text-gris">Ninguna coincide.</li>
+            <li className="px-2 py-2 text-[0.85rem] text-text-muted">Ninguna coincide.</li>
           )}
         </ul>
       )}
 
-      <div className="flex flex-wrap items-end gap-2 border-t border-linea pt-3">
+      <div className="flex flex-wrap items-end gap-2 border-t border-border pt-3">
         <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor="url-libre" className="meta text-gris">
+          <label htmlFor="url-libre" className="meta text-text-muted">
             O una dirección de afuera
           </label>
           <input
@@ -110,13 +110,13 @@ export function EnlazarNota({ notas, idActual, onElegir, onCerrar }: Props) {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://…"
-            className="tactil border border-linea-fuerte bg-tarjeta px-3 font-display text-[0.9rem]"
+            className="tactil border border-border-control bg-bg-elevated px-3 font-display text-[0.9rem]"
           />
         </div>
         <button
           type="button"
           onClick={() => url.trim() && onElegir(url.trim())}
-          className="tactil flex items-center gap-2 border border-linea-fuerte px-4 font-display text-[0.9rem] font-bold hover:bg-papel"
+          className="tactil flex items-center gap-2 border border-border-control px-4 font-display text-[0.9rem] font-bold hover:bg-bg"
         >
           <Link2 size={16} aria-hidden="true" />
           Enlazar

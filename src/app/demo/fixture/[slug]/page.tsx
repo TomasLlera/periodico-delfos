@@ -44,7 +44,7 @@ export default async function DemoPartidoDeFecha({
           {tituloAccesible(partido)}
         </h1>
 
-        <p className="prose-nota mt-3 text-gris">
+        <p className="prose-nota mt-3 text-text-muted">
           Esto es la <strong>página</strong>, no la ventana: es lo que se ve al
           recargar o al entrar directo. La línea de tiempo es la planilla demo
           prestada y no se corresponde con el marcador.
@@ -56,7 +56,7 @@ export default async function DemoPartidoDeFecha({
 
         <Link
           href="/demo/fixture"
-          className="tactil mt-8 inline-flex items-center font-display text-[0.9rem] font-semibold text-verde-600 hover:underline"
+          className="tactil mt-8 inline-flex items-center font-display text-[0.9rem] font-semibold text-accent-text hover:underline"
         >
           Volver a la franja
         </Link>

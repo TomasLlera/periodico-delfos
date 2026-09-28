@@ -20,10 +20,10 @@ interface Props {
 
 export function LineaAutor({ autor, publicadaEn, tiempoDeLectura }: Props) {
   return (
-    <div className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-1 border-y border-linea py-3">
-      <span className="meta text-tinta">
+    <div className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-1 border-y border-border py-3">
+      <span className="meta text-text">
         Por{' '}
-        <Link href="/quienes-somos" className="hover:text-verde-600">
+        <Link href="/quienes-somos" className="hover:text-accent-text">
           {autor.nombre}
         </Link>
       </span>

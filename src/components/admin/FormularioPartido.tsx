@@ -127,7 +127,7 @@ export function FormularioPartido({
         />
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="fecha_hora_local" className="meta text-gris">
+          <label htmlFor="fecha_hora_local" className="meta text-text-muted">
             Día y hora
           </label>
           <input
@@ -137,14 +137,14 @@ export function FormularioPartido({
             onChange={(e) => f.cambiarVarios(conSlug({ fecha_hora_local: e.target.value }))}
             aria-invalid={f.errores.fecha_hora_local ? true : undefined}
             className={
-              'tactil w-full border bg-tarjeta px-3 font-display text-[0.95rem] ' +
-              (f.errores.fecha_hora_local ? 'border-roja' : 'border-linea-fuerte')
+              'tactil w-full border bg-bg-elevated px-3 font-display text-[0.95rem] ' +
+              (f.errores.fecha_hora_local ? 'border-danger' : 'border-border-control')
             }
           />
           {f.errores.fecha_hora_local ? (
-            <p className="text-[0.85rem] text-roja">{f.errores.fecha_hora_local}</p>
+            <p className="text-[0.85rem] text-danger">{f.errores.fecha_hora_local}</p>
           ) : (
-            <p className="text-[0.8rem] text-gris">Hora de Mar del Plata.</p>
+            <p className="text-[0.8rem] text-text-muted">Hora de Mar del Plata.</p>
           )}
         </div>
       </div>
@@ -184,8 +184,8 @@ export function FormularioPartido({
         ayuda="Un partido finalizado necesita el resultado cargado."
       />
 
-      <fieldset className="grid gap-5 border border-linea bg-tarjeta p-4 sm:grid-cols-2">
-        <legend className="meta px-1 text-gris">Resultado</legend>
+      <fieldset className="grid gap-5 border border-border bg-bg-elevated p-4 sm:grid-cols-2">
+        <legend className="meta px-1 text-text-muted">Resultado</legend>
 
         <CampoNumero
           id="goles_local"
@@ -207,7 +207,7 @@ export function FormularioPartido({
           error={f.errores.goles_visitante}
         />
 
-        <p className="text-[0.8rem] text-gris sm:col-span-2">
+        <p className="text-[0.8rem] text-text-muted sm:col-span-2">
           Lo que se escribe acá es el resultado declarado. La planilla lo compara con los goles
           cargados uno por uno y avisa si no coinciden.
         </p>

@@ -6,9 +6,9 @@ import type { Jugadora, Posicion } from '@/types'
 /**
  * La cabecera de la ficha: foto, nombre y los totales de carrera.
  *
- * Va en bloque verde como la nota de tapa: `verde-900` es una superficie en
- * los dos temas y lleva texto blanco, así que la ficha se ve igual de firme
- * con foto o sin ella.
+ * Va en bloque oscuro como la nota de tapa: `block-bg` es oscuro en los dos
+ * temas y lleva `block-text`, así que la ficha se ve igual de firme con foto o
+ * sin ella.
  *
  * **Los totales son la suma de todas las temporadas**, no la del último año
  * (ver `totalesJugadora()`). Abajo, en la tabla, se abren por temporada.
@@ -58,7 +58,7 @@ export function CabeceraJugadora({
   ].filter((parte): parte is string => Boolean(parte))
 
   return (
-    <header className="bg-verde-900 text-white">
+    <header className="border-b border-block-border bg-block-bg text-block-text">
       <div className="grid gap-6 p-6 sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)] sm:gap-8 sm:p-8">
         <FotoJugadora
           jugadora={jugadora}
@@ -71,12 +71,12 @@ export function CabeceraJugadora({
         />
 
         <div className="flex flex-col">
-          <p className="meta text-amarillo">{volanta.join(' · ')}</p>
+          <p className="meta text-block-accent">{volanta.join(' · ')}</p>
 
           {/* El nombre va chico arriba y el apellido grande: es como se lee una
               ficha de plantel, y es lo que se busca en un listado. */}
           <Titulo className="mt-2">
-            <span className="block font-display text-[1.05rem] leading-tight text-white/75">
+            <span className="block font-display text-[1.05rem] leading-tight text-block-text/75">
               {jugadora.nombre}
             </span>
             <span className="titular block text-[2rem] leading-[0.95] md:text-[2.8rem]">
@@ -85,11 +85,11 @@ export function CabeceraJugadora({
           </Titulo>
 
           {ficha.length > 0 && (
-            <p className="dato mt-3 text-[0.85rem] text-white/70">{ficha.join(' · ')}</p>
+            <p className="dato mt-3 text-[0.85rem] text-block-text/70">{ficha.join(' · ')}</p>
           )}
 
           {jugadora.bio && (
-            <p className="mt-4 max-w-medida font-body text-[1rem] leading-relaxed text-white/80">
+            <p className="mt-4 max-w-medida font-body text-[1rem] leading-relaxed text-block-text/80">
               {jugadora.bio}
             </p>
           )}
@@ -116,13 +116,13 @@ function Totales({ totales }: { totales: TotalesJugadora }) {
   ]
 
   return (
-    <dl className="mt-6 flex flex-wrap gap-x-7 gap-y-3 border-t border-white/20 pt-5">
+    <dl className="mt-6 flex flex-wrap gap-x-7 gap-y-3 border-t border-block-text/20 pt-5">
       {datos.map((dato) => (
         // `flex-col-reverse`: el <dt> va antes que su <dd> en el DOM, pero el
         // número se lee arriba y la etiqueta abajo.
         <div key={dato.etiqueta} className="flex flex-col-reverse">
-          <dt className="dato text-[0.75rem] text-white/60">{dato.etiqueta}</dt>
-          <dd className="marca text-[1.8rem] text-amarillo">{dato.valor}</dd>
+          <dt className="dato text-[0.75rem] text-block-text/60">{dato.etiqueta}</dt>
+          <dd className="marca text-[1.8rem] text-block-accent">{dato.valor}</dd>
         </div>
       ))}
     </dl>

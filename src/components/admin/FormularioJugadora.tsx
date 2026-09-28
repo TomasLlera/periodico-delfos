@@ -153,7 +153,7 @@ export function FormularioJugadora({ jugadora }: { jugadora: Jugadora | null }) 
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="flex flex-col gap-1">
-          <label htmlFor="fecha_nacimiento" className="meta text-gris">
+          <label htmlFor="fecha_nacimiento" className="meta text-text-muted">
             Fecha de nacimiento
           </label>
           <input
@@ -161,9 +161,9 @@ export function FormularioJugadora({ jugadora }: { jugadora: Jugadora | null }) 
             type="date"
             value={f.entrada.fecha_nacimiento ?? ''}
             onChange={(e) => f.cambiar('fecha_nacimiento', e.target.value || null)}
-            className="tactil w-full border border-linea-fuerte bg-tarjeta px-3 font-display text-[0.95rem]"
+            className="tactil w-full border border-border-control bg-bg-elevated px-3 font-display text-[0.95rem]"
           />
-          <p className="text-[0.8rem] text-gris">Opcional. La ficha calcula la edad con esto.</p>
+          <p className="text-[0.8rem] text-text-muted">Opcional. La ficha calcula la edad con esto.</p>
         </div>
 
         <CampoTexto

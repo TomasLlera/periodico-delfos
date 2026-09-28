@@ -164,11 +164,11 @@ function VistaPlanilla({
   return (
     <NodeViewWrapper
       contentEditable={false}
-      className="my-4 flex items-center gap-3 border-l-2 border-verde-900 bg-papel-alt px-4 py-3"
+      className="my-4 flex items-center gap-3 border-l-2 border-accent bg-bg-muted px-4 py-3"
     >
       <ClipboardList size={18} aria-hidden="true" className="shrink-0" />
       <span className="flex flex-col">
-        <span className="meta text-gris">Planilla del partido</span>
+        <span className="meta text-text-muted">Planilla del partido</span>
         <span className="font-display text-[0.95rem] font-bold">
           {etiqueta ?? 'Un partido que ya no está cargado'}
         </span>

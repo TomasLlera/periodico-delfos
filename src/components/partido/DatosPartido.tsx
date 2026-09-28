@@ -27,13 +27,13 @@ export function DatosPartido({ partido }: Props) {
         {filas.map((fila) => (
           <div key={fila.termino} className="flex items-baseline gap-3">
             <dt className="meta w-20 shrink-0">{fila.termino}</dt>
-            <dd className="text-sm text-tinta">{fila.valor}</dd>
+            <dd className="text-sm text-text">{fila.valor}</dd>
           </div>
         ))}
       </dl>
 
       {partido.observaciones && (
-        <p className="mt-4 border-l-2 border-amarillo pl-3 text-sm italic leading-relaxed text-gris">
+        <p className="mt-4 border-l-2 border-accent pl-3 text-sm italic leading-relaxed text-text-muted">
           {partido.observaciones}
         </p>
       )}

@@ -24,11 +24,11 @@ export function GrillaPlantel({ plantel }: Props) {
       {grupos.map((grupo) => (
         <section key={grupo.clave} aria-labelledby={`puesto-${grupo.clave}`}>
           <div className="flex items-center gap-3">
-            <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-verde-600" />
+            <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-accent" />
             <h2 id={`puesto-${grupo.clave}`} className="titular text-[22px]">
               {grupo.titulo}
             </h2>
-            <span className="dato text-[0.8rem] text-gris">{grupo.jugadoras.length}</span>
+            <span className="dato text-[0.8rem] text-text-muted">{grupo.jugadoras.length}</span>
           </div>
 
           <ul className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
