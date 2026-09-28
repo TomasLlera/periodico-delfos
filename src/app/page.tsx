@@ -119,6 +119,26 @@ export default async function Portada() {
   // que sigan vacías desaparecen solas.
   const portadaVacia = !tapa && cronicas.length === 0 && analisis.length === 0
 
+  // Con la portada vacía el bloque de análisis se dibuja igual, con su estado
+  // escrito, así que cuenta como presente.
+  const hayAnalisis = analisis.length > 0 || portadaVacia
+
+  const plantel = (
+    <TarjetaPlantel
+      titulo="El plantel"
+      descripcion="Fichas, estadísticas y trayectoria de cada una de las jugadoras de Aldosivi."
+      enlace={{ href: '/plantel', texto: 'Ver el plantel completo' }}
+    />
+  )
+
+  const goleadoras = deportivo.temporada && (
+    <Goleadoras
+      id="goleadoras"
+      goleadoras={deportivo.goleadoras}
+      temporada={deportivo.temporada}
+    />
+  )
+
   return (
     <>
       <Header temperatura={temperatura} />
@@ -171,31 +191,34 @@ export default async function Portada() {
         />
 
 
-        <div className="mt-bloque grid gap-bloque lg:grid-cols-[2fr_1fr]">
-          <ListaAnalisis
-            id="analisis"
-            titulo="Análisis"
-            notas={analisis}
-            enlace={{ href: '/analisis', texto: 'Ver más' }}
-            vacio={portadaVacia ? 'Todavía no hay análisis publicados.' : undefined}
-          />
-
-          <div>
-            <TarjetaPlantel
-              titulo="El plantel"
-              descripcion="Fichas, estadísticas y trayectoria de cada una de las jugadoras de Aldosivi."
-              enlace={{ href: '/plantel', texto: 'Ver el plantel completo' }}
+        {/* Con análisis, el plantel y las goleadoras son la columna angosta de
+            la derecha. Sin análisis no pueden quedarse en esa grilla: la
+            primera celda —la ancha, a la izquierda— queda libre y el bloque se
+            corre ahí con un hueco al costado. Pasó en producción con una sola
+            nota publicada, que va de tapa y deja vacíos los otros bloques. En
+            ese caso los dos se reparten el ancho, y `*:mt-0` saca el margen de
+            sección de las goleadoras: la separación ya la da `gap-bloque`. */}
+        {hayAnalisis ? (
+          <div className="mt-bloque grid gap-bloque lg:grid-cols-[2fr_1fr]">
+            <ListaAnalisis
+              id="analisis"
+              titulo="Análisis"
+              notas={analisis}
+              enlace={{ href: '/analisis', texto: 'Ver más' }}
+              vacio={portadaVacia ? 'Todavía no hay análisis publicados.' : undefined}
             />
 
-            {deportivo.temporada && (
-              <Goleadoras
-                id="goleadoras"
-                goleadoras={deportivo.goleadoras}
-                temporada={deportivo.temporada}
-              />
-            )}
+            <div>
+              {plantel}
+              {goleadoras}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="mt-bloque grid items-start gap-bloque *:mt-0 lg:grid-cols-2">
+            {plantel}
+            {goleadoras}
+          </div>
+        )}
 
         <BloqueArchivo />
       </main>
