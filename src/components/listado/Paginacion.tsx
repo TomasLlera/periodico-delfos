@@ -37,19 +37,19 @@ export function Paginacion({ base, pagina, totalPaginas }: Props) {
   const paginas = Array.from({ length: totalPaginas }, (_, i) => i + 1)
 
   return (
-    <nav aria-label="Paginación" className="mt-12 border-t border-linea pt-6">
+    <nav aria-label="Paginación" className="mt-12 border-t border-border pt-6">
       <ul className="flex flex-wrap items-center gap-2">
         <li>
           {pagina > 1 ? (
             <Link
               href={hrefDePagina(base, pagina - 1)}
               rel="prev"
-              className={`${ENLACE} border-linea-fuerte bg-tarjeta hover:border-verde-600 hover:text-verde-600`}
+              className={`${ENLACE} border-border-control bg-bg-elevated hover:border-accent-text hover:text-accent-text`}
             >
               ← Anterior
             </Link>
           ) : (
-            <span className={`${ENLACE} border-linea text-gris-tenue`} aria-hidden="true">
+            <span className={`${ENLACE} border-border text-text-muted`} aria-hidden="true">
               ← Anterior
             </span>
           )}
@@ -58,11 +58,11 @@ export function Paginacion({ base, pagina, totalPaginas }: Props) {
         {paginas.map((n) => (
           <li key={n}>
             {n === pagina ? (
-              // `aria-current` y no sólo el color: el filete amarillo no se lo
+              // `aria-current` y no sólo el color: el fondo invertido no se lo
               // puede leer nadie con un lector de pantalla.
               <span
                 aria-current="page"
-                className={`${ENLACE} dato border-verde-900 bg-verde-900 text-white`}
+                className={`${ENLACE} dato border-text bg-text text-bg`}
               >
                 {n}
               </span>
@@ -70,7 +70,7 @@ export function Paginacion({ base, pagina, totalPaginas }: Props) {
               <Link
                 href={hrefDePagina(base, n)}
                 aria-label={`Página ${n}`}
-                className={`${ENLACE} dato border-linea-fuerte bg-tarjeta hover:border-verde-600 hover:text-verde-600`}
+                className={`${ENLACE} dato border-border-control bg-bg-elevated hover:border-accent-text hover:text-accent-text`}
               >
                 {n}
               </Link>
@@ -83,12 +83,12 @@ export function Paginacion({ base, pagina, totalPaginas }: Props) {
             <Link
               href={hrefDePagina(base, pagina + 1)}
               rel="next"
-              className={`${ENLACE} border-linea-fuerte bg-tarjeta hover:border-verde-600 hover:text-verde-600`}
+              className={`${ENLACE} border-border-control bg-bg-elevated hover:border-accent-text hover:text-accent-text`}
             >
               Siguiente →
             </Link>
           ) : (
-            <span className={`${ENLACE} border-linea text-gris-tenue`} aria-hidden="true">
+            <span className={`${ENLACE} border-border text-text-muted`} aria-hidden="true">
               Siguiente →
             </span>
           )}

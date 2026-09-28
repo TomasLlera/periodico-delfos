@@ -121,7 +121,7 @@ export function EditorPlantel({ temporadaId, plantel, jugadoras }: Props) {
     <div className="flex flex-col gap-5">
       {/* Agregar va arriba: en una temporada nueva es lo único que se hace, y
           en una cargada es lo que se busca al entrar. */}
-      <div className="flex flex-wrap items-end gap-3 border border-linea bg-tarjeta p-4">
+      <div className="flex flex-wrap items-end gap-3 border border-border bg-bg-elevated p-4">
         <div className="min-w-[240px] flex-1">
           <CampoSelect
             id="a-sumar"
@@ -143,7 +143,7 @@ export function EditorPlantel({ temporadaId, plantel, jugadoras }: Props) {
           type="button"
           onClick={agregar}
           disabled={ocupado || aSumar === ''}
-          className="tactil flex items-center gap-2 bg-amarillo px-4 font-display text-[0.9rem] font-extrabold text-negro-cancha disabled:opacity-60"
+          className="tactil flex items-center gap-2 bg-accent px-4 font-display text-[0.9rem] font-extrabold text-accent-contrast disabled:opacity-60"
         >
           <Plus size={16} aria-hidden="true" />
           Sumar
@@ -169,7 +169,7 @@ export function EditorPlantel({ temporadaId, plantel, jugadoras }: Props) {
             return (
               <li
                 key={fila.id}
-                className="flex flex-wrap items-end gap-3 border-b border-linea pb-3"
+                className="flex flex-wrap items-end gap-3 border-b border-border pb-3"
               >
                 <span className="min-w-[160px] flex-1 font-display text-[0.95rem] font-bold">
                   {nombreCompleto(fila)}
@@ -210,7 +210,7 @@ export function EditorPlantel({ temporadaId, plantel, jugadoras }: Props) {
                     type="checkbox"
                     checked={fila.capitana}
                     onChange={(e) => tocar(fila.id, { capitana: e.target.checked })}
-                    className="size-4 accent-verde-900"
+                    className="size-4 accent-accent-text"
                   />
                   Capitana
                 </label>
@@ -230,18 +230,18 @@ export function EditorPlantel({ temporadaId, plantel, jugadoras }: Props) {
       )}
 
       {aviso && (
-        <p role="status" className="border-l-2 border-verde-600 bg-papel-alt px-3 py-2 text-[0.9rem]">
+        <p role="status" className="border-l-2 border-accent-text bg-bg-muted px-3 py-2 text-[0.9rem]">
           {aviso}
         </p>
       )}
 
       {filas.length > 0 && (
-        <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-linea bg-papel py-3">
+        <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-border bg-bg py-3">
           <button
             type="button"
             onClick={guardarTodo}
             disabled={ocupado || tocadas.size === 0}
-            className="tactil flex items-center gap-2 bg-verde-900 px-5 font-display text-[0.9rem] font-extrabold text-white hover:bg-verde-600 disabled:opacity-60"
+            className="tactil flex items-center gap-2 bg-text px-5 font-display text-[0.9rem] font-extrabold text-bg hover:bg-text/85 disabled:opacity-60"
           >
             <Save size={16} aria-hidden="true" />
             {ocupado ? 'Guardando…' : 'Guardar los cambios'}
@@ -249,7 +249,7 @@ export function EditorPlantel({ temporadaId, plantel, jugadoras }: Props) {
 
           {/* Sumar y sacar guardan solos; los dorsales y los puestos no, así
               que hay que decir cuántos quedan sin guardar. */}
-          <span className="text-[0.85rem] text-gris">
+          <span className="text-[0.85rem] text-text-muted">
             {tocadas.size === 0
               ? 'No hay cambios sin guardar.'
               : `${tocadas.size} fila${tocadas.size > 1 ? 's' : ''} sin guardar.`}

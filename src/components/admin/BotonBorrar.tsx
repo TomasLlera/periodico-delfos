@@ -37,7 +37,7 @@ export function BotonBorrar({ que, consecuencia, borrar, volverA }: Props) {
   if (error) {
     return (
       <span className="flex flex-wrap items-center gap-2">
-        <span role="alert" className="text-[0.85rem] text-roja">
+        <span role="alert" className="text-[0.85rem] text-danger">
           {error}
         </span>
         <button
@@ -59,7 +59,7 @@ export function BotonBorrar({ que, consecuencia, borrar, volverA }: Props) {
       <button
         type="button"
         onClick={() => setPreguntando(true)}
-        className="tactil flex items-center gap-2 px-3 font-display text-[0.9rem] font-bold text-roja hover:underline"
+        className="tactil flex items-center gap-2 px-3 font-display text-[0.9rem] font-bold text-danger hover:underline"
       >
         <Trash2 size={16} aria-hidden="true" />
         Borrar
@@ -71,7 +71,7 @@ export function BotonBorrar({ que, consecuencia, borrar, volverA }: Props) {
     <span className="flex flex-wrap items-center gap-2 text-[0.85rem]">
       <span>
         ¿Borrar {que}?
-        {consecuencia && <strong className="block font-normal text-roja">{consecuencia}</strong>}
+        {consecuencia && <strong className="block font-normal text-danger">{consecuencia}</strong>}
       </span>
 
       <button
@@ -88,7 +88,7 @@ export function BotonBorrar({ que, consecuencia, borrar, volverA }: Props) {
             if (volverA) router.push(volverA)
           })
         }
-        className="tactil bg-roja px-3 font-display text-[0.85rem] font-extrabold text-white disabled:opacity-60"
+        className="tactil bg-danger px-3 font-display text-[0.85rem] font-extrabold text-bg disabled:opacity-60"
       >
         {ocupado ? 'Borrando…' : 'Sí, borrar'}
       </button>

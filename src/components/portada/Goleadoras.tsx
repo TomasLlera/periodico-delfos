@@ -47,7 +47,7 @@ export function Goleadoras({ id, goleadoras, temporada }: Props) {
           temporada={temporada.nombre}
         />
       ) : (
-        <p className="font-body text-[0.95rem] text-gris">
+        <p className="font-body text-[0.95rem] text-text-muted">
           Todavía no hay goles cargados en {temporada.nombre}.
         </p>
       )}

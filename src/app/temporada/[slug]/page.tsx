@@ -85,7 +85,7 @@ export default async function PaginaTemporada({ params, searchParams }: Params) 
       <Header />
 
       <main className="contenedor py-10">
-        <div className="border-b-[3px] border-tinta pb-3">
+        <div className="border-b-[3px] border-border-strong pb-3">
           <p className="meta">{contexto.join(' · ')}</p>
           <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
             <h1 className="marca text-[1.8rem] uppercase md:text-[2.3rem]">
@@ -93,7 +93,7 @@ export default async function PaginaTemporada({ params, searchParams }: Params) 
             </h1>
             <Link
               href={`/plantel/${temporada.slug}`}
-              className="shrink-0 font-display text-[0.85rem] font-bold text-verde-600 underline underline-offset-[3px]"
+              className="shrink-0 font-display text-[0.85rem] font-bold text-accent-text underline underline-offset-[3px]"
             >
               Ver el plantel →
             </Link>

@@ -43,8 +43,8 @@ export function CampoImagen({
   const aMostrar = urlLocal ?? urlGuardada
 
   return (
-    <fieldset className="flex flex-col gap-3 border border-linea bg-tarjeta p-4">
-      <legend className="meta px-1 text-gris">Portada</legend>
+    <fieldset className="flex flex-col gap-3 border border-border bg-bg-elevated p-4">
+      <legend className="meta px-1 text-text-muted">Portada</legend>
 
       {aMostrar && (
         <div className="flex items-start gap-3">
@@ -55,9 +55,9 @@ export function CampoImagen({
           <img
             src={aMostrar}
             alt=""
-            className="h-24 w-40 border border-linea object-cover"
+            className="h-24 w-40 border border-border object-cover"
           />
-          <div className="flex flex-col gap-1 text-[0.8rem] text-gris">
+          <div className="flex flex-col gap-1 text-[0.8rem] text-text-muted">
             <span>{urlLocal ? 'Elegida, todavía sin subir' : 'Subida al bucket'}</span>
             <button
               type="button"
@@ -73,7 +73,7 @@ export function CampoImagen({
 
       <label
         htmlFor="archivo"
-        className="tactil flex cursor-pointer items-center gap-2 self-start border border-linea-fuerte px-4 font-display text-[0.9rem] font-bold hover:bg-papel-alt"
+        className="tactil flex cursor-pointer items-center gap-2 self-start border border-border-control px-4 font-display text-[0.9rem] font-bold hover:bg-bg-muted"
       >
         <ImagePlus size={16} aria-hidden="true" />
         {aMostrar ? 'Cambiar imagen' : 'Elegir imagen'}

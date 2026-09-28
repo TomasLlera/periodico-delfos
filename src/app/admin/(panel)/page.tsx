@@ -28,7 +28,7 @@ export default async function Panel() {
 
         <Link
           href="/admin/notas/nueva"
-          className="tactil ml-auto flex items-center gap-2 bg-amarillo px-4 font-display text-[0.9rem] font-extrabold text-negro-cancha hover:bg-amarillo/90"
+          className="tactil ml-auto flex items-center gap-2 bg-accent px-4 font-display text-[0.9rem] font-extrabold text-accent-contrast hover:bg-accent/90"
         >
           <Plus size={16} aria-hidden="true" />
           Nota nueva
@@ -36,7 +36,7 @@ export default async function Panel() {
       </div>
 
       {notas.length === 0 && (
-        <p className="border-l-2 border-linea-fuerte bg-papel-alt px-4 py-3 text-[0.95rem]">
+        <p className="border-l-2 border-border-control bg-bg-muted px-4 py-3 text-[0.95rem]">
           Todavía no hay ninguna nota. La primera se escribe desde{' '}
           <Link href="/admin/notas/nueva" className="underline underline-offset-4">
             Nota nueva
@@ -47,7 +47,7 @@ export default async function Panel() {
 
       {borradores.length > 0 && (
         <section className="mb-8">
-          <h2 className="meta mb-2 text-gris">En borrador · {borradores.length}</h2>
+          <h2 className="meta mb-2 text-text-muted">En borrador · {borradores.length}</h2>
           <ul>
             {borradores.map((nota) => (
               <FilaNota key={nota.id} nota={nota} />
@@ -58,7 +58,7 @@ export default async function Panel() {
 
       {resto.length > 0 && (
         <section>
-          <h2 className="meta mb-2 text-gris">Publicadas · {resto.length}</h2>
+          <h2 className="meta mb-2 text-text-muted">Publicadas · {resto.length}</h2>
           <ul>
             {resto.map((nota) => (
               <FilaNota key={nota.id} nota={nota} />

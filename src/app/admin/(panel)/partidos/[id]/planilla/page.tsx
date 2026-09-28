@@ -45,7 +45,7 @@ export default async function Planilla({ params }: Params) {
   return (
     <main className="mx-auto max-w-[900px] px-4 py-6">
       <h1 className="titular mb-1 text-[1.4rem]">{etiquetaDePartido(partido)}</h1>
-      <p className="meta mb-5 text-gris">{partido.cancha ?? 'Sin cancha cargada'}</p>
+      <p className="meta mb-5 text-text-muted">{partido.cancha ?? 'Sin cancha cargada'}</p>
 
       {pendientes.length > 0 && (
         <div className="mb-5">

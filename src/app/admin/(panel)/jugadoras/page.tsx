@@ -30,7 +30,7 @@ export default async function Jugadoras() {
 
         <Link
           href="/admin/jugadoras/nueva"
-          className="tactil ml-auto flex items-center gap-2 bg-amarillo px-4 font-display text-[0.9rem] font-extrabold text-negro-cancha hover:bg-amarillo/90"
+          className="tactil ml-auto flex items-center gap-2 bg-accent px-4 font-display text-[0.9rem] font-extrabold text-accent-contrast hover:bg-accent/90"
         >
           <Plus size={16} aria-hidden="true" />
           Jugadora nueva
@@ -46,7 +46,7 @@ export default async function Jugadoras() {
 
       {enElClub.length > 0 && (
         <section className="mb-8">
-          <h2 className="meta mb-2 text-gris">En el club · {enElClub.length}</h2>
+          <h2 className="meta mb-2 text-text-muted">En el club · {enElClub.length}</h2>
           <ul>
             {enElClub.map((jugadora) => (
               <Fila key={jugadora.id} jugadora={jugadora} />
@@ -57,7 +57,7 @@ export default async function Jugadoras() {
 
       {seFueron.length > 0 && (
         <section>
-          <h2 className="meta mb-2 text-gris">Ya no están · {seFueron.length}</h2>
+          <h2 className="meta mb-2 text-text-muted">Ya no están · {seFueron.length}</h2>
           <ul>
             {seFueron.map((jugadora) => (
               <Fila key={jugadora.id} jugadora={jugadora} />
@@ -75,7 +75,7 @@ function Fila({
   jugadora: Awaited<ReturnType<typeof getJugadoras>>[number]
 }) {
   return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-linea py-3">
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border py-3">
       <Link
         href={`/admin/jugadoras/${jugadora.id}`}
         className="font-display text-[1rem] font-bold underline-offset-4 hover:underline"
@@ -83,9 +83,9 @@ function Fila({
         {nombreDeLista(jugadora)}
       </Link>
 
-      <span className="meta text-gris">{NOMBRE_PUESTO[jugadora.posicion]}</span>
+      <span className="meta text-text-muted">{NOMBRE_PUESTO[jugadora.posicion]}</span>
 
-      <span className="ml-auto flex items-center gap-3 text-[0.85rem] text-gris">
+      <span className="ml-auto flex items-center gap-3 text-[0.85rem] text-text-muted">
         {jugadora.activa && (
           <Link href={`/jugadora/${jugadora.slug}`} target="_blank" className="tactil hover:underline">
             Ver

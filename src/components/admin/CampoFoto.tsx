@@ -31,8 +31,8 @@ export function CampoFoto({ urlGuardada, urlLocal, nombre, onArchivo }: Props) {
   const aMostrar = urlLocal ?? urlGuardada
 
   return (
-    <fieldset className="flex flex-col gap-3 border border-linea bg-tarjeta p-4">
-      <legend className="meta px-1 text-gris">Foto</legend>
+    <fieldset className="flex flex-col gap-3 border border-border bg-bg-elevated p-4">
+      <legend className="meta px-1 text-text-muted">Foto</legend>
 
       {aMostrar && (
         <div className="flex items-start gap-3">
@@ -42,9 +42,9 @@ export function CampoFoto({ urlGuardada, urlLocal, nombre, onArchivo }: Props) {
           <img
             src={aMostrar}
             alt={nombre.trim() ? `Foto de ${nombre}` : 'La foto elegida'}
-            className="size-24 border border-linea object-cover"
+            className="size-24 border border-border object-cover"
           />
-          <div className="flex flex-col gap-1 text-[0.8rem] text-gris">
+          <div className="flex flex-col gap-1 text-[0.8rem] text-text-muted">
             <span>{urlLocal ? 'Elegida, todavía sin subir' : 'Subida al bucket'}</span>
             <button
               type="button"
@@ -60,7 +60,7 @@ export function CampoFoto({ urlGuardada, urlLocal, nombre, onArchivo }: Props) {
 
       <label
         htmlFor="foto"
-        className="tactil flex cursor-pointer items-center gap-2 self-start border border-linea-fuerte px-4 font-display text-[0.9rem] font-bold hover:bg-papel-alt"
+        className="tactil flex cursor-pointer items-center gap-2 self-start border border-border-control px-4 font-display text-[0.9rem] font-bold hover:bg-bg-muted"
       >
         <ImagePlus size={16} aria-hidden="true" />
         {aMostrar ? 'Cambiar foto' : 'Elegir foto'}
@@ -73,7 +73,7 @@ export function CampoFoto({ urlGuardada, urlLocal, nombre, onArchivo }: Props) {
         className="sr-only"
       />
 
-      <p className="text-[0.8rem] text-gris">
+      <p className="text-[0.8rem] text-text-muted">
         Opcional. Sin foto, el plantel dibuja las iniciales.
       </p>
     </fieldset>

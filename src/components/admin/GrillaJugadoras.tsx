@@ -25,7 +25,7 @@ interface Props {
 
 export function GrillaJugadoras({ jugadoras, elegida, onElegir, vacio }: Props) {
   if (jugadoras.length === 0) {
-    return <p className="px-1 py-3 text-[0.9rem] text-gris">{vacio}</p>
+    return <p className="px-1 py-3 text-[0.9rem] text-text-muted">{vacio}</p>
   }
 
   const ordenadas = [...jugadoras].sort((a, b) => (a.dorsal ?? 99) - (b.dorsal ?? 99))
@@ -43,8 +43,8 @@ export function GrillaJugadoras({ jugadoras, elegida, onElegir, vacio }: Props) 
               aria-pressed={activa}
               className={`tactil flex w-full flex-col items-center justify-center gap-0.5 rounded-sm border px-1 py-2 ${
                 activa
-                  ? 'border-verde-900 bg-verde-900 text-white'
-                  : 'border-linea bg-tarjeta hover:border-verde-600'
+                  ? 'border-text bg-text text-bg'
+                  : 'border-border bg-bg-elevated hover:border-accent-text'
               }`}
             >
               <span className="font-mono text-[1.1rem] font-bold leading-none">

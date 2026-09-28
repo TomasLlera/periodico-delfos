@@ -1,6 +1,8 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Archivo, Source_Serif_4, IBM_Plex_Mono } from 'next/font/google'
 import { BarraEstado } from '@/components/layout/BarraEstado'
+import { ProveedorTema } from '@/components/layout/ProveedorTema'
+import { COLOR_BARRA_NAVEGADOR } from '@/lib/colores'
 import { urlOg } from '@/lib/seo'
 import { getEstadoDelSitio } from '@/lib/supabase/queries/estado'
 import './globals.css'
@@ -66,6 +68,18 @@ export const metadata: Metadata = {
 }
 
 /**
+ * La barra del navegador empalma con la cabecera en cada tema. Son dos
+ * `<meta name="theme-color">` con `media`, que siguen al sistema;
+ * `<ToggleTema />` los reescribe cuando el tema está forzado.
+ */
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: COLOR_BARRA_NAVEGADOR.light },
+    { media: '(prefers-color-scheme: dark)', color: COLOR_BARRA_NAVEGADOR.dark },
+  ],
+}
+
+/**
  * `<BarraEstado />` va acá y no en cada página: el blueprint la pide "fija
  * arriba, siempre visible", y en el layout raíz aparece en todas sin que
  * ninguna tenga que acordarse de ponerla.
@@ -83,26 +97,33 @@ export default async function RootLayout({
 
   return (
     // es-AR, no es-ES: el sitio de WordPress lo tiene mal configurado.
+    // `suppressHydrationWarning` alcanza sólo a los atributos de <html>, no a
+    // sus hijos: el script de next-themes pone `data-theme` y `color-scheme`
+    // antes de hidratar, y sin esto React avisa que no coinciden con el HTML
+    // del servidor —que no puede saber el tema—.
     <html
       lang="es-AR"
       className={`${archivo.variable} ${sourceSerif.variable} ${plexMono.variable}`}
+      suppressHydrationWarning
     >
       <body className="min-h-dvh antialiased">
-        {temporada && (
-          <BarraEstado
-            temporada={temporada}
-            ultimo={ultimo}
-            proximo={proximo}
-            posicion={posicion}
-          />
-        )}
-        {children}
+        <ProveedorTema>
+          {temporada && (
+            <BarraEstado
+              temporada={temporada}
+              ultimo={ultimo}
+              proximo={proximo}
+              posicion={posicion}
+            />
+          )}
+          {children}
 
-        {/* El slot de las ventanas. En casi todas las páginas esto es `null`
-            —lo pone `@modal/default.tsx`— y sólo se llena cuando se interceptó
-            la ruta de un partido, o sea cuando alguien apretó un chip de la
-            franja sin recargar la página. */}
-        {modal}
+          {/* El slot de las ventanas. En casi todas las páginas esto es `null`
+              —lo pone `@modal/default.tsx`— y sólo se llena cuando se interceptó
+              la ruta de un partido, o sea cuando alguien apretó un chip de la
+              franja sin recargar la página. */}
+          {modal}
+        </ProveedorTema>
       </body>
     </html>
   )

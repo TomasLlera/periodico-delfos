@@ -37,7 +37,7 @@ export default function DemoTemporada() {
         <h1 className="mt-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
           La página de temporada
         </h1>
-        <p className="prose-nota mt-4 text-gris">
+        <p className="prose-nota mt-4 text-text-muted">
           Esta página no se indexa y no llega a producción. El fixture y las
           goleadoras son <strong>los de verdad</strong>: salen de la ficha y las
           incidencias de las doce crónicas del sitio viejo. La tabla de
@@ -48,7 +48,7 @@ export default function DemoTemporada() {
         </p>
 
         <section aria-labelledby="demo-fixture" className="mt-12">
-          <h2 id="demo-fixture" className="marca border-b-[3px] border-tinta pb-2 text-[1.6rem] uppercase">
+          <h2 id="demo-fixture" className="marca border-b-[3px] border-border-strong pb-2 text-[1.6rem] uppercase">
             Pestaña 1 · Fixture
           </h2>
           <div className="mt-6">
@@ -57,7 +57,7 @@ export default function DemoTemporada() {
         </section>
 
         <section aria-labelledby="demo-tabla" className="mt-16">
-          <h2 id="demo-tabla" className="marca border-b-[3px] border-tinta pb-2 text-[1.6rem] uppercase">
+          <h2 id="demo-tabla" className="marca border-b-[3px] border-border-strong pb-2 text-[1.6rem] uppercase">
             Pestaña 2 · Tabla
           </h2>
           <div className="mt-6">
@@ -70,7 +70,7 @@ export default function DemoTemporada() {
         </section>
 
         <section aria-labelledby="demo-goleadoras" className="mt-16">
-          <h2 id="demo-goleadoras" className="marca border-b-[3px] border-tinta pb-2 text-[1.6rem] uppercase">
+          <h2 id="demo-goleadoras" className="marca border-b-[3px] border-border-strong pb-2 text-[1.6rem] uppercase">
             Pestaña 3 · Goleadoras
           </h2>
           <div className="mt-6 max-w-[720px]">
@@ -79,10 +79,10 @@ export default function DemoTemporada() {
         </section>
 
         <section aria-labelledby="demo-vacios" className="mt-16">
-          <h2 id="demo-vacios" className="marca border-b-[3px] border-tinta pb-2 text-[1.6rem] uppercase">
+          <h2 id="demo-vacios" className="marca border-b-[3px] border-border-strong pb-2 text-[1.6rem] uppercase">
             Los estados vacíos
           </h2>
-          <p className="prose-nota mt-4 text-gris">
+          <p className="prose-nota mt-4 text-text-muted">
             Es lo que ve alguien que entra a una temporada recién creada. Se
             escriben, no se omiten: una pantalla en blanco no distingue
             &laquo;todavía no hay datos&raquo; de &laquo;está roto&raquo;.

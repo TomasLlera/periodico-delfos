@@ -20,18 +20,18 @@ export function SinTemporada({ titulo, explicacion }: Props) {
     <main className="contenedor py-10">
       <CabeceraBloque id="sin-temporada" titulo={titulo} nivel={1} />
 
-      <div className="max-w-medida border-l-4 border-verde-600 bg-papel-alt py-6 pl-5">
-        <p className="font-body text-[1.05rem] leading-relaxed text-tinta-suave">
+      <div className="max-w-medida border-l-4 border-accent bg-bg-muted py-6 pl-5">
+        <p className="font-body text-[1.05rem] leading-relaxed text-text-soft">
           {explicacion}
         </p>
 
-        <p className="mt-4 font-body text-gris">
+        <p className="mt-4 font-body text-text-muted">
           Mientras tanto están{' '}
-          <Link href="/cronicas" className="text-verde-600 underline underline-offset-2">
+          <Link href="/cronicas" className="text-accent-text underline underline-offset-2">
             las crónicas
           </Link>{' '}
           y{' '}
-          <Link href="/analisis" className="text-verde-600 underline underline-offset-2">
+          <Link href="/analisis" className="text-accent-text underline underline-offset-2">
             los análisis
           </Link>
           .

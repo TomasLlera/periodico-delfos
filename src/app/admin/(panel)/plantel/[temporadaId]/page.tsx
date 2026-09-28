@@ -31,12 +31,12 @@ export default async function PlantelDeTemporada({ params }: Params) {
   return (
     <main className="mx-auto max-w-[900px] px-4 py-8">
       <h1 className="titular mb-1 text-[1.4rem]">Plantel</h1>
-      <p className="meta mb-5 text-gris">
+      <p className="meta mb-5 text-text-muted">
         {temporada.nombre} · {plantel.length} jugadoras
       </p>
 
       {jugadoras.length === 0 ? (
-        <p className="border-l-2 border-linea-fuerte bg-papel-alt px-4 py-3 text-[0.95rem]">
+        <p className="border-l-2 border-border-control bg-bg-muted px-4 py-3 text-[0.95rem]">
           Todavía no hay ninguna ficha de jugadora cargada. Se crean en{' '}
           <Link href="/admin/jugadoras" className="underline underline-offset-4">
             Jugadoras

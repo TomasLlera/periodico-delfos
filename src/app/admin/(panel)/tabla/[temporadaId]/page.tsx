@@ -55,13 +55,13 @@ export default async function Tabla({ params, searchParams }: Params) {
   return (
     <main className="mx-auto max-w-[900px] px-4 py-8">
       <h1 className="titular mb-1 text-[1.4rem]">Tabla de posiciones</h1>
-      <p className="meta mb-5 text-gris">
+      <p className="meta mb-5 text-text-muted">
         {temporada.nombre} · fecha {fecha}
       </p>
 
       {cargadas.length > 0 && (
         <nav aria-label="Fechas ya cargadas" className="mb-5 flex flex-wrap items-center gap-2">
-          <span className="meta text-gris">Ya cargadas:</span>
+          <span className="meta text-text-muted">Ya cargadas:</span>
           {cargadas.map((numero) => (
             <Link
               key={numero}
@@ -70,8 +70,8 @@ export default async function Tabla({ params, searchParams }: Params) {
               className={
                 'tactil flex items-center px-3 font-display text-[0.85rem] font-bold ' +
                 (numero === fecha
-                  ? 'bg-verde-900 text-white'
-                  : 'border border-linea-fuerte hover:bg-papel-alt')
+                  ? 'bg-text text-bg'
+                  : 'border border-border-control hover:bg-bg-muted')
               }
             >
               {numero}

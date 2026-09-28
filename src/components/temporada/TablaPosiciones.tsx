@@ -46,17 +46,17 @@ export function TablaPosiciones({ filas, fecha, temporada }: Props) {
       tabIndex={0}
       role="region"
       aria-label={`Tabla de posiciones de ${temporada}`}
-      className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-600"
+      className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-text"
     >
       <table className="w-full min-w-[520px] border-collapse text-left">
-        <caption className="mb-4 max-w-medida text-left font-display text-[0.85rem] leading-snug text-gris">
+        <caption className="mb-4 max-w-medida text-left font-display text-[0.85rem] leading-snug text-text-muted">
           {temporada}
           {fecha !== null ? ` · actualizada a la fecha ${fecha}` : ''}. Se carga
           a mano, fecha por fecha: puede ir una fecha atrás de lo jugado.
         </caption>
 
         <thead>
-          <tr className="border-b-2 border-tinta">
+          <tr className="border-b-2 border-border-strong">
             <th scope="col" className="meta py-2 pr-2 text-[0.7rem]">
               <span className="sr-only">Posición</span>
               <span aria-hidden="true">#</span>
@@ -76,9 +76,9 @@ export function TablaPosiciones({ filas, fecha, temporada }: Props) {
           {filas.map((fila) => (
             <tr
               key={fila.id}
-              className={`border-b border-linea ${fila.equipo.es_aldosivi ? 'bg-verde-100' : ''}`}
+              className={`border-b border-border ${fila.equipo.es_aldosivi ? 'bg-bg-muted' : ''}`}
             >
-              <td className="dato py-2 pr-2 text-[0.85rem] text-gris">{fila.posicion}</td>
+              <td className="dato py-2 pr-2 text-[0.85rem] text-text-muted">{fila.posicion}</td>
 
               {/* El equipo es el encabezado de su fila: sin esto un lector de
                   pantalla lee "14" sin decir de quién es. */}
@@ -87,7 +87,7 @@ export function TablaPosiciones({ filas, fecha, temporada }: Props) {
                   <EscudoEquipo equipo={fila.equipo} tamano={22} />
                   <span
                     className={`font-display text-[0.9rem] leading-tight ${
-                      fila.equipo.es_aldosivi ? 'font-bold text-verde-600' : 'text-tinta'
+                      fila.equipo.es_aldosivi ? 'font-bold text-accent-text' : 'text-text'
                     }`}
                   >
                     {fila.equipo.nombre_corto}
@@ -125,7 +125,7 @@ function Encabezado({
   return (
     <th
       scope="col"
-      className={`meta py-2 text-right text-[0.7rem] ${fuerte ? 'pl-3 text-tinta' : 'pl-2'} ${
+      className={`meta py-2 text-right text-[0.7rem] ${fuerte ? 'pl-3 text-text' : 'pl-2'} ${
         oculta ? 'hidden sm:table-cell' : ''
       }`}
     >
@@ -150,7 +150,7 @@ function Celda({
   return (
     <td
       className={`dato py-2 text-right ${
-        fuerte ? 'pl-3 text-[0.95rem] font-bold text-tinta' : 'pl-2 text-[0.85rem] text-tinta-suave'
+        fuerte ? 'pl-3 text-[0.95rem] font-bold text-text' : 'pl-2 text-[0.85rem] text-text-soft'
       } ${oculta ? 'hidden sm:table-cell' : ''}`}
     >
       {children}
@@ -164,11 +164,11 @@ function Celda({
  */
 function SinTabla({ temporada }: { temporada: string }) {
   return (
-    <div className="max-w-medida border-l-4 border-verde-600 bg-papel-alt py-6 pl-5">
-      <p className="font-body text-[1.05rem] leading-relaxed text-tinta-suave">
+    <div className="max-w-medida border-l-4 border-accent bg-bg-muted py-6 pl-5">
+      <p className="font-body text-[1.05rem] leading-relaxed text-text-soft">
         Todavía no se cargó ninguna fecha de la tabla de {temporada}.
       </p>
-      <p className="mt-3 font-body text-gris">
+      <p className="mt-3 font-body text-text-muted">
         La tabla se carga a mano, fecha por fecha: el medio cubre a Aldosivi y
         no todos los partidos de la zona, así que no se puede calcular desde los
         partidos que hay acá.

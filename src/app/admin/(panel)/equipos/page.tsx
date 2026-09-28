@@ -26,7 +26,7 @@ export default async function Equipos() {
 
         <Link
           href="/admin/equipos/nuevo"
-          className="tactil ml-auto flex items-center gap-2 bg-amarillo px-4 font-display text-[0.9rem] font-extrabold text-negro-cancha hover:bg-amarillo/90"
+          className="tactil ml-auto flex items-center gap-2 bg-accent px-4 font-display text-[0.9rem] font-extrabold text-accent-contrast hover:bg-accent/90"
         >
           <Plus size={16} aria-hidden="true" />
           Equipo nuevo
@@ -43,13 +43,13 @@ export default async function Equipos() {
           {equipos.map((equipo) => (
             <li
               key={equipo.id}
-              className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-linea py-3"
+              className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border py-3"
             >
               {/* El equipo propio se marca con la palabra y con el icono, no
                   con el color solo: es la misma regla que el estado de las
                   notas en `FilaNota`. */}
               {equipo.es_aldosivi && (
-                <span className="meta flex items-center gap-1 bg-verde-900 px-2 py-0.5 text-white">
+                <span className="meta flex items-center gap-1 bg-text px-2 py-0.5 text-bg">
                   <Shield size={12} aria-hidden="true" />
                   Propio
                 </span>
@@ -62,9 +62,9 @@ export default async function Equipos() {
                 {equipo.nombre_corto}
               </Link>
 
-              <span className="text-[0.85rem] text-gris">{equipo.nombre}</span>
+              <span className="text-[0.85rem] text-text-muted">{equipo.nombre}</span>
 
-              <span className="ml-auto flex items-center gap-3 text-[0.85rem] text-gris">
+              <span className="ml-auto flex items-center gap-3 text-[0.85rem] text-text-muted">
                 {equipo.ciudad && <span>{equipo.ciudad}</span>}
                 <Link
                   href={`/admin/equipos/${equipo.id}`}

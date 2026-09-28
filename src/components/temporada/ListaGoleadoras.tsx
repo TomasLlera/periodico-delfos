@@ -21,11 +21,11 @@ interface Props {
 export function ListaGoleadoras({ goleadoras, temporada }: Props) {
   if (goleadoras.length === 0) {
     return (
-      <div className="max-w-medida border-l-4 border-verde-600 bg-papel-alt py-6 pl-5">
-        <p className="font-body text-[1.05rem] leading-relaxed text-tinta-suave">
+      <div className="max-w-medida border-l-4 border-accent bg-bg-muted py-6 pl-5">
+        <p className="font-body text-[1.05rem] leading-relaxed text-text-soft">
           Todavía no hay goles cargados en {temporada}.
         </p>
-        <p className="mt-3 font-body text-gris">
+        <p className="mt-3 font-body text-text-muted">
           Esta lista se arma sola con los goles de cada planilla de partido: no
           se escribe a mano en ningún lado.
         </p>
@@ -36,12 +36,12 @@ export function ListaGoleadoras({ goleadoras, temporada }: Props) {
   return (
     <ol className="flex flex-col">
       {goleadoras.map((goleadora, indice) => (
-        <li key={goleadora.jugadora_id} className="border-b border-linea">
+        <li key={goleadora.jugadora_id} className="border-b border-border">
           <Link
             href={`/jugadora/${goleadora.slug}`}
-            className="group flex items-center gap-3 py-3 transition-colors hover:bg-papel-alt sm:gap-4"
+            className="group flex items-center gap-3 py-3 transition-colors hover:bg-bg-muted sm:gap-4"
           >
-            <span aria-hidden="true" className="dato w-6 shrink-0 text-center text-[0.9rem] text-gris">
+            <span aria-hidden="true" className="dato w-6 shrink-0 text-center text-[0.9rem] text-text-muted">
               {indice + 1}
             </span>
 
@@ -55,23 +55,23 @@ export function ListaGoleadoras({ goleadoras, temporada }: Props) {
             </span>
 
             <span className="min-w-0 flex-1">
-              <span className="block font-display text-[0.8rem] leading-tight text-gris">
+              <span className="block font-display text-[0.8rem] leading-tight text-text-muted">
                 {goleadora.nombre}
               </span>
-              <span className="titular block text-[1.05rem] leading-[1.1] group-hover:text-verde-600">
+              <span className="titular block text-[1.05rem] leading-[1.1] group-hover:text-accent-text">
                 {goleadora.apellido}
               </span>
             </span>
 
             <span className="shrink-0 text-right">
-              <span className="marca block text-[1.6rem] leading-none text-verde-600">
+              <span className="marca block text-[1.6rem] leading-none text-accent-text">
                 {goleadora.goles}
               </span>
               <span className="meta block text-[0.65rem]">
                 {goleadora.goles === 1 ? 'gol' : 'goles'}
               </span>
               {goleadora.de_penal > 0 && (
-                <span className="dato block text-[0.7rem] leading-tight text-gris">
+                <span className="dato block text-[0.7rem] leading-tight text-text-muted">
                   {goleadora.de_penal} de penal
                 </span>
               )}

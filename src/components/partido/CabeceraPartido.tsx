@@ -76,16 +76,16 @@ export function CabeceraPartido({
       />
 
       <span
-        className={`dato whitespace-nowrap font-bold leading-none tracking-tight text-tinta ${medida.marcador}`}
+        className={`dato whitespace-nowrap font-bold leading-none tracking-tight text-text ${medida.marcador}`}
       >
         {hayResultado ? (
           <>
             {lados.golesIzquierda}
-            <span className="px-1 font-normal text-gris sm:px-2">–</span>
+            <span className="px-1 font-normal text-text-muted sm:px-2">–</span>
             {lados.golesDerecha}
           </>
         ) : (
-          <span className="font-display font-semibold uppercase text-gris">
+          <span className="font-display font-semibold uppercase text-text-muted">
             vs
           </span>
         )}
@@ -114,8 +114,8 @@ function Equipo({
 }) {
   const derecha = alineacion === 'derecha'
 
-  // Aldosivi va en verde y más pesado. El verde 600 se aclara en modo oscuro
-  // (token --color-verde-600), así que mantiene AA en los dos temas.
+  // Aldosivi va en dorado y más pesado. `--accent-text` se aclara en modo oscuro
+  // (5.09:1 en claro, 7.90:1 en oscuro), así que mantiene AA en los dos temas.
   // `truncate` y no sólo `min-w-0` en el padre: `min-w-0` deja que la caja se
   // encoja, pero el texto se sale igual si la palabra no tiene dónde cortarse.
   // "DEFENSORES" y "COMUNICACIONES" cruzaban el borde de la tarjeta del fixture
@@ -125,8 +125,8 @@ function Equipo({
     'block truncate font-display uppercase leading-tight tracking-[0.02em]',
     medida.nombre,
     equipo.es_aldosivi
-      ? 'font-bold text-verde-600'
-      : 'font-semibold text-tinta',
+      ? 'font-bold text-accent-text'
+      : 'font-semibold text-text',
   ].join(' ')
 
   const escudo = <EscudoEquipo equipo={equipo} tamano={medida.escudo} />

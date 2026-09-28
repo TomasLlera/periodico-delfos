@@ -36,7 +36,7 @@ export function LineaDeTiempo({ partido }: Props) {
 
   if (grupos.length === 0) {
     return (
-      <p className="py-6 text-center font-display text-sm text-gris">
+      <p className="py-6 text-center font-display text-sm text-text-muted">
         {partido.estado === 'programado'
           ? 'El partido todavía no se jugó.'
           : 'Sin goles ni tarjetas cargadas en este partido.'}
@@ -84,7 +84,7 @@ export function LineaDeTiempo({ partido }: Props) {
         tabIndex={0}
         role="group"
         aria-label="Línea de tiempo del partido, minuto a minuto"
-        className="relative -mx-4 overflow-x-auto px-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-600 sm:mx-0 sm:px-0"
+        className="relative -mx-4 overflow-x-auto px-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-text sm:mx-0 sm:px-0"
       >
         <ol className="grid w-max min-w-full auto-cols-[minmax(4.75rem,1fr)] grid-flow-col grid-rows-[1fr_auto_1fr]">
           {grupos.map((grupo) => (
@@ -104,9 +104,9 @@ export function LineaDeTiempo({ partido }: Props) {
 
               <span
                 aria-hidden="true"
-                className="flex items-center justify-center border-y border-linea bg-papel-alt"
+                className="flex items-center justify-center border-y border-border bg-bg-muted"
               >
-                <span className="dato px-1 py-1 text-[12px] font-medium text-gris sm:text-[13px]">
+                <span className="dato px-1 py-1 text-[12px] font-medium text-text-muted sm:text-[13px]">
                   {grupo.etiqueta}
                 </span>
               </span>

@@ -143,7 +143,7 @@ export default async function PaginaJugadora({ params }: Params) {
 
         <section aria-labelledby="estadisticas" className="mt-12">
           <div className="flex items-center gap-3">
-            <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-verde-600" />
+            <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-accent" />
             <h2 id="estadisticas" className="titular text-[22px]">
               Temporada a temporada
             </h2>
@@ -156,12 +156,12 @@ export default async function PaginaJugadora({ params }: Params) {
 
         <section aria-labelledby="goles" className="mt-12">
           <div className="flex items-center gap-3">
-            <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-verde-600" />
+            <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-accent" />
             <h2 id="goles" className="titular text-[22px]">
               Sus goles
             </h2>
             {goles.length > 0 && (
-              <span className="dato text-[0.8rem] text-gris">{goles.length}</span>
+              <span className="dato text-[0.8rem] text-text-muted">{goles.length}</span>
             )}
           </div>
 

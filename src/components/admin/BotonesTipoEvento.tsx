@@ -44,8 +44,8 @@ export function BotonesTipoEvento({ elegido, onElegir }: Props) {
             aria-pressed={activo}
             className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-sm border font-display text-[0.95rem] font-extrabold ${
               activo
-                ? 'border-verde-900 bg-verde-900 text-white'
-                : 'border-linea-fuerte bg-tarjeta hover:border-verde-600'
+                ? 'border-text bg-text text-bg'
+                : 'border-border-control bg-bg-elevated hover:border-accent-text'
             }`}
           >
             <IconoEvento tipo={tipo} className="h-5 w-5" />

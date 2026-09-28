@@ -65,7 +65,8 @@ en el request.
   `PlanillaPartido` (es plegable), `NavPrincipal` (necesita la ruta actual para
   `aria-current`) y `FechaDeHoy` (la portada se prerenderiza y la fecha se
   congelaría en el build) y `Ventana` (`<dialog>` nativo: `showModal()` es lo
-  que da trampa de foco, Escape y foco restaurado sin escribirlos), más todo
+  que da trampa de foco, Escape y foco restaurado sin escribirlos),
+  `ProveedorTema` y `ToggleTema` (el tema claro/oscuro), más todo
   `/admin` cuando exista. **El buscador no es
   cliente**: es un `<form method="get">` que anda sin JS.
 - Todas las queries en `lib/supabase/queries/*`. Nunca inline en un componente.
@@ -88,29 +89,44 @@ en el request.
 6. **Los iconos salen de `lucide-react`.** Nada de SVG dibujado a mano salvo que
    lucide no tenga el glifo — hoy la única excepción es la pelota de fútbol, que
    no existe en la biblioteca (ver `IconoEvento.tsx`). Colorearlos con las
-   utilidades del tema (`stroke-roja`, `fill-amarillo`), no con atributos SVG:
+   utilidades del tema (`stroke-danger`, `fill-card-yellow`), no con atributos SVG:
    la clase le gana al atributo y el token se redefine solo en tema oscuro.
 
 ## Design System
 
-**El tema por omisión es el claro**: el crema de los dos bocetos que trajo el
-usuario, guardados en `referencia/boceto-portada.html` y
-`referencia/boceto-cronica.html`. El oscuro existe como variante en
-`@media (prefers-color-scheme: dark)` y está medido a AA entero. Los valores
-viven en `@theme` de `globals.css`; los componentes usan siempre las utilidades
-semánticas (`bg-papel`, `text-tinta`, `border-linea`) y nunca un color fijo, que
-es lo que permite revestir el sitio entero cambiando sólo los tokens — quedó
-demostrado al invertir el tema sin tocar un solo componente.
+**Diario digital sobrio: crema, tinta y dorado, con modo claro y oscuro.** Los
+valores viven como variables CSS en `src/app/globals.css` (`:root` para el claro,
+`[data-theme='dark']` para el oscuro) y `@theme inline` las mapea 1:1 a
+utilidades de Tailwind: `bg-bg`, `text-text-muted`, `border-border-strong`. Los
+componentes usan siempre esas utilidades y **nunca un color fijo**. La paleta
+por omisión de Tailwind está apagada (`--color-*: initial`): `text-white` o
+`bg-green-900` no generan CSS.
 
-- Claro: Papel `#F6F3EA` · Papel alt `#EFEBDF` · Tarjeta `#FFFFFF`
-  · Verde 900 `#0F3B2A` · Verde 600 `#1C5A3E` · Negro cancha `#092619`
-  · Amarillo `#F2A900` · Tinta `#111511` · Gris `#5F645E` · Línea `#DDD8CB`
-  · Roja `#C42127`
-- Oscuro: Papel `#111418` · Tarjeta `#1E2228` · Verde 900 `#102A1E`
-  · Verde 600 `#00A859` · Negro cancha `#0B0D0F` · Amarillo `#F5A623`
-  · Tinta `#F9FAFB` · Gris `#9CA3AF` · Línea `#2A303A` · Roja `#EF4444`
-- **`verde-900` es una superficie, no un acento**: es el bloque verde de la
-  cabecera, la tapa y el aside. Lleva texto blanco en los dos temas.
+- Tokens por función, no por color: `bg`, `bg-elevated` (tarjetas),
+  `bg-muted` (avisos), `text`, `text-soft` (copetes), `text-muted`, `border`,
+  `border-strong` (filete bajo los títulos de sección), `border-control`
+  (límite de inputs y botones, 3:1), `accent` (dorado de filetes y fondos de
+  botón), `accent-text` (dorado para texto y links), `accent-contrast` (texto
+  sobre dorado), `score-bg`/`score-text` (marcador), `danger` (sólo tarjeta
+  roja y errores), `card-yellow`, `overlay`.
+- **Detalles y acentos van en gris y dorado.** El rojo queda para la tarjeta
+  roja y los errores del admin; un resultado se pinta dorado (victoria), gris
+  (empate) o tinta (derrota).
+- **`accent` nunca es texto sobre crema** (2.68:1). Texto, links y el
+  outline de foco van en `accent-text`.
+- **Bloques oscuros** —cabecera, ticker, pie, nota de tapa, "El Plantel",
+  cabecera de jugadora— usan `block-bg`/`block-text`/`block-accent` (la
+  cabecera, sus alias `header-bg`/`header-text`). Son oscuros en los dos
+  temas, así que su texto no depende del tema. `block-border` los separa de la
+  página en oscuro.
+- **Seleccionado y botón primario** van invertidos: `bg-text text-bg`. En
+  oscuro un bloque `#181818` sobre `#0E0E0E` no se ve como botón.
+- El tema lo maneja `next-themes` (`ProveedorTema`): sigue al sistema hasta
+  que alguien toca `ToggleTema`, y la elección queda en `localStorage`
+  (`tema`). Sin JS manda el media query. `oscuro:` es la variante para lo que
+  cambia de forma entre temas (el icono sol/luna), no para colores.
+- Los colores que JS necesita como valor (imagen OG, `theme-color`) están en
+  `src/lib/colores.ts`, atados a `globals.css` por `colores.test.ts`.
 - Titulares: Archivo · Cuerpo: Source Serif 4 · Datos: IBM Plex Mono.
   Los bocetos usan JetBrains Mono para los datos; **la decisión no está tomada**
   y hasta que lo esté vale IBM Plex, que es la del blueprint y la que está
@@ -126,14 +142,13 @@ demostrado al invertir el tema sin tocar un solo componente.
   rediseño no toca el cuerpo de la nota**: entra en chrome, portada, listados y
   componentes.
 - **Los títulos del cuerpo siempre miden más que el cuerpo**: `h2` 22/28px con
-  filete verde, `h3` 20/22px, y `h4` como volanta (caja alta, 0.95rem). El `h3`
+  filete `border-strong`, `h3` 20/22px, y `h4` como volanta (caja alta, 0.95rem). El `h3`
   medía 18px —menos que el cuerpo en desktop— hasta que se miró `/demo/nota`.
 - Radius 2–4px (tarjetas 8px). Espaciado base 4px. Mobile-first a 375px. Áreas
   táctiles 44px (clase `.tactil`)
 - **Todo color nuevo se verifica a AA antes de entrar**, con la fórmula de WCAG
-  y no a ojo. La única excepción a "nunca un color fijo" es el texto sobre los
-  bloques verdes, que va en blanco con alfa (`text-white/70`): esa superficie es
-  oscura en los dos temas, así que el blanco no depende del tema sino del fondo.
+  y no a ojo, en los dos temas. Los ratios de cada par están comentados junto
+  al token en `globals.css`.
 
 ## Reglas No Negociables
 

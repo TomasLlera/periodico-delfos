@@ -142,7 +142,7 @@ export default async function Portada() {
         {tapa ? (
           <NotaTapa nota={tapa} />
         ) : (
-          <p className="mt-8 border-l-4 border-verde-600 bg-papel-alt py-6 pl-5 font-body text-gris">
+          <p className="mt-8 border-l-4 border-accent bg-bg-muted py-6 pl-5 font-body text-text-muted">
             Todavía no hay ninguna nota publicada. La primera que se publique
             abre la portada.
           </p>

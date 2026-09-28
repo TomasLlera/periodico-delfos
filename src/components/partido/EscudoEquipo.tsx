@@ -37,7 +37,7 @@ export function EscudoEquipo({ equipo, tamano = 32 }: Props) {
   return (
     <span
       aria-hidden="true"
-      className="flex shrink-0 items-center justify-center rounded-full bg-verde-100 font-display font-semibold leading-none text-verde-600"
+      className="flex shrink-0 items-center justify-center rounded-full bg-bg-muted font-display font-semibold leading-none text-accent-text"
       style={{ width: lado, height: lado, fontSize: `calc(${lado} * 0.36)` }}
     >
       {iniciales(equipo.nombre_corto)}

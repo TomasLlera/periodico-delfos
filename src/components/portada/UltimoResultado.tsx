@@ -67,16 +67,16 @@ export function UltimoResultado({ id, partido, eventos, rutaBase = '/partido' }:
   return (
     <section
       aria-labelledby={id}
-      className="mt-[1.4rem] border border-linea bg-tarjeta px-4 py-2 text-center"
+      className="mt-[1.4rem] border border-border bg-bg-elevated px-4 py-2 text-center"
     >
       <h2 id={id} className="sr-only">
         Último resultado. {tituloAccesible(partido)}
       </h2>
 
       {/* Renglón 1: de qué partido se trata y en qué estado está. */}
-      <p className="meta flex flex-wrap items-baseline justify-center gap-x-2 text-[0.6rem] text-gris">
+      <p className="meta flex flex-wrap items-baseline justify-center gap-x-2 text-[0.6rem] text-text-muted">
         <span>{etiquetaFecha(partido)}</span>
-        <span className="text-verde-600">{ETIQUETA_ESTADO[partido.estado]}</span>
+        <span className="text-accent-text">{ETIQUETA_ESTADO[partido.estado]}</span>
       </p>
 
       {/* Renglón 2: el marcador. `minmax(0,1fr)` en los nombres para que uno
@@ -86,21 +86,21 @@ export function UltimoResultado({ id, partido, eventos, rutaBase = '/partido' }:
         aria-hidden="true"
         className="mt-0.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3"
       >
-        <span className="block min-w-0 truncate text-right font-display text-[clamp(0.8rem,2.6vw,1rem)] font-extrabold uppercase leading-none text-tinta">
+        <span className="block min-w-0 truncate text-right font-display text-[clamp(0.8rem,2.6vw,1rem)] font-extrabold uppercase leading-none text-text">
           {lados.izquierda.nombre_corto}
         </span>
 
         {hayResultado ? (
-          <span className="dato bg-tinta px-2 py-[0.15rem] text-[clamp(1.05rem,3.4vw,1.45rem)] font-medium leading-none tracking-[-0.03em] text-amarillo">
+          <span className="dato bg-score-bg px-2 py-[0.15rem] text-[clamp(1.05rem,3.4vw,1.45rem)] font-medium leading-none tracking-[-0.03em] text-score-text">
             {lados.golesIzquierda}-{lados.golesDerecha}
           </span>
         ) : (
-          <span className="font-display text-[0.9rem] font-semibold uppercase leading-none text-gris">
+          <span className="font-display text-[0.9rem] font-semibold uppercase leading-none text-text-muted">
             vs
           </span>
         )}
 
-        <span className="block min-w-0 truncate text-left font-display text-[clamp(0.8rem,2.6vw,1rem)] font-extrabold uppercase leading-none text-tinta">
+        <span className="block min-w-0 truncate text-left font-display text-[clamp(0.8rem,2.6vw,1rem)] font-extrabold uppercase leading-none text-text">
           {lados.derecha.nombre_corto}
         </span>
       </div>
@@ -113,7 +113,7 @@ export function UltimoResultado({ id, partido, eventos, rutaBase = '/partido' }:
             <GolesDe equipo={lados.derecha.nombre_corto} goles={golesDerecha} />
             <Link
               href={`${rutaBase}/${partido.slug}`}
-              className="font-display font-bold text-verde-600 underline underline-offset-[3px]"
+              className="font-display font-bold text-accent-text underline underline-offset-[3px]"
             >
               {restantes > 0 ? `+${restantes} y la planilla` : 'La planilla'}
             </Link>
@@ -122,7 +122,7 @@ export function UltimoResultado({ id, partido, eventos, rutaBase = '/partido' }:
           // Un partido puede estar cargado sin planilla: el resultado entra
           // primero y los goles se cargan después. Sin planilla el link no
           // lleva a nada que no se esté viendo ya, así que no se dibuja.
-          <span className="meta border border-linea px-1.5 text-[0.6rem] leading-[1.6] text-gris">
+          <span className="meta border border-border px-1.5 text-[0.6rem] leading-[1.6] text-text-muted">
             Planilla pendiente
           </span>
         )}
@@ -147,8 +147,8 @@ function GolesDe({
   if (goles.length === 0) return null
 
   return (
-    <span className="text-gris">
-      <span className="font-display font-bold text-tinta">{equipo}</span>{' '}
+    <span className="text-text-muted">
+      <span className="font-display font-bold text-text">{equipo}</span>{' '}
       {goles.map((gol, i) => (
         <span key={gol.clave}>
           <span className="sr-only">{gol.accesible}</span>

@@ -33,7 +33,7 @@ export default function DemoNota() {
         <h1 className="mt-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
           &lt;CuerpoTipTap /&gt;
         </h1>
-        <p className="prose-nota mt-4 text-gris">
+        <p className="prose-nota mt-4 text-text-muted">
           Esta página no se indexa y no llega a producción. Está para mirar cómo
           cae cada nodo del cuerpo dentro de la medida de 68ch, y para comprobar
           que un documento mal cargado se degrada en vez de romper la nota. Las
@@ -59,7 +59,7 @@ export default function DemoNota() {
           titulo="3 · Un cuerpo que no es un documento"
           nota="Lo que quedaría si una fila trajera el HTML crudo de WordPress. La validación no lo deja pasar y el renderer no devuelve nada: hueco, no pantalla de error. La página que lo use decide qué escribir en su lugar."
         >
-          <div className="border border-dashed border-linea p-4">
+          <div className="border border-dashed border-border p-4">
             <CuerpoTipTap cuerpo={'<p>Un párrafo de WordPress</p>'} partidos={PARTIDOS} />
             <p className="meta">↑ El recuadro está vacío a propósito.</p>
           </div>
@@ -82,10 +82,10 @@ function Seccion({
 }) {
   return (
     <section className="mt-14">
-      <h2 className="border-t-[3px] border-verde-600 pt-2 font-display text-[22px] font-semibold">
+      <h2 className="border-t-[3px] border-accent-text pt-2 font-display text-[22px] font-semibold">
         {titulo}
       </h2>
-      <p className="mt-1 max-w-[68ch] font-display text-[13px] leading-relaxed text-gris">
+      <p className="mt-1 max-w-[68ch] font-display text-[13px] leading-relaxed text-text-muted">
         {nota}
       </p>
       <div className="mt-5">{children}</div>

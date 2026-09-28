@@ -11,9 +11,9 @@
  */
 
 const ESTILO = {
-  neutro: 'border-linea-fuerte bg-papel-alt',
-  atencion: 'border-amarillo bg-papel-alt',
-  error: 'border-roja bg-papel-alt',
+  neutro: 'border-border-control bg-bg-muted',
+  atencion: 'border-accent bg-bg-muted',
+  error: 'border-danger bg-bg-muted',
 } as const
 
 export type TonoAviso = keyof typeof ESTILO

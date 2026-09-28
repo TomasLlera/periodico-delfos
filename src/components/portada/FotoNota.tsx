@@ -52,8 +52,8 @@ export function FotoNota({
       aria-hidden="true"
       className={`${aspecto} w-full ${
         variante === 'oscuro'
-          ? 'bg-verde-600/25 text-white/10'
-          : 'bg-papel-alt text-tinta/10'
+          ? 'bg-block-text/10 text-block-text/10'
+          : 'bg-bg-muted text-text/10'
       }`}
       style={{
         backgroundImage:

@@ -25,7 +25,7 @@ export function BotonLado({ activo, onClick, children }: Props) {
       onClick={onClick}
       aria-pressed={activo}
       className={`tactil flex-1 px-3 font-display text-[0.9rem] font-bold ${
-        activo ? 'bg-verde-900 text-white' : 'border border-linea-fuerte hover:bg-papel-alt'
+        activo ? 'bg-text text-bg' : 'border border-border-control hover:bg-bg-muted'
       }`}
     >
       {children}

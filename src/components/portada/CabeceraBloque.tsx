@@ -32,7 +32,7 @@ export function CabeceraBloque({ id, titulo, enlace, nivel = 2 }: Props) {
     // —donde vive `<Goleadoras />`— "La tabla completa" se salía del filete y
     // quedaba cortado contra el borde. Se veía a 1024px y a 320px, que son los
     // dos anchos donde esa columna se pone más flaca.
-    <div className="mb-6 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b-[3px] border-tinta pb-2">
+    <div className="mb-6 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b-[3px] border-border-strong pb-2">
       <Titulo id={id} className="marca min-w-0 text-[1.6rem] uppercase md:text-[1.9rem]">
         {titulo}
       </Titulo>
@@ -40,7 +40,7 @@ export function CabeceraBloque({ id, titulo, enlace, nivel = 2 }: Props) {
       {enlace && (
         <Link
           href={enlace.href}
-          className="font-display text-[0.85rem] font-bold text-verde-600 underline underline-offset-[3px]"
+          className="font-display text-[0.85rem] font-bold text-accent-text underline underline-offset-[3px]"
         >
           {enlace.texto}
         </Link>

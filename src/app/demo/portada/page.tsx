@@ -72,7 +72,7 @@ export default function DemoPortada() {
         {/* Abajo y en una línea: la advertencia tiene que estar —esta ruta no
             se indexa y no llega a producción— pero no adelante de la tapa, que
             es lo que la portada tiene que mostrar primero. */}
-        <p className="mt-10 border-t border-linea pt-4 font-display text-[0.8rem] text-gris">
+        <p className="mt-10 border-t border-border pt-4 font-display text-[0.8rem] text-text-muted">
           Banco de pruebas · no se indexa y no llega a producción. Las notas son
           las de verdad, leídas del sitio viejo con el script de migración; la
           portada real sigue leyendo la base, que hoy está vacía.

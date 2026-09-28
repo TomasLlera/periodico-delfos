@@ -34,7 +34,7 @@ export function TarjetaNota({ nota, destacada = false }: Props) {
         }
       />
 
-      <p className="mt-[0.9rem] w-fit border-l-4 border-verde-600 pl-[0.6rem] font-display text-[0.7rem] font-extrabold uppercase leading-none tracking-[0.1em] text-verde-600">
+      <p className="mt-[0.9rem] w-fit border-l-4 border-accent pl-[0.6rem] font-display text-[0.7rem] font-extrabold uppercase leading-none tracking-[0.1em] text-accent-text">
         {etiquetaCategoria(nota.categoria)}
       </p>
 
@@ -43,17 +43,17 @@ export function TarjetaNota({ nota, destacada = false }: Props) {
           destacada ? 'max-w-[22ch] text-[1.6rem] md:text-[1.9rem]' : 'text-[1.3rem]'
         }`}
       >
-        <Link href={`/nota/${nota.slug}`} className="group-hover:text-verde-600">
+        <Link href={`/nota/${nota.slug}`} className="group-hover:text-accent-text">
           {nota.titulo}
         </Link>
       </h3>
 
-      <p className="mt-2 font-body text-[0.95rem] leading-snug text-tinta-suave">
+      <p className="mt-2 font-body text-[0.95rem] leading-snug text-text-soft">
         {nota.bajada}
       </p>
 
-      <p className="mt-[0.7rem] flex flex-wrap items-center gap-x-4 font-display text-[0.8rem] text-gris">
-        <span className="text-tinta">{nota.autor.nombre}</span>
+      <p className="mt-[0.7rem] flex flex-wrap items-center gap-x-4 font-display text-[0.8rem] text-text-muted">
+        <span className="text-text">{nota.autor.nombre}</span>
         {nota.publicada_en && <span className="dato">{fechaCorta(nota.publicada_en)}</span>}
       </p>
     </article>

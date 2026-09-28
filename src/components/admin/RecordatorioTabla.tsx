@@ -50,7 +50,7 @@ export function RecordatorioTabla({ temporadaId, fechas }: Props) {
           <Link
             key={fecha}
             href={`/admin/tabla/${temporadaId}?fecha=${fecha}`}
-            className="tactil inline-flex items-center border border-linea-fuerte bg-tarjeta px-3 font-display text-[0.85rem] font-bold hover:bg-papel"
+            className="tactil inline-flex items-center border border-border-control bg-bg-elevated px-3 font-display text-[0.85rem] font-bold hover:bg-bg"
           >
             Cargar la fecha {fecha}
           </Link>

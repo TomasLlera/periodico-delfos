@@ -45,7 +45,7 @@ export function EventoPlanilla({ evento, alineacion }: Props) {
         </Linea>
         <Linea justificar={justificar}>
           <IconoEvento tipo="sale" />
-          <span className="min-w-0 text-gris">{apellidoQueSale(evento)}</span>
+          <span className="min-w-0 text-text-muted">{apellidoQueSale(evento)}</span>
         </Linea>
         <Detalle texto={evento.detalle} />
       </span>
@@ -62,7 +62,7 @@ export function EventoPlanilla({ evento, alineacion }: Props) {
             de desbordar su columna en una pantalla muy angosta. */}
         <span className="min-w-0">
           {apellidoDeEvento(evento)}
-          {sufijo && <span className="ml-1 text-gris">{sufijo}</span>}
+          {sufijo && <span className="ml-1 text-text-muted">{sufijo}</span>}
         </span>
       </Linea>
       <Detalle texto={evento.detalle} />
@@ -79,7 +79,7 @@ function Linea({
 }) {
   return (
     <span
-      className={`flex min-w-0 items-center gap-1.5 text-[13px] leading-snug text-balance text-tinta sm:text-sm ${justificar}`}
+      className={`flex min-w-0 items-center gap-1.5 text-[13px] leading-snug text-balance text-text sm:text-sm ${justificar}`}
     >
       {children}
     </span>
@@ -89,7 +89,7 @@ function Linea({
 function Detalle({ texto }: { texto: string | null }) {
   if (!texto?.trim()) return null
   return (
-    <span className="text-[11px] italic leading-snug text-gris">
+    <span className="text-[11px] italic leading-snug text-text-muted">
       {texto.trim()}
     </span>
   )

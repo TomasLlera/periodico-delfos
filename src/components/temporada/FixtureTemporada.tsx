@@ -25,11 +25,11 @@ export function FixtureTemporada({ partidos, temporada }: Props) {
 
   if (partidos.length === 0) {
     return (
-      <div className="max-w-medida border-l-4 border-verde-600 bg-papel-alt py-6 pl-5">
-        <p className="font-body text-[1.05rem] leading-relaxed text-tinta-suave">
+      <div className="max-w-medida border-l-4 border-accent bg-bg-muted py-6 pl-5">
+        <p className="font-body text-[1.05rem] leading-relaxed text-text-soft">
           Todavía no hay partidos cargados en {temporada}.
         </p>
-        <p className="mt-3 font-body text-gris">
+        <p className="mt-3 font-body text-text-muted">
           Cada partido se carga desde el admin con su planilla, y de ahí salen
           solos el fixture, las goleadoras y las estadísticas de cada jugadora.
         </p>
@@ -64,17 +64,17 @@ function Bloque({
   return (
     <section aria-labelledby={id}>
       <div className="flex items-center gap-3">
-        <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-verde-600" />
+        <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-accent" />
         <h2 id={id} className="titular text-[22px]">
           {titulo}
         </h2>
-        <span className="dato text-[0.8rem] text-gris">{partidos.length}</span>
+        <span className="dato text-[0.8rem] text-text-muted">{partidos.length}</span>
       </div>
 
       <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {partidos.map((partido) => (
           <li key={partido.id}>
-            <PlanillaCompacta partido={partido} className="h-full bg-tarjeta" />
+            <PlanillaCompacta partido={partido} className="h-full bg-bg-elevated" />
           </li>
         ))}
       </ul>
@@ -106,7 +106,7 @@ function Balance({ balance }: { balance: ReturnType<typeof balanceAldosivi> }) {
   ]
 
   return (
-    <section aria-labelledby="balance" className="bg-verde-900 p-6 text-white">
+    <section aria-labelledby="balance" className="border border-block-border bg-block-bg p-6 text-block-text">
       <h2 id="balance" className="marca text-[1.3rem] uppercase">
         Campaña
       </h2>
@@ -124,8 +124,8 @@ function Balance({ balance }: { balance: ReturnType<typeof balanceAldosivi> }) {
             {/* `.meta` y no `.dato`: en minúscula y en monoespaciada las
                 etiquetas se leían como texto de debug al pie de cada número.
                 En caja alta con tracking son rótulos, que es lo que son. */}
-            <dt className="meta text-[0.6rem] leading-tight text-white/60">{dato.etiqueta}</dt>
-            <dd className="marca text-[1.5rem] leading-none text-amarillo sm:text-[1.7rem]">
+            <dt className="meta text-[0.6rem] leading-tight text-block-text/60">{dato.etiqueta}</dt>
+            <dd className="marca text-[1.5rem] leading-none text-block-accent sm:text-[1.7rem]">
               {dato.valor}
             </dd>
           </div>
@@ -136,7 +136,7 @@ function Balance({ balance }: { balance: ReturnType<typeof balanceAldosivi> }) {
           necesaria —estos números y los de la pestaña "Tabla" pueden no
           coincidir— pero es una nota al pie, no el encabezado del bloque: de
           bajada pesaba más que los datos que venía a explicar. */}
-      <p className="mt-4 font-body text-[0.78rem] leading-snug text-white/50">
+      <p className="mt-4 font-body text-[0.78rem] leading-snug text-block-text/50">
         Contado desde los partidos que cubrió el medio, no desde la tabla.
       </p>
     </section>

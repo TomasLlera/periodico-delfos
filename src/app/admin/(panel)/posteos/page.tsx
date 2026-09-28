@@ -58,7 +58,7 @@ export default async function Posteos() {
           {[...porNota.entries()].map(([notaId, filas]) => (
             <li key={notaId}>
               <div className="mb-1 flex flex-wrap items-center gap-3">
-                <h2 className="meta text-gris">
+                <h2 className="meta text-text-muted">
                   {filas[0].nota?.titulo ?? filas[0].nota_slug}
                 </h2>
                 <span className="ml-auto">
@@ -79,7 +79,7 @@ export default async function Posteos() {
         </ul>
       )}
 
-      <p className="mt-8 border-t border-linea pt-4 text-[0.85rem] text-gris">
+      <p className="mt-8 border-t border-border pt-4 text-[0.85rem] text-text-muted">
         Reintentar vuelve a disparar el pipeline: destraba lo que quedó en curso y reintenta lo
         que falló. <strong>Lo que ya se publicó no se vuelve a publicar.</strong> Las redes de
         cada nota se eligen en{' '}

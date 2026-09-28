@@ -61,7 +61,7 @@ export default function DemoWidgets() {
         <h1 className="mt-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
           Los widgets deportivos
         </h1>
-        <p className="prose-nota mt-4 text-gris">
+        <p className="prose-nota mt-4 text-text-muted">
           Esta página no se indexa y no llega a producción. El último resultado,
           la franja y las goleadoras son <strong>los de verdad</strong>, leídos
           de las doce crónicas del sitio viejo; la posición en la tabla es lo
@@ -98,11 +98,11 @@ export default function DemoWidgets() {
         <section aria-labelledby="demo-vacios" className="mt-16">
           <h2
             id="demo-vacios"
-            className="marca border-b-[3px] border-tinta pb-2 text-[1.6rem] uppercase"
+            className="marca border-b-[3px] border-border-strong pb-2 text-[1.6rem] uppercase"
           >
             Los estados vacíos
           </h2>
-          <p className="prose-nota mt-4 text-gris">
+          <p className="prose-nota mt-4 text-text-muted">
             Es lo que ve alguien que entra el día que arranca la temporada. La
             barra de estado no aparece —una franja fija que dice &laquo;todavía
             no hay nada&raquo; arriba de todas las páginas es ruido—, y los

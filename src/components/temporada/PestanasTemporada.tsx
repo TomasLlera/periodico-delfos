@@ -24,7 +24,7 @@ const BASE =
 export function PestanasTemporada({ slug, actual }: Props) {
   return (
     // Igual que la nav del header: en 375px scrollea en lugar de apilarse.
-    <nav aria-label="Vistas de la temporada" className="border-b border-linea">
+    <nav aria-label="Vistas de la temporada" className="border-b border-border">
       <ul className="-mx-4 flex overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {PESTANAS.map((pestana) => {
           const activa = pestana.clave === actual
@@ -40,8 +40,8 @@ export function PestanasTemporada({ slug, actual }: Props) {
                 aria-current={activa ? 'page' : undefined}
                 className={
                   activa
-                    ? `${BASE} border-verde-600 text-verde-600`
-                    : `${BASE} border-transparent text-gris hover:text-tinta`
+                    ? `${BASE} border-accent-text text-accent-text`
+                    : `${BASE} border-transparent text-text-muted hover:text-text`
                 }
               >
                 {pestana.titulo}

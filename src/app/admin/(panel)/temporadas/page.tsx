@@ -25,7 +25,7 @@ export default async function Temporadas() {
 
         <Link
           href="/admin/temporadas/nueva"
-          className="tactil ml-auto flex items-center gap-2 bg-amarillo px-4 font-display text-[0.9rem] font-extrabold text-negro-cancha hover:bg-amarillo/90"
+          className="tactil ml-auto flex items-center gap-2 bg-accent px-4 font-display text-[0.9rem] font-extrabold text-accent-contrast hover:bg-accent/90"
         >
           <Plus size={16} aria-hidden="true" />
           Temporada nueva
@@ -40,10 +40,10 @@ export default async function Temporadas() {
       ) : (
         <ul>
           {temporadas.map((temporada) => (
-            <li key={temporada.id} className="border-b border-linea py-3">
+            <li key={temporada.id} className="border-b border-border py-3">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 {temporada.activa && (
-                  <span className="meta bg-verde-900 px-2 py-0.5 text-white">En curso</span>
+                  <span className="meta bg-text px-2 py-0.5 text-bg">En curso</span>
                 )}
 
                 <Link
@@ -54,12 +54,12 @@ export default async function Temporadas() {
                 </Link>
 
                 {temporada.zona && (
-                  <span className="text-[0.85rem] text-gris">{temporada.zona}</span>
+                  <span className="text-[0.85rem] text-text-muted">{temporada.zona}</span>
                 )}
 
                 <Link
                   href={`/admin/temporadas/${temporada.id}`}
-                  className="tactil ml-auto flex items-center gap-1 text-[0.85rem] text-gris hover:underline"
+                  className="tactil ml-auto flex items-center gap-1 text-[0.85rem] text-text-muted hover:underline"
                 >
                   <Pencil size={14} aria-hidden="true" />
                   Editar
@@ -71,7 +71,7 @@ export default async function Temporadas() {
               <div className="mt-2 flex flex-wrap gap-2">
                 <Link
                   href={`/admin/plantel/${temporada.id}`}
-                  className="tactil flex items-center gap-2 border border-linea-fuerte px-3 font-display text-[0.85rem] font-bold hover:bg-papel-alt"
+                  className="tactil flex items-center gap-2 border border-border-control px-3 font-display text-[0.85rem] font-bold hover:bg-bg-muted"
                 >
                   <Users size={14} aria-hidden="true" />
                   Plantel
@@ -79,7 +79,7 @@ export default async function Temporadas() {
 
                 <Link
                   href={`/admin/tabla/${temporada.id}`}
-                  className="tactil flex items-center gap-2 border border-linea-fuerte px-3 font-display text-[0.85rem] font-bold hover:bg-papel-alt"
+                  className="tactil flex items-center gap-2 border border-border-control px-3 font-display text-[0.85rem] font-bold hover:bg-bg-muted"
                 >
                   <ListOrdered size={14} aria-hidden="true" />
                   Tabla de posiciones

@@ -56,7 +56,7 @@ export default function DemoJugadora() {
         <h1 className="mt-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
           La ficha de una jugadora
         </h1>
-        <p className="prose-nota mt-4 text-gris">
+        <p className="prose-nota mt-4 text-text-muted">
           Esta página no se indexa y no llega a producción, pero la campaña de
           Morena Larea es <strong>la de verdad</strong>, contada de las doce
           crónicas: goleadora del torneo con ocho goles, titular en todas las
@@ -85,7 +85,7 @@ export default function DemoJugadora() {
 
         <section aria-labelledby="demo-estadisticas" className="mt-12">
           <div className="flex items-center gap-3">
-            <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-verde-600" />
+            <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-accent" />
             <h2 id="demo-estadisticas" className="titular text-[22px]">
               Temporada a temporada
             </h2>
@@ -97,11 +97,11 @@ export default function DemoJugadora() {
 
         <section aria-labelledby="demo-goles" className="mt-12">
           <div className="flex items-center gap-3">
-            <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-verde-600" />
+            <span aria-hidden="true" className="h-7 w-2.5 shrink-0 rounded-sm bg-accent" />
             <h2 id="demo-goles" className="titular text-[22px]">
               Sus goles
             </h2>
-            <span className="dato text-[0.8rem] text-gris">{golesDemo.length}</span>
+            <span className="dato text-[0.8rem] text-text-muted">{golesDemo.length}</span>
           </div>
           <div className="mt-5 max-w-[720px]">
             <ListaGoles goles={golesDemo} />

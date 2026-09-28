@@ -74,7 +74,7 @@ export default async function PaginaPlantel({ params }: Params) {
       <Header />
 
       <main className="contenedor py-10">
-        <div className="border-b-[3px] border-tinta pb-3">
+        <div className="border-b-[3px] border-border-strong pb-3">
           <p className="meta">
             {temporada.nombre}
             {plantel.length > 0 &&
@@ -84,7 +84,7 @@ export default async function PaginaPlantel({ params }: Params) {
             <h1 className="marca text-[1.8rem] uppercase md:text-[2.3rem]">Plantel</h1>
             <Link
               href={`/temporada/${temporada.slug}`}
-              className="shrink-0 font-display text-[0.85rem] font-bold text-verde-600 underline underline-offset-[3px]"
+              className="shrink-0 font-display text-[0.85rem] font-bold text-accent-text underline underline-offset-[3px]"
             >
               Fixture y tabla →
             </Link>
@@ -93,11 +93,11 @@ export default async function PaginaPlantel({ params }: Params) {
 
         <div className="mt-10">
           {plantel.length === 0 ? (
-            <div className="max-w-medida border-l-4 border-verde-600 bg-papel-alt py-6 pl-5">
-              <p className="font-body text-[1.05rem] leading-relaxed text-tinta-suave">
+            <div className="max-w-medida border-l-4 border-accent bg-bg-muted py-6 pl-5">
+              <p className="font-body text-[1.05rem] leading-relaxed text-text-soft">
                 Todavía no hay jugadoras cargadas en {temporada.nombre}.
               </p>
-              <p className="mt-3 font-body text-gris">
+              <p className="mt-3 font-body text-text-muted">
                 El plantel se carga desde el admin, y de ahí salen la ficha de
                 cada jugadora y sus estadísticas.
               </p>

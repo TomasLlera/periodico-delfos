@@ -43,14 +43,14 @@ export default async function EditarPartido({ params }: Params) {
   return (
     <main className="mx-auto max-w-[700px] px-4 py-8">
       <h1 className="titular mb-1 text-[1.4rem]">{etiquetaDePartido(partido)}</h1>
-      <p className="meta mb-5 text-gris">
+      <p className="meta mb-5 text-text-muted">
         {partido.formaciones.length} en la formación · {partido.eventos.length} eventos cargados
       </p>
 
       <div className="mb-6 flex flex-wrap gap-2">
         <Link
           href={`/admin/partidos/${id}/formacion`}
-          className="tactil flex items-center gap-2 border border-linea-fuerte px-4 font-display text-[0.9rem] font-bold hover:bg-papel-alt"
+          className="tactil flex items-center gap-2 border border-border-control px-4 font-display text-[0.9rem] font-bold hover:bg-bg-muted"
         >
           <Users size={16} aria-hidden="true" />
           Formación
@@ -58,7 +58,7 @@ export default async function EditarPartido({ params }: Params) {
 
         <Link
           href={`/admin/partidos/${id}/planilla`}
-          className="tactil flex items-center gap-2 bg-verde-900 px-4 font-display text-[0.9rem] font-extrabold text-white hover:bg-verde-600"
+          className="tactil flex items-center gap-2 bg-text px-4 font-display text-[0.9rem] font-extrabold text-bg hover:bg-text/85"
         >
           <ClipboardList size={16} aria-hidden="true" />
           Planilla
@@ -73,7 +73,7 @@ export default async function EditarPartido({ params }: Params) {
         temporadaActivaId={activa?.id ?? null}
       />
 
-      <div className="mt-8 border-t border-linea pt-4">
+      <div className="mt-8 border-t border-border pt-4">
         <BotonBorrar
           que="este partido"
           consecuencia="Sólo se puede mientras no tenga formación ni eventos cargados."

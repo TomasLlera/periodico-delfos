@@ -41,7 +41,7 @@ export function ListaEventos({
 }: Props) {
   if (eventos.length === 0) {
     return (
-      <p className="border-l-2 border-linea-fuerte bg-papel-alt px-3 py-2 text-[0.9rem]">
+      <p className="border-l-2 border-border-control bg-bg-muted px-3 py-2 text-[0.9rem]">
         Todavía no cargaste nada. Elegí qué pasó con los botones de abajo.
       </p>
     )
@@ -58,7 +58,7 @@ export function ListaEventos({
         const equipo = e.equipo_id === equipoLocalId ? nombreLocal : nombreVisitante
 
         return (
-          <li key={e.id} className="flex items-center gap-2 border-b border-linea py-2">
+          <li key={e.id} className="flex items-center gap-2 border-b border-border py-2">
             <span className="w-12 shrink-0 font-mono text-[0.95rem] font-bold">
               {e.minuto}
               {e.adicionado > 0 && `+${e.adicionado}`}
@@ -69,7 +69,7 @@ export function ListaEventos({
 
             <span className="flex min-w-0 flex-col leading-tight">
               <span className="truncate font-display text-[0.95rem] font-bold">{quien}</span>
-              <span className="meta text-gris">
+              <span className="meta text-text-muted">
                 {ETIQUETA_EVENTO[e.tipo]} · {equipo}
               </span>
             </span>
@@ -79,7 +79,7 @@ export function ListaEventos({
               onClick={() => onBorrar(e.id)}
               disabled={borrando === e.id}
               aria-label={`Borrar ${ETIQUETA_EVENTO[e.tipo]} de ${quien} al minuto ${e.minuto}`}
-              className="tactil ml-auto flex shrink-0 items-center justify-center px-2 text-gris hover:text-roja disabled:opacity-50"
+              className="tactil ml-auto flex shrink-0 items-center justify-center px-2 text-text-muted hover:text-danger disabled:opacity-50"
             >
               <Trash2 size={16} aria-hidden="true" />
             </button>

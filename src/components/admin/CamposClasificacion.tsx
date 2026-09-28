@@ -35,14 +35,14 @@ export function CamposClasificacion({ entrada, temporadas, partidos, onCambio }:
     <>
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="flex flex-col gap-1">
-          <label htmlFor="categoria" className="meta text-gris">
+          <label htmlFor="categoria" className="meta text-text-muted">
             Categoría
           </label>
           <select
             id="categoria"
             value={entrada.categoria}
             onChange={(e) => onCambio('categoria', e.target.value as EntradaNota['categoria'])}
-            className="tactil border border-linea-fuerte bg-tarjeta px-3 font-display text-[0.95rem]"
+            className="tactil border border-border-control bg-bg-elevated px-3 font-display text-[0.95rem]"
           >
             {CATEGORIAS.map(([valor, nombre]) => (
               <option key={valor} value={valor}>
@@ -53,14 +53,14 @@ export function CamposClasificacion({ entrada, temporadas, partidos, onCambio }:
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="temporada" className="meta text-gris">
+          <label htmlFor="temporada" className="meta text-text-muted">
             Temporada
           </label>
           <select
             id="temporada"
             value={entrada.temporada_id ?? ''}
             onChange={(e) => onCambio('temporada_id', e.target.value || null)}
-            className="tactil border border-linea-fuerte bg-tarjeta px-3 font-display text-[0.95rem]"
+            className="tactil border border-border-control bg-bg-elevated px-3 font-display text-[0.95rem]"
           >
             <option value="">Ninguna</option>
             {temporadas.map((t) => (
@@ -85,14 +85,14 @@ export function CamposClasificacion({ entrada, temporadas, partidos, onCambio }:
        * otra pantalla y otro momento (regla no negociable 2).
        */}
       <div className="flex flex-col gap-1">
-        <label htmlFor="partido" className="meta text-gris">
+        <label htmlFor="partido" className="meta text-text-muted">
           Partido
         </label>
         <select
           id="partido"
           value={entrada.partido_id ?? ''}
           onChange={(e) => onCambio('partido_id', e.target.value || null)}
-          className="tactil border border-linea-fuerte bg-tarjeta px-3 font-display text-[0.95rem]"
+          className="tactil border border-border-control bg-bg-elevated px-3 font-display text-[0.95rem]"
         >
           <option value="">Ninguno</option>
           {partidos.map((p) => (
@@ -101,7 +101,7 @@ export function CamposClasificacion({ entrada, temporadas, partidos, onCambio }:
             </option>
           ))}
         </select>
-        <p className="text-[0.8rem] text-gris">
+        <p className="text-[0.8rem] text-text-muted">
           {partidos.length === 0
             ? 'Todavía no hay partidos cargados. Se crean en Partidos → Partido nuevo.'
             : 'Al elegirlo, la nota muestra el marcador y la planilla, y se enlaza con las otras notas de ese partido.'}

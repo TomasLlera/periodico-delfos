@@ -22,7 +22,7 @@ interface Props {
 export function ListaGoles({ goles }: Props) {
   if (goles.length === 0) {
     return (
-      <p className="max-w-medida border-l-4 border-verde-600 bg-papel-alt py-5 pl-5 font-body text-gris">
+      <p className="max-w-medida border-l-4 border-accent bg-bg-muted py-5 pl-5 font-body text-text-muted">
         Todavía no convirtió en ningún partido cargado.
       </p>
     )
@@ -36,17 +36,17 @@ export function ListaGoles({ goles }: Props) {
         const fecha = gol.partido.fecha_numero ? `Fecha ${gol.partido.fecha_numero}` : null
 
         return (
-          <li key={gol.id} className="border-b border-linea">
+          <li key={gol.id} className="border-b border-border">
             <Link
               href={`/partido/${gol.partido.slug}`}
-              className="group flex items-baseline gap-3 py-3 transition-colors hover:bg-papel-alt sm:gap-4"
+              className="group flex items-baseline gap-3 py-3 transition-colors hover:bg-bg-muted sm:gap-4"
             >
-              <span className="dato w-14 shrink-0 text-[1.05rem] font-bold text-verde-600">
+              <span className="dato w-14 shrink-0 text-[1.05rem] font-bold text-accent-text">
                 {minutoEvento(gol)}
               </span>
 
               <span className="min-w-0 flex-1">
-                <span className="block font-display text-[0.95rem] leading-tight group-hover:text-verde-600">
+                <span className="block font-display text-[0.95rem] leading-tight group-hover:text-accent-text">
                   a {contra.nombre}
                   {/* Local o visitante: el mismo rival de ida y de vuelta son
                       dos partidos distintos, y sin esto se leen igual. */}
@@ -55,7 +55,7 @@ export function ListaGoles({ goles }: Props) {
                   </span>
                 </span>
 
-                <span className="dato mt-0.5 block text-[0.75rem] text-gris">
+                <span className="dato mt-0.5 block text-[0.75rem] text-text-muted">
                   {[fecha, fechaCorta(gol.partido.fecha_hora)].filter(Boolean).join(' · ')}
                   {sufijo ? ` · ${sufijo}` : ''}
                 </span>

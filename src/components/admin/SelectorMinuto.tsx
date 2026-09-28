@@ -32,7 +32,7 @@ export function SelectorMinuto({ minuto, adicionado, onMinuto, onAdicionado }: P
   return (
     <div className="flex flex-wrap items-end gap-3">
       <div className="flex flex-col gap-1">
-        <label htmlFor="minuto" className="meta text-gris">
+        <label htmlFor="minuto" className="meta text-text-muted">
           Minuto
         </label>
 
@@ -41,7 +41,7 @@ export function SelectorMinuto({ minuto, adicionado, onMinuto, onAdicionado }: P
             type="button"
             onClick={() => onMinuto(acotado(minuto - 1))}
             aria-label="Un minuto menos"
-            className="tactil flex items-center justify-center rounded-sm border border-linea-fuerte px-3 hover:bg-papel-alt"
+            className="tactil flex items-center justify-center rounded-sm border border-border-control px-3 hover:bg-bg-muted"
           >
             <Minus size={18} aria-hidden="true" />
           </button>
@@ -54,14 +54,14 @@ export function SelectorMinuto({ minuto, adicionado, onMinuto, onAdicionado }: P
             max={120}
             value={minuto}
             onChange={(e) => onMinuto(acotado(Number(e.target.value)))}
-            className="tactil w-20 border border-linea-fuerte bg-tarjeta text-center font-mono text-[1.3rem] font-bold"
+            className="tactil w-20 border border-border-control bg-bg-elevated text-center font-mono text-[1.3rem] font-bold"
           />
 
           <button
             type="button"
             onClick={() => onMinuto(acotado(minuto + 1))}
             aria-label="Un minuto más"
-            className="tactil flex items-center justify-center rounded-sm border border-linea-fuerte px-3 hover:bg-papel-alt"
+            className="tactil flex items-center justify-center rounded-sm border border-border-control px-3 hover:bg-bg-muted"
           >
             <Plus size={18} aria-hidden="true" />
           </button>
@@ -69,7 +69,7 @@ export function SelectorMinuto({ minuto, adicionado, onMinuto, onAdicionado }: P
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="adicionado" className="meta text-gris">
+        <label htmlFor="adicionado" className="meta text-text-muted">
           Adicionado
         </label>
         <input
@@ -80,7 +80,7 @@ export function SelectorMinuto({ minuto, adicionado, onMinuto, onAdicionado }: P
           max={30}
           value={adicionado}
           onChange={(e) => onAdicionado(Math.min(30, Math.max(0, Number(e.target.value))))}
-          className="tactil w-16 border border-linea-fuerte bg-tarjeta text-center font-mono text-[1.1rem]"
+          className="tactil w-16 border border-border-control bg-bg-elevated text-center font-mono text-[1.1rem]"
         />
       </div>
     </div>

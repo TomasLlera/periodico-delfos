@@ -29,7 +29,7 @@ export default function DemoFixture() {
           La ventana de la planilla
         </h1>
 
-        <div className="prose-nota mt-4 text-gris">
+        <div className="prose-nota mt-4 text-text-muted">
           <p>
             Apretá cualquier fecha: la planilla se abre como ventana encima de
             esta página. Lo que hay que comprobar es que el chip{' '}

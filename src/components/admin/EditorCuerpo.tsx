@@ -95,11 +95,11 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
     },
   })
 
-  if (!editor) return <div className="min-h-[28rem] border border-linea bg-tarjeta" />
+  if (!editor) return <div className="min-h-[28rem] border border-border bg-bg-elevated" />
 
   return (
-    <div className="border border-linea bg-tarjeta">
-      <div className="flex flex-wrap items-center gap-1 border-b border-linea px-2 py-1">
+    <div className="border border-border bg-bg-elevated">
+      <div className="flex flex-wrap items-center gap-1 border-b border-border px-2 py-1">
         <Boton editor={editor} accion="negrita" etiqueta="Negrita">
           <Bold size={16} aria-hidden="true" />
         </Boton>
@@ -107,7 +107,7 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
           <Italic size={16} aria-hidden="true" />
         </Boton>
 
-        <span className="mx-1 h-5 w-px bg-linea" />
+        <span className="mx-1 h-5 w-px bg-border" />
 
         <Boton editor={editor} accion="titulo2" etiqueta="Título">
           <span className="font-display text-[0.85rem] font-extrabold">H2</span>
@@ -116,7 +116,7 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
           <span className="font-display text-[0.85rem] font-extrabold">H3</span>
         </Boton>
 
-        <span className="mx-1 h-5 w-px bg-linea" />
+        <span className="mx-1 h-5 w-px bg-border" />
 
         <Boton editor={editor} accion="lista" etiqueta="Lista">
           <List size={16} aria-hidden="true" />
@@ -128,7 +128,7 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
           <Quote size={16} aria-hidden="true" />
         </Boton>
 
-        <span className="mx-1 h-5 w-px bg-linea" />
+        <span className="mx-1 h-5 w-px bg-border" />
 
         <Boton editor={editor} accion="deshacer" etiqueta="Deshacer">
           <Undo2 size={16} aria-hidden="true" />
@@ -137,7 +137,7 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
           <Redo2 size={16} aria-hidden="true" />
         </Boton>
 
-        <span className="mx-1 h-5 w-px bg-linea" />
+        <span className="mx-1 h-5 w-px bg-border" />
 
         {/* Anclar una nota. El texto seleccionado se vuelve el link; si no hay
             nada seleccionado, TipTap no tiene qué enlazar y el botón no abre
@@ -151,8 +151,8 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
           aria-pressed={panel === 'enlazar'}
           className={`tactil flex min-w-11 items-center justify-center px-2 disabled:opacity-40 ${
             panel === 'enlazar' || editor.isActive('link')
-              ? 'bg-verde-900 text-white'
-              : 'hover:bg-papel-alt'
+              ? 'bg-text text-bg'
+              : 'hover:bg-bg-muted'
           }`}
         >
           <Link2 size={16} aria-hidden="true" />
@@ -164,12 +164,12 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
           disabled={!editor.isActive('link')}
           title="Sacar el link"
           aria-label="Sacar el link"
-          className="tactil flex min-w-11 items-center justify-center px-2 hover:bg-papel-alt disabled:opacity-40"
+          className="tactil flex min-w-11 items-center justify-center px-2 hover:bg-bg-muted disabled:opacity-40"
         >
           <Unlink size={16} aria-hidden="true" />
         </button>
 
-        <span className="mx-1 h-5 w-px bg-linea" />
+        <span className="mx-1 h-5 w-px bg-border" />
 
         {/* Los dos nodos propios. Van juntos y al final de la barra: se usan
             una o dos veces por nota, al revés que la negrita. */}
@@ -180,7 +180,7 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
           aria-label="Insertar una imagen"
           aria-pressed={panel === 'imagen'}
           className={`tactil flex min-w-11 items-center justify-center px-2 ${
-            panel === 'imagen' ? 'bg-verde-900 text-white' : 'hover:bg-papel-alt'
+            panel === 'imagen' ? 'bg-text text-bg' : 'hover:bg-bg-muted'
           }`}
         >
           <ImagePlus size={16} aria-hidden="true" />
@@ -193,7 +193,7 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
           aria-label="Embeber la planilla de un partido"
           aria-pressed={panel === 'planilla'}
           className={`tactil flex min-w-11 items-center justify-center px-2 ${
-            panel === 'planilla' ? 'bg-verde-900 text-white' : 'hover:bg-papel-alt'
+            panel === 'planilla' ? 'bg-text text-bg' : 'hover:bg-bg-muted'
           }`}
         >
           <ClipboardList size={16} aria-hidden="true" />
@@ -293,7 +293,7 @@ function Boton({
       aria-label={etiqueta}
       aria-pressed={activo ? encendido : undefined}
       className={`tactil flex min-w-11 items-center justify-center px-2 ${
-        encendido ? 'bg-verde-900 text-white' : 'hover:bg-papel-alt'
+        encendido ? 'bg-text text-bg' : 'hover:bg-bg-muted'
       }`}
     >
       {children}

@@ -34,13 +34,13 @@ export function Casilla({ id, etiqueta, valor, onCambio, ayuda }: Props) {
           checked={valor}
           onChange={(e) => onCambio(e.target.checked)}
           aria-describedby={idAyuda}
-          className="size-4 accent-verde-900"
+          className="size-4 accent-accent-text"
         />
         {etiqueta}
       </label>
 
       {ayuda && (
-        <p id={idAyuda} className="text-[0.8rem] text-gris">
+        <p id={idAyuda} className="text-[0.8rem] text-text-muted">
           {ayuda}
         </p>
       )}

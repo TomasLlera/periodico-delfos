@@ -34,7 +34,7 @@ const COLUMNAS = [
 export function TablaEstadisticas({ filas }: Props) {
   if (filas.length === 0) {
     return (
-      <p className="max-w-medida border-l-4 border-verde-600 bg-papel-alt py-5 pl-5 font-body text-gris">
+      <p className="max-w-medida border-l-4 border-accent bg-bg-muted py-5 pl-5 font-body text-text-muted">
         Todavía no jugó ningún partido cargado. Las estadísticas se arman solas
         con cada planilla que se carga.
       </p>
@@ -47,7 +47,7 @@ export function TablaEstadisticas({ filas }: Props) {
     <div className="overflow-x-auto">
       <table className="w-full min-w-[420px] border-collapse text-left">
         <thead>
-          <tr className="border-b-2 border-tinta">
+          <tr className="border-b-2 border-border-strong">
             <th scope="col" className="meta py-2 pr-3 text-[0.7rem]">
               Temporada
             </th>
@@ -63,12 +63,12 @@ export function TablaEstadisticas({ filas }: Props) {
 
         <tbody>
           {filas.map((fila) => (
-            <tr key={fila.estadisticas.temporada_id} className="border-b border-linea">
+            <tr key={fila.estadisticas.temporada_id} className="border-b border-border">
               <th scope="row" className="py-2 pr-3 text-left font-display text-[0.9rem] font-normal">
                 {fila.temporadaSlug ? (
                   <Link
                     href={`/temporada/${fila.temporadaSlug}`}
-                    className="text-verde-600 underline underline-offset-2"
+                    className="text-accent-text underline underline-offset-2"
                   >
                     {fila.temporadaNombre}
                   </Link>
@@ -80,7 +80,7 @@ export function TablaEstadisticas({ filas }: Props) {
               {COLUMNAS.map((columna) => (
                 <td
                   key={columna.clave}
-                  className="dato py-2 pl-2 text-right text-[0.85rem] text-tinta-suave"
+                  className="dato py-2 pl-2 text-right text-[0.85rem] text-text-soft"
                 >
                   {fila.estadisticas[columna.clave]}
                 </td>
@@ -91,14 +91,14 @@ export function TablaEstadisticas({ filas }: Props) {
 
         {filas.length > 1 && (
           <tfoot>
-            <tr className="border-t-2 border-tinta">
-              <th scope="row" className="meta py-2 pr-3 text-[0.7rem] text-tinta">
+            <tr className="border-t-2 border-border-strong">
+              <th scope="row" className="meta py-2 pr-3 text-[0.7rem] text-text">
                 Total
               </th>
               {COLUMNAS.map((columna) => (
                 <td
                   key={columna.clave}
-                  className="dato py-2 pl-2 text-right text-[0.9rem] font-bold text-tinta"
+                  className="dato py-2 pl-2 text-right text-[0.9rem] font-bold text-text"
                 >
                   {total[columna.clave]}
                 </td>

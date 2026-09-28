@@ -22,7 +22,7 @@ export function FormacionesPartido({ partido, denso = false, nivelTitulo = 3 }: 
   if (once.length === 0 && banco.length === 0) {
     if (denso) return null
     return (
-      <p className="font-display text-sm text-gris">
+      <p className="font-display text-sm text-text-muted">
         Formación no cargada para este partido.
       </p>
     )
@@ -60,12 +60,12 @@ function Bloque({
       <Titulo className="meta mb-2">{titulo}</Titulo>
       <ul className="flex flex-col">
         {filas.map((fila) => (
-          <li key={fila.jugadora_id} className="border-b border-linea last:border-b-0">
+          <li key={fila.jugadora_id} className="border-b border-border last:border-b-0">
             <Link
               href={`/jugadora/${fila.jugadora.slug}`}
-              className="flex items-center gap-3 py-2 text-sm text-tinta hover:text-verde-600"
+              className="flex items-center gap-3 py-2 text-sm text-text hover:text-accent-text"
             >
-              <span className="dato w-6 shrink-0 text-right text-[13px] text-gris">
+              <span className="dato w-6 shrink-0 text-right text-[13px] text-text-muted">
                 {fila.dorsal ?? '—'}
               </span>
               <span>
@@ -86,10 +86,10 @@ function ListaDensa({ titulo, filas }: { titulo: string; filas: FormacionConJuga
       <span className="meta mr-2">{titulo}</span>
       {filas.map((fila, indice) => (
         <span key={fila.jugadora_id}>
-          {indice > 0 && <span className="text-linea"> · </span>}
+          {indice > 0 && <span className="text-border-control"> · </span>}
           <Link
             href={`/jugadora/${fila.jugadora.slug}`}
-            className="text-tinta hover:text-verde-600 hover:underline"
+            className="text-text hover:text-accent-text hover:underline"
           >
             {fila.jugadora.apellido}
           </Link>

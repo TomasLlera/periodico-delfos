@@ -53,10 +53,10 @@ export function VentanaRecordatorio({ temporadaId, fecha, onCerrar }: Props) {
       onClick={(evento) => {
         if (evento.target === ref.current) ref.current?.close()
       }}
-      className="m-0 max-h-dvh max-w-none bg-transparent p-0 backdrop:bg-negro-cancha/70"
+      className="m-0 max-h-dvh max-w-none bg-transparent p-0 backdrop:bg-overlay/70"
     >
       <div className="flex min-h-dvh w-dvw items-end justify-center sm:items-center sm:p-6">
-        <div className="tarjeta flex w-full flex-col gap-4 rounded-t-lg border border-linea p-5 sm:max-w-[460px] sm:rounded-lg">
+        <div className="tarjeta flex w-full flex-col gap-4 rounded-t-lg border border-border p-5 sm:max-w-[460px] sm:rounded-lg">
           <h2 id="titulo-recordatorio" className="titular flex items-center gap-2 text-[1.05rem]">
             <ListOrdered size={18} aria-hidden="true" />
             Recordá modificar la tabla de posiciones.
@@ -72,7 +72,7 @@ export function VentanaRecordatorio({ temporadaId, fecha, onCerrar }: Props) {
                 que elegir el número otra vez es la mitad del olvido. */}
             <Link
               href={`/admin/tabla/${temporadaId}?fecha=${fecha}`}
-              className="tactil flex flex-1 items-center justify-center gap-2 bg-verde-900 px-5 font-display text-[0.9rem] font-extrabold text-white hover:bg-verde-600"
+              className="tactil flex flex-1 items-center justify-center gap-2 bg-text px-5 font-display text-[0.9rem] font-extrabold text-bg hover:bg-text/85"
             >
               <ListOrdered size={16} aria-hidden="true" />
               Cargar la fecha {fecha}
@@ -81,7 +81,7 @@ export function VentanaRecordatorio({ temporadaId, fecha, onCerrar }: Props) {
             <button
               type="button"
               onClick={() => ref.current?.close()}
-              className="tactil flex items-center justify-center border border-linea-fuerte px-5 font-display text-[0.9rem] font-bold hover:bg-papel-alt"
+              className="tactil flex items-center justify-center border border-border-control px-5 font-display text-[0.9rem] font-bold hover:bg-bg-muted"
             >
               Después
             </button>

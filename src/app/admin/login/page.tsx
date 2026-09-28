@@ -25,20 +25,20 @@ export default async function Login({ searchParams }: Params) {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-[420px] flex-col justify-center px-4 py-10">
-      <Link href="/" className="marca mb-1 text-[1.6rem] text-verde-900">
-        Periódico Delfos
+      <Link href="/" className="marca mb-1 text-[1.6rem] text-text">
+        Periódico <span className="text-accent-text">Delfos</span>
       </Link>
-      <p className="mb-8 text-[0.9rem] text-gris">Panel de redacción</p>
+      <p className="mb-8 text-[0.9rem] text-text-muted">Panel de redacción</p>
 
       {error === 'link' && (
-        <p role="alert" className="mb-4 border-l-2 border-roja bg-papel-alt px-3 py-2 text-[0.9rem]">
+        <p role="alert" className="mb-4 border-l-2 border-danger bg-bg-muted px-3 py-2 text-[0.9rem]">
           Ese link no sirve más. Los links valen una hora y un solo uso: pedí uno nuevo.
         </p>
       )}
 
       <FormularioLogin volver={volver?.startsWith('/admin') ? volver : '/admin'} />
 
-      <Link href="/" className="mt-8 text-[0.85rem] text-gris underline-offset-4 hover:underline">
+      <Link href="/" className="mt-8 text-[0.85rem] text-text-muted underline-offset-4 hover:underline">
         Volver al sitio
       </Link>
     </main>

@@ -1,40 +1,178 @@
 @import "tailwindcss";
 
 /* ============================================================
-   Tokens
-   Verde y amarillo de Aldosivi. Se descarta cualquier acento que
-   pelee con esos dos: todas las fotos del sitio los tienen.
+   Tokens de color
+   Diario digital sobrio: crema, tinta y dorado. Los nombres dicen
+   para qué sirve el color, no cómo es — por eso se puede cambiar la
+   paleta entera sin tocar un componente.
+
+   Los valores viven como variables CSS sueltas (`--bg`, `--text`…)
+   y no directo en `@theme`: así el tema oscuro las redefine con
+   `data-theme` y Tailwind las lee en vivo (`@theme inline`, abajo).
+
+   TODO par texto/fondo de acá está medido con la fórmula de WCAG:
+   AA en los dos temas. Todo color nuevo se mide antes de entrar.
    ============================================================ */
 
-/* El tema por omisión es el CLARO: papel de diario, crema cálido, verde de
-   Aldosivi en los bloques y amarillo en los filetes. Es la dirección de los
-   bocetos de portada y crónica, y la que pide la sección 8 del blueprint —
-   "una publicación con criterio editorial, no un template de noticias".
+/* Claro, el tema por omisión. */
+:root {
+  --bg: #f7f3ea; /* crema: el fondo del sitio */
+  --bg-elevated: #fffdf8; /* tarjetas, fichas, planilla */
+  --bg-muted: #efe9dc; /* avisos, bloques alternos, hover de tarjeta */
+  --text: #1a1a1a; /* 15.72:1 sobre --bg */
+  --text-soft: #3d3d3d; /* copetes: un escalón bajo el texto */
+  --text-muted: #5c5c5c; /* metadatos, epígrafes. 5.53:1 en el peor fondo (--bg-muted) */
+  --border: #d9d2c3; /* divisores decorativos */
+  --border-strong: #1a1a1a; /* el filete bajo los títulos de sección */
+  /* El límite de inputs y botones secundarios. WCAG 1.4.11 le pide 3:1
+     contra el fondo: 3.35:1. El #C6BFAE de antes daba 1.7:1. */
+  --border-control: #8c8474;
+  /* Dorado para filetes, fondos de botón y detalles: NUNCA texto sobre
+     crema (2.68:1). Para texto y links va --accent-text. */
+  --accent: #b8902f;
+  /* El #8A6A1F de partida daba 4.17:1 sobre --bg-muted y no llegaba. Este
+     da 5.09:1 en el peor fondo y 5.56:1 sobre --bg. */
+  --accent-text: #7a5d1a;
+  --accent-contrast: #1a1a1a; /* texto sobre --accent: 5.86:1 */
 
-   El oscuro sigue existiendo como variante, más abajo. Los dos están medidos:
-   ningún par de color que se use en la interfaz baja de AA. */
+  /* Los bloques oscuros: cabecera, ticker, pie, nota de tapa, "El Plantel",
+     cabecera de jugadora. Son oscuros EN LOS DOS temas, así que su texto no
+     depende del tema sino del bloque. */
+  --block-bg: #1a1a1a;
+  --block-text: #f2f0ea; /* 15.27:1; con alfa /50 todavía 4.72:1 */
+  --block-accent: #c9a24a; /* dorado para texto sobre el bloque: 7.25:1 */
+  --block-border: #1a1a1a; /* invisible en claro; en oscuro separa el bloque */
+  --header-bg: var(--block-bg);
+  --header-text: var(--block-text);
+
+  /* El recuadro del marcador */
+  --score-bg: #1a1a1a;
+  --score-text: #c9a24a; /* 7.25:1 */
+
+  /* Semánticos del fútbol y de la interfaz */
+  --danger: #b3261e; /* tarjeta roja, derrota, errores. 5.40:1 en el peor fondo */
+  --card-yellow: #f2c230; /* tarjeta amarilla: se distingue de la roja por luminancia */
+  --overlay: #0e0e0e; /* fondo de las ventanas modales, con alfa */
+
+  color-scheme: light dark;
+}
+
+/* Oscuro. Dos entradas con los mismos valores, y las dos hacen falta:
+   `data-theme="dark"` es el que pone el script de next-themes antes del
+   primer pintado (preferencia del sistema o elección guardada), y el
+   media query cubre al que navega sin JavaScript, donde no hay atributo. */
+:root[data-theme='dark'] {
+  --bg: #0e0e0e;
+  --bg-elevated: #181818;
+  --bg-muted: #202020;
+  --text: #f2f0ea; /* blanco cálido, no #FFF: 16.94:1 */
+  --text-soft: #d6d3cc;
+  --text-muted: #a3a3a3; /* 6.46:1 en el peor fondo */
+  --border: #2e2e2e;
+  --border-strong: #f2f0ea;
+  --border-control: #6b6b6b; /* 3.33:1 sobre --bg-elevated */
+  --accent: #c9a24a;
+  --accent-text: #d4b062; /* 7.90:1 en el peor fondo */
+  --accent-contrast: #0e0e0e; /* 8.04:1 */
+  --block-bg: #181818;
+  --block-text: #f2f0ea;
+  --block-accent: #c9a24a;
+  --block-border: #2e2e2e;
+  /* Crema sobre negro y no dorado sobre #202020: 16.94:1 contra 6.79:1. */
+  --score-bg: #f2f0ea;
+  --score-text: #0e0e0e;
+  --danger: #f87171; /* 5.89:1 en el peor fondo */
+  --card-yellow: #f2c230;
+  --overlay: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #0e0e0e;
+    --bg-elevated: #181818;
+    --bg-muted: #202020;
+    --text: #f2f0ea;
+    --text-soft: #d6d3cc;
+    --text-muted: #a3a3a3;
+    --border: #2e2e2e;
+    --border-strong: #f2f0ea;
+    --border-control: #6b6b6b;
+    --accent: #c9a24a;
+    --accent-text: #d4b062;
+    --accent-contrast: #0e0e0e;
+    --block-bg: #181818;
+    --block-text: #f2f0ea;
+    --block-accent: #c9a24a;
+    --block-border: #2e2e2e;
+    --score-bg: #f2f0ea;
+    --score-text: #0e0e0e;
+    --danger: #f87171;
+    --card-yellow: #f2c230;
+    --overlay: #000000;
+  }
+}
+
+/* `oscuro:` para lo poco que cambia de forma y no sólo de color entre temas —
+   hoy, el icono sol/luna de `<ToggleTema />`—. Los colores NO lo usan: para
+   eso están los tokens, que ya cambian solos. Cubre los dos casos del tema
+   oscuro, como las variables de arriba. */
+@custom-variant oscuro {
+  &:where([data-theme='dark'] *) {
+    @slot;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme]) *) {
+      @slot;
+    }
+  }
+}
+
+/* Barras de scroll, controles nativos y el fondo previo a la carga siguen al
+   tema elegido, no sólo al del sistema. */
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* Las utilidades de Tailwind (`bg-bg`, `text-text-muted`, `border-border`…),
+   mapeadas 1:1 a las variables. `inline` hace que la clase use `var(--bg)` y
+   no una copia del valor, que es lo que deja que el tema cambie en vivo.
+
+   `--color-*: initial` apaga la paleta por omisión de Tailwind: `bg-green-900`
+   o `text-white` no generan CSS. Un color fuera de los tokens no compila en
+   silencio, directamente no existe. */
+@theme inline {
+  --color-*: initial;
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-muted: var(--bg-muted);
+  --color-text: var(--text);
+  --color-text-soft: var(--text-soft);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-border-control: var(--border-control);
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-block-bg: var(--block-bg);
+  --color-block-text: var(--block-text);
+  --color-block-accent: var(--block-accent);
+  --color-block-border: var(--block-border);
+  --color-header-bg: var(--header-bg);
+  --color-header-text: var(--header-text);
+  --color-score-bg: var(--score-bg);
+  --color-score-text: var(--score-text);
+  --color-danger: var(--danger);
+  --color-card-yellow: var(--card-yellow);
+  --color-overlay: var(--overlay);
+}
+
 @theme {
-  /* Color */
-  --color-verde-900: #0f3b2a; /* bloques verdes: cabecera, tapa, aside, pie */
-  --color-verde-600: #1c5a3e; /* acento sobre claro: links, filetes de sección */
-  --color-verde-100: #e4f1e9; /* fondos suaves, filas resaltadas */
-  --color-amarillo: #f2a900; /* acento: filetes, subrayados, botón */
-  --color-tinta: #111511; /* texto principal */
-  --color-tinta-suave: #3f433f; /* copetes de tarjeta y de listado */
-  --color-gris: #5f645e; /* metadatos, epígrafes */
-  /* El gris del boceto. Es el más claro que todavía llega a AA sobre el crema
-     (4.61:1), así que `gris` va un escalón más oscuro y este queda de tenue:
-     el #78837E que había antes daba 3.54 y no llegaba. */
-  --color-gris-tenue: #6b6f69;
-  --color-papel: #f6f3ea; /* crema: el fondo del sitio */
-  --color-papel-alt: #efebdf; /* secciones alternas */
-  --color-tarjeta: #ffffff; /* planilla y fichas: papel blanco sobre el crema */
-  --color-tarjeta-hover: #fbfaf5;
-  --color-negro-cancha: #092619; /* barra de resultados y pie */
-  --color-linea: #ddd8cb;
-  --color-linea-fuerte: #c6bfae;
-  --color-roja: #c42127; /* tarjeta roja, derrotas */
-
   /* Tipografía */
   --font-display: var(--fuente-display), system-ui, sans-serif;
   --font-body: var(--fuente-body), Georgia, serif;
@@ -54,61 +192,46 @@
   --radius-md: 4px;
 }
 
-/* El tema oscuro, para quien lo pida desde el sistema. Es la paleta del
-   rediseño "portal deportivo", que se midió entera a AA cuando era el tema por
-   omisión. Se conserva entera salvo `verde-900`, que era un acento y este tema
-   lo necesita como superficie (ver abajo): no se pierde nada por haber
-   invertido. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    /* Superficie, no acento. Este token es la cabecera y los bloques verdes: el
-       #007A41 que había acá es un verde de acento y con texto blanco encima
-       parece un resaltador. Es la misma superficie traducida al tema oscuro —
-       blanco 15.32:1, amarillo 7.56:1 — y nunca se usó como acento. */
-    --color-verde-900: #102a1e;
-    --color-verde-600: #00a859;
-    --color-verde-100: #0e2a1b;
-    --color-amarillo: #f5a623; /* el #F2A900 sobre fondo oscuro pierde brillo */
-    --color-tinta: #f9fafb;
-    --color-tinta-suave: #d7dbe0;
-    --color-gris: #9ca3af;
-    --color-gris-tenue: #808a96;
-    --color-papel: #111418;
-    --color-papel-alt: #16191d;
-    --color-tarjeta: #1e2228;
-    --color-tarjeta-hover: #252b33;
-    --color-negro-cancha: #0b0d0f;
-    --color-linea: #2a303a;
-    --color-linea-fuerte: #384150;
-    --color-roja: #ef4444;
-  }
-}
-
 /* ============================================================
    Base
    ============================================================ */
 
 html {
   -webkit-text-size-adjust: 100%;
-  /* Sin esto el navegador dibuja su propia mitad de la página con el tema
-     equivocado: barras de scroll, controles de formulario y el fondo que pinta
-     antes de que cargue el CSS. `color-scheme` es lo único que se lo dice, y no
-     lo deduce de nuestros tokens. Acompaña al tema en los dos sentidos. */
-  color-scheme: light;
 }
 
 body {
-  background: var(--color-papel);
-  color: var(--color-tinta);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-body);
   text-rendering: optimizeLegibility;
 }
 
-/* Foco visible siempre. Requisito de accesibilidad, no decorativo. */
+/* Foco visible siempre, dorado en los dos temas. `--accent-text` y no
+   `--accent`: el dorado claro da 2.68:1 sobre crema y el foco pide 3:1
+   (WCAG 2.4.13). El oscuro da 5.56:1 en claro y 9.36:1 en oscuro. */
 :focus-visible {
-  outline: 2px solid var(--color-verde-600);
+  outline: 2px solid var(--accent-text);
   outline-offset: 2px;
+}
+
+/* El cambio de tema funde los colores en 180ms. Sólo mientras dura el cambio
+   —`<ToggleTema />` pone la clase y la saca—: un `transition` permanente en
+   todo el documento pisaría los `transition-colors` de hover de cada
+   componente. Con movimiento reducido no hay fundido. */
+@media (prefers-reduced-motion: no-preference) {
+  html.tema-cambiando,
+  html.tema-cambiando *,
+  html.tema-cambiando *::before,
+  html.tema-cambiando *::after {
+    transition:
+      background-color 180ms ease,
+      color 180ms ease,
+      border-color 180ms ease,
+      fill 180ms ease,
+      stroke 180ms ease,
+      outline-color 180ms ease !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -177,7 +300,7 @@ body {
   line-height: 1.25;
   margin-top: 2em;
   padding-top: 0.6em;
-  border-top: 3px solid var(--color-verde-600); /* filete verde */
+  border-top: 3px solid var(--border-strong); /* filete de diario */
 }
 
 @media (min-width: 768px) {
@@ -220,22 +343,22 @@ body {
 
 /* Subrayado obligatorio: el color solo no llega a AA. */
 .prose-nota a {
-  color: var(--color-verde-600);
+  color: var(--accent-text);
   text-decoration: underline;
   text-underline-offset: 0.15em;
 }
 
 .prose-nota blockquote {
-  border-left: 3px solid var(--color-amarillo);
+  border-left: 3px solid var(--accent);
   padding-left: 1em;
   font-style: italic;
-  color: var(--color-gris);
+  color: var(--text-muted);
 }
 
 .prose-nota figure figcaption {
   font-family: var(--font-display);
   font-size: 0.8125rem; /* 13px */
-  color: var(--color-gris);
+  color: var(--text-muted);
   margin-top: 0.5em;
 }
 
@@ -263,7 +386,7 @@ body {
 }
 
 .prose-nota li::marker {
-  color: var(--color-verde-600);
+  color: var(--accent-text);
 }
 
 /* Un párrafo suelto adentro de un <li> no lleva el margen de bloque: TipTap
@@ -275,8 +398,8 @@ body {
 .prose-nota code {
   font-family: var(--font-data);
   font-size: 0.875em;
-  background: var(--color-papel-alt);
-  border: 1px solid var(--color-linea);
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 0.1em 0.3em;
 }
@@ -286,14 +409,14 @@ body {
   width: 6rem;
   margin: 2.5em auto;
   border: 0;
-  border-top: 2px solid var(--color-linea);
+  border-top: 2px solid var(--border);
 }
 
 /* ============================================================
    La planilla embebida en el cuerpo de una nota
 
    `<PlanillaPartido variante="embebida" />` cae adentro de `.prose-nota`, y su
-   marcador es un <h2>. Sin esto se lleva el filete verde, la serif y los 2em
+   marcador es un <h2>. Sin esto se lleva el filete, la serif y los 2em
    de margen de los subtítulos de la nota. Las utilidades de Tailwind no
    alcanzan para corregirlo: `.prose-nota h2` tiene más especificidad.
    ============================================================ */
@@ -324,7 +447,7 @@ body {
   margin-top: 0;
 }
 
-/* Los apellidos de las formaciones no son links de lectura: no van en verde ni
+/* Los apellidos de las formaciones no son links de lectura: no van en dorado ni
    subrayados como los del cuerpo de la nota. El único link de acción de la
    planilla se marca con `.link-planilla`. */
 .prose-nota .planilla a {
@@ -334,7 +457,7 @@ body {
 
 .prose-nota .planilla a.link-planilla,
 .prose-nota .planilla a:hover {
-  color: var(--color-verde-600);
+  color: var(--accent-text);
 }
 
 /* ============================================================
@@ -342,7 +465,7 @@ body {
 
    Van en `@layer components` y no sueltas: las capas mandan por encima de la
    especificidad, así que desde acá una clase de Tailwind —`text-[11px]`,
-   `text-verde-600`— puede pisar lo que definen. Sin la capa, `.meta` le gana a
+   `text-accent-text`— puede pisar lo que definen. Sin la capa, `.meta` le gana a
    cualquier utilidad y hay que pelearla con `!important`.
    ============================================================ */
 
@@ -355,7 +478,7 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--color-gris);
+    color: var(--text-muted);
   }
 
   /**
@@ -377,14 +500,14 @@ body {
 
   /* La tarjeta del rediseño: fondo propio sobre el fondo de página. */
   .tarjeta {
-    background: var(--color-tarjeta);
-    border: 1px solid var(--color-linea);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
     border-radius: 0.5rem;
   }
 
-  /* La barra/franja oscura: header, footer y tiras de datos. */
+  /* El bloque oscuro del pie. Oscuro en los dos temas (ver --block-bg). */
   .franja {
-    background: var(--color-negro-cancha);
+    background: var(--block-bg);
   }
 
   /* Datos que tienen que alinearse en columna: minutos, dorsales, resultados. */

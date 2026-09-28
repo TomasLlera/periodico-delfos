@@ -49,7 +49,7 @@ export default async function VentanaDePartido({
 
       <Link
         href={`/partido/${partido.slug}`}
-        className="tactil mt-6 flex items-center justify-center rounded border border-linea font-display text-[0.9rem] font-semibold text-verde-600 transition-colors hover:bg-papel-alt"
+        className="tactil mt-6 flex items-center justify-center rounded border border-border font-display text-[0.9rem] font-semibold text-accent-text transition-colors hover:bg-bg-muted"
       >
         Ver la ficha completa del partido
       </Link>

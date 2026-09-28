@@ -28,12 +28,12 @@ interface Props {
 
 export function PieMarcador({ marcador, ocupado, onFinalizar, pendientes }: Props) {
   return (
-    <section className="flex flex-wrap items-center gap-3 border-t border-linea pt-4">
+    <section className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
       <p className="font-display text-[0.95rem]">
         Van <strong className="font-mono">{marcador.cargado.local}</strong> –{' '}
         <strong className="font-mono">{marcador.cargado.visitante}</strong>
         {marcador.declarado && !marcador.coincide && (
-          <span className="ml-2 text-roja">
+          <span className="ml-2 text-danger">
             (cargaste {marcador.declarado.local}–{marcador.declarado.visitante} al crear el
             partido: falta cargar algún gol)
           </span>
@@ -47,7 +47,7 @@ export function PieMarcador({ marcador, ocupado, onFinalizar, pendientes }: Prop
             quedaría sin esos goles. Se avisa antes en vez de bloquear, que es
             el criterio de toda esta pantalla. */}
         {pendientes > 0 && (
-          <span className="text-[0.85rem] text-roja">
+          <span className="text-[0.85rem] text-danger">
             Faltan subir {pendientes} evento{pendientes > 1 ? 's' : ''}
           </span>
         )}
@@ -56,7 +56,7 @@ export function PieMarcador({ marcador, ocupado, onFinalizar, pendientes }: Prop
           type="button"
           onClick={onFinalizar}
           disabled={ocupado}
-          className="tactil bg-amarillo px-5 font-display text-[0.9rem] font-extrabold text-negro-cancha disabled:opacity-60"
+          className="tactil bg-accent px-5 font-display text-[0.9rem] font-extrabold text-accent-contrast disabled:opacity-60"
         >
           Finalizar partido
         </button>

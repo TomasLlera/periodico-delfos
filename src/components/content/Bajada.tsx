@@ -11,7 +11,7 @@
 
 export function Bajada({ children }: { children: string }) {
   return (
-    <p className="mt-4 max-w-[52ch] font-body text-[19px] leading-[1.55] text-gris md:text-[21px]">
+    <p className="mt-4 max-w-[52ch] font-body text-[19px] leading-[1.55] text-text-muted md:text-[21px]">
       {children}
     </p>
   )

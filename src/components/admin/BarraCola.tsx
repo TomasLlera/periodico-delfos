@@ -27,8 +27,8 @@ export function BarraCola({ estado, hayConexion, onReintentar }: Props) {
     <p
       role="status"
       className={
-        'flex flex-wrap items-center gap-3 border-l-2 bg-papel-alt px-3 py-2 text-[0.9rem] ' +
-        (hayConexion ? 'border-amarillo' : 'border-roja')
+        'flex flex-wrap items-center gap-3 border-l-2 bg-bg-muted px-3 py-2 text-[0.9rem] ' +
+        (hayConexion ? 'border-accent' : 'border-danger')
       }
     >
       <span>{estado}</span>

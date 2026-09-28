@@ -39,7 +39,7 @@ export function GrillaNotas({ id, titulo, notas, enlace, vacio }: Props) {
     <section aria-labelledby={id} className="mt-bloque">
       <CabeceraBloque id={id} titulo={titulo} enlace={enlace} />
 
-      {notas.length === 0 && <p className="font-body text-gris">{vacio}</p>}
+      {notas.length === 0 && <p className="font-body text-text-muted">{vacio}</p>}
 
       <ul className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {notas.map((nota, i) => (
