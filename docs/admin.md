@@ -94,7 +94,7 @@ partido sin formación abre la planilla sin ninguna jugadora que tocar.
 | Estado del formulario | `src/components/admin/usarFormulario.ts` | El hook que comparten los cuatro formularios |
 | Revalidación | `src/lib/revalidar.ts` | Qué rutas públicas caen con cada cambio |
 | Cola offline | `src/lib/cola.ts` · `cola-idb.ts` · `usarCola.ts` | La lógica con test, el IndexedDB y el hook |
-| Nodos del editor | `src/lib/tiptap/extensiones.tsx` | `imagen` y `planilla`, con los atributos que fija `esquema.ts` |
+| Nodos del editor | `src/lib/tiptap/extensiones.tsx` | `imagen`, `planilla`, `video` y `posteo`, con los atributos que fija `esquema.ts` |
 | Auto-posteo | `src/lib/inngest/` · `src/lib/social/` | El fan-out durable, el copy y el registro en `social_posts` |
 
 **La lógica de cada entidad está partida en dos archivos a propósito.**

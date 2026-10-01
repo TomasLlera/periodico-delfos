@@ -43,14 +43,14 @@ export default function DemoNota() {
 
         <Seccion
           titulo="1 · Todos los nodos"
-          nota="Párrafos, h2 y h3, negrita, itálica, código, links internos y externos, viñetas, lista ordenada, cita, separador, salto de línea, imagen con epígrafe y la planilla embebida. El párrafo vacío del final de TipTap no dibuja nada."
+          nota="Párrafos, h2 y h3, negrita, itálica, código, links internos y externos, viñetas, lista ordenada, cita, posteo citado, video de YouTube, separador, salto de línea, imagen con epígrafe y la planilla embebida. El párrafo vacío del final de TipTap no dibuja nada."
         >
           <CuerpoTipTap cuerpo={cuerpoCompleto} partidos={PARTIDOS} nivelBase={3} />
         </Seccion>
 
         <Seccion
           titulo="2 · Un cuerpo mal cargado"
-          nota="Ocho nodos rotos entre dos párrafos sanos: links con esquema prohibido, imagen sin alt, imagen con src data:, planilla sin id, planilla de un partido que no se precargó, un nodo de una extensión inexistente y una lista vacía. Se tienen que ver los dos párrafos y nada más."
+          nota="Diez nodos rotos entre dos párrafos sanos: links con esquema prohibido, imagen sin alt, imagen con src data:, planilla sin id, planilla de un partido que no se precargó, un video con la URL donde va el id, un posteo sin la cita, un posteo de un dominio que se le parece y una lista vacía. Se tienen que ver los dos párrafos y nada más."
         >
           <CuerpoTipTap cuerpo={cuerpoHostil} partidos={PARTIDOS} nivelBase={3} />
         </Seccion>

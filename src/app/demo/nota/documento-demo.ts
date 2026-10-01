@@ -102,6 +102,22 @@ export const cuerpoCompleto: DocumentoTipTap = {
       ],
     },
 
+    {
+      type: 'posteo',
+      attrs: {
+        url: 'https://www.instagram.com/p/C8xYzAbCdEf/',
+        usuario: 'aldosivi.fem',
+        texto: 'Tres puntos de local y seguimos arriba. Gracias, gente. ¡Vamos Tiburonas!',
+      },
+    },
+
+    {
+      // Un id con la forma correcta y que no existe: la demo no carga el
+      // reproductor de un video de verdad para probar un contenedor.
+      type: 'video',
+      attrs: { videoId: 'aaaaaaaaaaa', titulo: 'El segundo gol, desde la popular' },
+    },
+
     { type: 'horizontalRule' },
 
     { type: 'heading', attrs: { level: 2 }, content: [texto('La planilla')] },
@@ -148,7 +164,7 @@ export const cuerpoCompleto: DocumentoTipTap = {
 export const cuerpoHostil: DocumentoTipTap = {
   type: 'doc',
   content: [
-    parrafo(texto('Debajo de este párrafo hay ocho nodos rotos. No se ve ninguno.')),
+    parrafo(texto('Debajo de este párrafo hay diez nodos rotos. No se ve ninguno.')),
 
     // 1. Link con esquema prohibido: queda el texto, se cae el link.
     parrafo(
@@ -176,10 +192,24 @@ export const cuerpoHostil: DocumentoTipTap = {
     // 6. Planilla de un partido que la página no precargó.
     { type: 'planilla', attrs: { partidoId: 'par-que-no-existe' } },
 
-    // 7. Nodo de una extensión que no existe.
+    // 7. Video con la URL donde va el id: el nodo existe, los atributos no
+    //    validan, y lo que no llega a un `<iframe src>` es justo el punto.
     { type: 'video', attrs: { url: 'https://youtube.com/watch?v=x' } },
 
-    // 8. Lista vacía.
+    // 8. Posteo sin la cita: una tarjeta que no dice nada es el hueco que el
+    //    nodo vino a evitar, así que se descarta entera.
+    {
+      type: 'posteo',
+      attrs: { url: 'https://x.com/aldosivi/status/1783456789012345678', usuario: 'aldosivi' },
+    },
+
+    // 9. Posteo de un dominio que se le parece.
+    {
+      type: 'posteo',
+      attrs: { url: 'https://instagram.com.evil.io/p/C8xYzAbCdEf/', usuario: 'a', texto: 'Hola' },
+    },
+
+    // 10. Lista vacía.
     { type: 'bulletList', content: [] },
 
     parrafo(texto('Y este párrafo cierra: el documento llegó hasta el final.')),

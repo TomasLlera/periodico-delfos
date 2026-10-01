@@ -11,6 +11,7 @@ import {
   Link2,
   List,
   ListOrdered,
+  MessageSquareQuote,
   Quote,
   Redo2,
   Undo2,
@@ -20,9 +21,10 @@ import {
 import { EnlazarNota, type NotaEnlazable } from '@/components/admin/EnlazarNota'
 import { InsertarImagen } from '@/components/admin/InsertarImagen'
 import { InsertarPlanilla } from '@/components/admin/InsertarPlanilla'
+import { InsertarPosteo } from '@/components/admin/InsertarPosteo'
 import { InsertarVideo } from '@/components/admin/InsertarVideo'
 import { etiquetaDePartido } from '@/lib/partido'
-import { NodoImagen, NodoPlanilla, NodoVideo } from '@/lib/tiptap/extensiones'
+import { NodoImagen, NodoPlanilla, NodoPosteo, NodoVideo } from '@/lib/tiptap/extensiones'
 import type { DocumentoTipTap, PartidoConEquipos } from '@/types'
 
 /**
@@ -38,8 +40,8 @@ import type { DocumentoTipTap, PartidoConEquipos } from '@/types'
  * dibuja en el servidor un árbol que el cliente rearma distinto, y React tira
  * un error de hidratación en cada carga del editor.
  *
- * **Los dos nodos propios del proyecto —`imagen` y `planilla`— se insertan
- * desde esta barra.** Viven en `src/lib/tiptap/extensiones.tsx` y respetan el
+ * **Los cuatro nodos propios del proyecto —`imagen`, `planilla`, `video` y
+ * `posteo`— se insertan desde esta barra.** Viven en `src/lib/tiptap/extensiones.tsx` y respetan el
  * contrato de atributos que documenta `esquema.ts`, que es el mismo que lee el
  * renderer del sitio. Tocar esos nombres en un solo lado guarda nodos que el
  * sitio después descarta en silencio.
@@ -50,8 +52,8 @@ import type { DocumentoTipTap, PartidoConEquipos } from '@/types'
  * después en la planilla aparece corregido en la nota ya publicada.
  */
 
-/** Cuál de los tres paneles está abierto. Uno solo a la vez: son excluyentes. */
-type Panel = 'enlazar' | 'imagen' | 'planilla' | 'video'
+/** Cuál de los paneles está abierto. Uno solo a la vez: son excluyentes. */
+type Panel = 'enlazar' | 'imagen' | 'planilla' | 'video' | 'posteo'
 
 interface Props {
   valor: DocumentoTipTap
@@ -72,6 +74,7 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
       StarterKit,
       NodoImagen,
       NodoVideo,
+      NodoPosteo,
       // El nodo guarda sólo el id; el nombre del partido se lo da esta opción
       // para poder dibujar el bloque mientras se escribe. `partidos` lo trae
       // la página del editor y no cambia mientras la pantalla está abierta,
@@ -176,8 +179,8 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
 
         <span className="mx-1 h-5 w-px bg-border" />
 
-        {/* Los dos nodos propios. Van juntos y al final de la barra: se usan
-            una o dos veces por nota, al revés que la negrita. */}
+        {/* Los nodos propios. Van juntos y al final de la barra: se usan una o
+            dos veces por nota, al revés que la negrita. */}
         <button
           type="button"
           onClick={() => setPanel((p) => (p === 'imagen' ? null : 'imagen'))}
@@ -215,6 +218,19 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
           }`}
         >
           <IconoVideo size={16} aria-hidden="true" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setPanel((p) => (p === 'posteo' ? null : 'posteo'))}
+          title="Citar un posteo de Instagram o de X"
+          aria-label="Citar un posteo de Instagram o de X"
+          aria-pressed={panel === 'posteo'}
+          className={`tactil flex min-w-11 items-center justify-center px-2 ${
+            panel === 'posteo' ? 'bg-text text-bg' : 'hover:bg-bg-muted'
+          }`}
+        >
+          <MessageSquareQuote size={16} aria-hidden="true" />
         </button>
       </div>
 
@@ -256,6 +272,16 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
           onCerrar={() => setPanel(null)}
           onInsertar={(video) => {
             editor.chain().focus().insertContent({ type: 'video', attrs: video }).run()
+            setPanel(null)
+          }}
+        />
+      )}
+
+      {panel === 'posteo' && (
+        <InsertarPosteo
+          onCerrar={() => setPanel(null)}
+          onInsertar={(posteo) => {
+            editor.chain().focus().insertContent({ type: 'posteo', attrs: posteo }).run()
             setPanel(null)
           }}
         />
