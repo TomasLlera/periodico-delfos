@@ -19,6 +19,8 @@ function nota(parcial: Partial<NotaResumen> = {}): NotaResumen {
     autor_id: 'a1',
     estado: 'publicada',
     publicada_en: '2026-09-15T09:00:00Z',
+
+    publicar_en: null,
     destacada: false,
     auto_post: true,
     redes: [],

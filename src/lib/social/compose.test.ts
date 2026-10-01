@@ -171,6 +171,7 @@ function nota(opciones: {
     autor_id: AUTOR.id,
     estado: 'publicada',
     publicada_en: '2026-08-15T23:00:00.000Z',
+    publicar_en: null,
     destacada: false,
     auto_post: true,
     redes: ['facebook', 'instagram', 'x'],

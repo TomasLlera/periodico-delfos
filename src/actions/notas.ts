@@ -2,7 +2,13 @@
 
 import { revalidatePath } from 'next/cache'
 import { inngest, notaPublicada } from '@/lib/inngest/client'
-import { chequearPublicacion, esquemaNota, firmaDe, redesAPostear } from '@/lib/nota'
+import {
+  chequearProgramacion,
+  chequearPublicacion,
+  esquemaNota,
+  firmaDe,
+  redesAPostear,
+} from '@/lib/nota'
 import { getAutorDeLaSesion } from '@/lib/supabase/queries/autores'
 import { createClient } from '@/lib/supabase/server'
 
@@ -224,6 +230,69 @@ export async function despublicarNota(id: string): Promise<ResultadoNota> {
   if (error) return { error: 'No se pudo despublicar' }
 
   revalidarRutasPublicas(data.slug)
+
+  return { id: data.id, slug: data.slug }
+}
+
+/**
+ * Deja la nota lista para que salga sola a la hora que se le diga.
+ *
+ * **Exige lo mismo que publicar, no menos.** Pasa por `chequearPublicacion()`
+ * igual que `publicarNota()`: una nota que se programa es una que se va a
+ * publicar sin que nadie la mire de nuevo, así que lo que no se permite
+ * publicar a mano tampoco se puede dejar agendado. Si no, el error aparece
+ * dentro del cron, de madrugada y sin nadie para arreglarlo.
+ *
+ * **No dispara el posteo a redes.** Lo hace el cron cuando la publica de
+ * verdad, con el mismo evento que la publicación manual. Emitirlo acá la
+ * postearía en el momento de programarla, con un link que todavía da 404.
+ *
+ * **No revalida nada**: una programada no sale en ninguna ruta pública. El
+ * sitio filtra por `estado = 'publicada'`.
+ */
+export async function programarNota(
+  datos: unknown,
+  id: string | null,
+  publicarEn: string | null,
+): Promise<ResultadoNota> {
+  const autor = await getAutorDeLaSesion()
+  if (!autor) return { error: 'Se cerró la sesión. Entrá de nuevo.' }
+
+  const parseo = esquemaNota.safeParse(datos)
+  if (!parseo.success) {
+    return { error: 'Faltan datos', motivos: parseo.error.issues.map((i) => i.message) }
+  }
+
+  const chequeo = chequearPublicacion(parseo.data)
+  if (!chequeo.puede) {
+    return { error: 'La nota todavía no se puede programar', motivos: chequeo.motivos }
+  }
+
+  const cuando = chequearProgramacion(publicarEn)
+  if (!cuando.puede) {
+    return { error: 'No se puede programar para esa hora', motivos: [cuando.motivo ?? ''] }
+  }
+
+  const supabase = await createClient()
+  const fila = {
+    ...filaDesde(parseo.data),
+    estado: 'programada' as const,
+    publicar_en: publicarEn,
+  }
+
+  const { data, error } = id
+    ? await supabase.from('notas').update(fila).eq('id', id).select('id, slug').single()
+    : await supabase
+        .from('notas')
+        .insert({ ...fila, autor_id: firmaDe(autor) })
+        .select('id, slug')
+        .single()
+
+  if (error) {
+    return {
+      error: error.code === '23505' ? 'Ya existe una nota con ese slug' : 'No se pudo programar',
+    }
+  }
 
   return { id: data.id, slug: data.slug }
 }

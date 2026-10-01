@@ -19,7 +19,13 @@ export default async function Panel() {
   const notas = await getNotasDelAdmin()
 
   const borradores = notas.filter((n) => n.estado === 'borrador')
-  const resto = notas.filter((n) => n.estado !== 'borrador')
+  // Las programadas van en su propio grupo y ordenadas por cuándo salen: bajo
+  // el título «Publicadas» decían que ya estaban en el sitio, y en el orden de
+  // último cambio no se veía cuál es la próxima en salir.
+  const programadas = notas
+    .filter((n) => n.estado === 'programada')
+    .sort((a, b) => (a.publicar_en ?? '').localeCompare(b.publicar_en ?? ''))
+  const resto = notas.filter((n) => n.estado !== 'borrador' && n.estado !== 'programada')
 
   return (
     <main className="mx-auto max-w-[1200px] px-4 py-8">
@@ -50,6 +56,17 @@ export default async function Panel() {
           <h2 className="meta mb-2 text-text-muted">En borrador · {borradores.length}</h2>
           <ul>
             {borradores.map((nota) => (
+              <FilaNota key={nota.id} nota={nota} />
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {programadas.length > 0 && (
+        <section className="mb-8">
+          <h2 className="meta mb-2 text-text-muted">Programadas · {programadas.length}</h2>
+          <ul>
+            {programadas.map((nota) => (
               <FilaNota key={nota.id} nota={nota} />
             ))}
           </ul>

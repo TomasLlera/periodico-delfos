@@ -33,6 +33,7 @@ function nota(
     partido_id: null,
     autor_id: 'charlie',
     estado: 'publicada',
+    publicar_en: null,
     destacada: false,
     auto_post: true,
     redes: [],

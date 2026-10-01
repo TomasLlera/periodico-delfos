@@ -76,7 +76,8 @@ export function notaDePrevisualizacion({
     // Se usa ahora, que es exactamente la que tendría si se confirmara: la
     // preview promete cómo va a quedar, no cómo está.
     publicada_en: existente?.publicada_en ?? momento,
-
+    // La vista previa nunca es una programada: se mira lo que se esta editando.
+    publicar_en: null,
     created_at: existente?.created_at ?? momento,
     updated_at: momento,
 

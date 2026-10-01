@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { ExternalLink, Pencil } from 'lucide-react'
-import { etiquetaCategoria, fechaCorta } from '@/lib/formato'
+import { etiquetaCategoria, fechaCorta, fechaHoraPartido } from '@/lib/formato'
 import type { NotaResumen } from '@/types'
 
 /**
@@ -17,12 +17,16 @@ import type { NotaResumen } from '@/types'
 
 const ESTILO_ESTADO = {
   borrador: 'bg-accent text-accent-contrast',
+  // Borde y no relleno: una programada todavia no salio, asi que no puede
+  // leerse tan firme como una publicada ni tan en crudo como un borrador.
+  programada: 'border border-text text-text',
   publicada: 'bg-text text-bg',
   archivada: 'bg-bg-muted text-text-muted',
 } as const
 
 const NOMBRE_ESTADO = {
   borrador: 'Borrador',
+  programada: 'Programada',
   publicada: 'Publicada',
   archivada: 'Archivada',
 } as const
@@ -52,8 +56,13 @@ export function FilaNota({ nota }: { nota: NotaResumen }) {
 
       <span className="ml-auto flex items-center gap-3 text-[0.85rem] text-text-muted">
         {/* La fecha que importa en el panel es la del último cambio: un
-            borrador nunca tiene fecha de publicación. */}
-        <span>{fechaCorta(nota.updated_at)}</span>
+            borrador nunca tiene fecha de publicación. Salvo en una programada,
+            donde lo que se quiere saber es cuándo sale, no cuándo se tocó. */}
+        {nota.estado === 'programada' && nota.publicar_en ? (
+          <span>sale el {fechaHoraPartido(nota.publicar_en)}</span>
+        ) : (
+          <span>{fechaCorta(nota.updated_at)}</span>
+        )}
 
         {nota.estado === 'publicada' && (
           <Link

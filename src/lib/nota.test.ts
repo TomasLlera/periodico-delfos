@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  chequearProgramacion,
   chequearPublicacion,
   cuerpoVacio,
   documentoVacio,
@@ -198,5 +199,35 @@ describe('entradaDesdeNota', () => {
       ...guardada,
       redes: ['x'],
     })
+  })
+})
+
+describe('chequearProgramacion', () => {
+  const ahora = new Date('2026-10-01T12:00:00Z')
+
+  it('acepta una hora con margen de sobra', () => {
+    expect(chequearProgramacion('2026-10-01T18:00:00Z', ahora)).toEqual({ puede: true })
+  })
+
+  it('rechaza una hora que ya paso, que es el caso que mas va a pasar', () => {
+    const r = chequearProgramacion('2026-10-01T11:59:00Z', ahora)
+    expect(r.puede).toBe(false)
+    expect(r.motivo).toContain('ya pasó')
+  })
+
+  it('rechaza programar adentro del intervalo del cron', () => {
+    // Dentro de 3 minutos: el publicador corre cada 5, asi que esa hora miente.
+    const r = chequearProgramacion('2026-10-01T12:03:00Z', ahora)
+    expect(r.puede).toBe(false)
+    expect(r.motivo).toContain('5')
+  })
+
+  it('acepta justo en el borde del margen', () => {
+    expect(chequearProgramacion('2026-10-01T12:05:00Z', ahora).puede).toBe(true)
+  })
+
+  it('pide una fecha cuando no hay ninguna', () => {
+    expect(chequearProgramacion(null, ahora).puede).toBe(false)
+    expect(chequearProgramacion('cualquier cosa', ahora).puede).toBe(false)
   })
 })
