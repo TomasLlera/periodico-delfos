@@ -3500,3 +3500,96 @@ segunda excepción prevista a la regla 6 de CLAUDE.md, después de la pelota.
 5. **Decidir, no programar**: qué hacer con los embeds de Instagram y X, y cómo
    son los huecos de publicidad. Las dos están frenadas por una decisión y no
    por el código.
+
+---
+
+## Prompt para la próxima sesión — al 01/10/2026, noche
+
+> **Éste es el vigente.** Reemplaza al bloque "Dónde quedó todo" de más arriba
+> en lo que se contradigan: desde entonces entraron las notas programadas y las
+> migraciones 0012 y 0013 **ya están aplicadas en producción**.
+
+````
+Estoy construyendo Periódico Delfos, un medio digital de Mar del Plata dedicado al
+fútbol femenino de Aldosivi (las "Tiburonas"). Lo escribe una sola persona, Charlie
+Redondo. Es una migración desde WordPress.
+
+El proyecto está en `periodico-delfos/`. Next 15 App Router + TypeScript strict +
+Tailwind v4 + Supabase + TipTap + Inngest.
+
+`CLAUDE.md` tiene las reglas no negociables y el sistema de diseño. El estado está
+en `HANDOFF.md`: **leé las dos últimas secciones**, que son las del 01/10; más
+arriba hay partes viejas que se contradicen con ellas. El mapa del panel está en
+`docs/admin.md`.
+
+DÓNDE ESTAMOS: rama `feat/pedidos-de-charlie`, pusheada y sin PR abierto, con tres
+commits sobre `main`. Son la respuesta a una lista que mandó Charlie después de
+cargar su primera nota de verdad.
+
+ENTORNO:
+- **Supabase está arriba con datos reales**: dos temporadas, 10 equipos, 33
+  jugadoras, un partido (fecha 4 contra Claypole, 6-1, sin planilla cargada) y dos
+  notas, una publicada y un borrador.
+- **`tabla_posiciones` está vacía.** Por eso la tabla a la fecha no se ve en
+  ninguna ficha real; se la mira en `/demo/partido`.
+- **Las migraciones 0012 y 0013 ya se aplicaron.** `notas` tiene la columna
+  `publicar_en` y el enum de estado tiene `'programada'`.
+- `next dev` y `next build` comparten `.next`: con el dev abierto, un build lo deja
+  tirando "Cannot find module ./vendor-chunks/@supabase+auth-js". Se arregla con
+  `rm -rf .next` y levantar el dev. Pasó dos veces; bajá el dev antes de buildear.
+- Varios archivos están en CRLF. Un reemplazo multilínea con `\n` falla en
+  silencio contra ellos.
+- `pnpm lint` falla de fábrica por un `eslint.config.mjs` que quedó de un
+  scaffolding de Next 16. No afecta al build.
+- Al 01/10 pasan `npx tsc --noEmit`, **648 tests en 41 archivos** y
+  `npx next build` exit 0. Mantenelos verdes.
+
+LO QUE FALTA, Y POR QUÉ ESTÁ FRENADO CADA UNO:
+
+1. INSTAGRAM Y X EN EL CUERPO DE LA NOTA. YouTube ya entró (nodo `video`,
+   `lib/tiptap/video.ts`). Estas dos están frenadas por una decisión, no por
+   código: el embed oficial de cada plataforma es un `<blockquote>` más un
+   `<script>` propio que pesa cientos de kilobytes, deja cookies de terceros
+   —el sitio no tiene política de privacidad— y **el bloque desaparece si borran
+   el posteo**, dejando un hueco en una nota vieja. La alternativa es una tarjeta
+   propia: cita con el texto, el autor y el link, que sobrevive al borrado.
+   **Preguntá cuál antes de escribir nada.**
+
+2. PUBLICIDAD. Charlie preguntó cómo se colocarían los espacios. AdSense es un
+   script más un bloque por hueco; los sponsors propios son una tabla con imagen,
+   link y vigencia, más una pantalla en el panel. Falta que él diga cuántos huecos
+   y dónde. AdSense además pide la cuenta aprobada y la política publicada.
+
+3. COLABORADORES QUE FIRMEN SUS PROPIAS NOTAS. La base lo aguanta: `notas.autor_id`
+   existe, `autores` es una tabla y RLS usa `es_autor()`. Falta el alta —hoy un
+   autor nace creando el usuario en Supabase Auth a mano— y decidir si cada uno
+   edita sólo lo suyo o todos ven todo, porque eso cambia las políticas de RLS.
+
+4. EL CASILLERO DE ANALYTICS EN EL PANEL. Hoy anda con `NEXT_PUBLIC_GA_ID`.
+   Charlie lo quería como campo del panel, y eso necesita una tabla de
+   configuración clave/valor. **No prender la variable antes de publicar la
+   política de privacidad**: GA deja cookies.
+
+5. PROBAR EL PANEL A MANO, que sigue sin hacerse y no lo puede hacer un agente.
+   Nadie cargó todavía una nota con un video adentro, ni programó una y esperó a
+   que saliera. Para lo segundo hace falta `npx inngest-cli dev` en otra terminal.
+
+DATOS QUE FALTAN Y QUE SÓLO TIENE CHARLIE: los handles de las redes (desbloquean
+los íconos del chrome, la columna "Seguinos" del pie y, detrás, la política de
+privacidad), el mail del medio y el responsable de datos.
+
+CÓMO TRABAJAR ACÁ:
+- Lógica pura en `src/lib/` con tests de vitest; componentes que reciben todo por
+  props.
+- Las queries en `src/lib/supabase/queries/*`, nunca un `.from()` adentro de un
+  componente. Los Server Actions en `src/actions/*`, uno por entidad.
+- Un componente por archivo, máximo 300 líneas.
+- Todo en español, incluidos los nombres de funciones y variables. Los commits en
+  español **sin acentos** y con prefijo `feat:`, `fix:`, `chore:`, `docs:`.
+- Los comentarios explican **por qué**, no qué.
+- Los colores salen de los tokens semánticos del PR de la paleta: `text-text-muted`,
+  `bg-bg-elevated`, `text-accent-text`. Ya no existen `text-gris` ni `bg-tarjeta`.
+  Mirá `src/lib/colores.ts` antes de escribir una clase de color nueva.
+- Verificar con `npx tsc --noEmit`, `npx vitest run` y `npx next build` antes de
+  decir que algo está hecho.
+````
