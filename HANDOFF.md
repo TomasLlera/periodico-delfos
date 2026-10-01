@@ -3367,3 +3367,136 @@ CÓMO TRABAJAR ACÁ:
 - Verificar con `npx tsc --noEmit`, `npx vitest run` y `npx next build` antes de decir
   que algo está hecho.
 ````
+
+---
+
+## Dónde quedó todo — al 01/10/2026
+
+> **Éste es el estado vigente.** El "Prompt para la próxima sesión" de más
+> arriba quedó al 21/09 y tiene datos que ya no valen: dice que la rama viva es
+> `fase/19-nodos-del-editor`, que está mergeada desde entonces, y da por vacía
+> la tabla `notas`, que ya tiene la nota de prueba de Charlie.
+
+### El mapa de ramas
+
+`main` tiene cinco PR mergeados: la firma de las notas (#1), la portada y el
+responsive (#2), la paleta sobria con modo oscuro (#3), el acomodo de la
+portada sin análisis (#4) y lo que entró después. Sin mergear queda
+**`feat/pedidos-de-charlie`**, pusheada y sin PR abierto.
+
+### Los pedidos de Charlie, uno por uno
+
+Vinieron en un documento después de que cargara la primera nota completa desde
+el panel. Están en orden del documento.
+
+**Colores y modo oscuro — cerrados.** Entraron por el PR #3, con `lib/colores.ts`
+y su toggle. Los tokens cambiaron de nombre en todo el sitio: donde había
+`text-gris` o `bg-tarjeta` ahora va `text-text-muted` y `bg-bg-elevated`. Antes
+de escribir una clase de color nueva, mirar ese archivo.
+
+**Títulos en caja normal — cerrado.** Clase `.titular-nota` en `globals.css`.
+`.titular` sigue forzando versalita y así tiene que quedarse: es para los
+rótulos deportivos, que son cortos y fijos.
+
+**Corrector ortográfico — cerrado.** `spellCheck` y `lang="es-AR"` en
+`CampoTexto` y en los `editorProps` de TipTap.
+
+**Multimedia en el cuerpo — a medias, y la mitad que falta es una decisión.**
+YouTube está: nodo `video`, `lib/tiptap/video.ts` con 9 tests, botón en el
+editor con vista previa de la miniatura.
+
+Instagram y X quedaron afuera a propósito y conviene no revertirlo sin pensar.
+El embed oficial de las dos plataformas es un `<blockquote>` más un `<script>`
+de la plataforma: pesa cientos de kilobytes, deja cookies de terceros —el sitio
+todavía no tiene política de privacidad— y **el bloque desaparece si borran el
+posteo**, dejando un hueco en una nota vieja. La alternativa sensata, si Charlie
+insiste, es una tarjeta propia: captura o cita con el texto, el autor y el link,
+que no depende de que el posteo siga vivo. Eso es diseño, no plomería, y hay
+que acordarlo antes de escribirlo.
+
+**Perfil del autor — cerrado.** `/admin/perfil`, con `actions/autor.ts`. El
+action edita siempre la fila de quien está logueado y no recibe un id.
+
+**Colaboradores que firmen sus propias notas — no empezado.** La base ya lo
+aguanta: `notas.autor_id` existe, `autores` es una tabla y RLS usa `es_autor()`.
+Lo que falta es el alta —hoy un autor nace creando el usuario en Supabase Auth a
+mano— y decidir si todos ven y editan todo o si cada uno toca sólo lo suyo. Eso
+segundo cambia las políticas de RLS, así que es la decisión primero y el código
+después.
+
+**Autor en el listado del panel — cerrado.**
+
+**Notas programadas — no empezado, y necesita migración.** Hace falta una
+columna `publicar_en` en `notas` y un trabajo periódico que las publique. La
+infraestructura está: Inngest ya corre el fan-out a redes, así que es una
+función más. Los dos cuidados: la publicación programada tiene que disparar el
+mismo evento `nota/publicada` que la manual —si no, se publica sin postear— y
+hay que decidir qué pasa si el trabajo corre tarde.
+
+**Tarjeta de vista previa al compartir — ya estaba hecho.** El `og:image` usa la
+foto de la nota y hay `/api/og` para las que no tienen. Si Charlie vio el link
+plano fue por una de tres: compartió una URL de `localhost`, la compartió antes
+de que existieran las etiquetas y quedó cacheada —se limpia en el depurador de
+Facebook— o la nota era borrador. **Verificarlo con una URL de producción antes
+de tocar nada.**
+
+**Publicidad — no empezado, y primero es una conversación.** Charlie preguntó
+cómo se colocarían. AdSense son un script y un bloque por hueco; los sponsors
+propios son una tabla con imagen, link y vigencia, más una pantalla en el panel.
+Las dos cosas necesitan que él diga cuántos huecos y dónde, y AdSense además
+pide la cuenta aprobada y la política de privacidad publicada.
+
+**Google Analytics — cerrado a medias.** Anda con `NEXT_PUBLIC_GA_ID`. Charlie
+lo pidió como casillero en el panel, y eso necesita una tabla de configuración
+clave/valor: conviene que entre junto con la migración de notas programadas y no
+en una propia. **No prender la variable antes de publicar la política de
+privacidad.**
+
+**Tabla de posiciones a la fecha del partido — cerrado, sin datos para verlo.**
+La ficha la dibuja si hay tabla cargada para esa fecha. `tabla_posiciones` tiene
+**cero filas**, así que hoy no aparece en ninguna ficha real; se la ve en
+`/demo/partido`. Cargar una fecha desde `/admin/tabla/[temporadaId]` es la forma
+de probarlo de verdad.
+
+**Compresión de imágenes — ya estaba.** Las fotos se sirven por el transformador
+de Supabase en 400/800/1600, WebP, calidad 75, con tope de 8 MB al subir.
+
+**Redes del medio — hecho, esperando los handles.** `lib/redes-del-medio.ts` lee
+cuatro variables de entorno y `<RedesDelMedio />` no dibuja nada mientras estén
+vacías. Con los handles aparecen solos los íconos de la cabecera y la columna
+"Seguinos" del pie. **Es el dato que más cosas desbloquea**: también lo necesita
+la política de privacidad.
+
+### Lo que encontró el camino
+
+**La portada tenía dos `<h1>`.** El suyo, oculto, y el de la nota de tapa. No se
+veía porque hacía falta una nota publicada para que la tapa existiera. La tapa
+pasó a `h2` y `/demo/portada` recibió su propio `h1` oculto. Arreglado.
+
+**`next build` con el `pnpm dev` abierto rompe el dev server**, y pasó dos veces
+en la misma sesión. Comparten `.next`: el build deja los vendor-chunks de
+producción y el dev pide los de desarrollo, con un `Cannot find module` que
+apunta a Supabase y no al verdadero problema. Se arregla con `rm -rf .next` y
+levantar el dev de nuevo. **Está avisado más arriba en este archivo y se cayó
+igual**: antes de un build, bajar el dev.
+
+**`lucide-react` v1 no tiene ningún logo de marca.** Los sacó por ser marcas
+registradas. Los cuatro de `<RedesDelMedio />` van dibujados a mano, y es la
+segunda excepción prevista a la regla 6 de CLAUDE.md, después de la pelota.
+
+### Qué conviene hacer mañana
+
+1. **Abrir el PR de `feat/pedidos-de-charlie`** y mergearlo. Son 31 archivos y
+   la rama ya vive más de lo que `CONTRIBUTING.md` considera sano.
+2. **Probar el panel contra la base, a mano.** Sigue siendo lo más importante y
+   sigue sin hacerse: el perfil del autor, el botón de video y el autor en el
+   listado se verificaron con `tsc`, tests y un barrido de navegador, pero
+   **nadie cargó una nota con un video adentro y la publicó**.
+3. **Pedirle a Charlie los handles de las redes y el mail del medio.** Desbloquea
+   los íconos, la columna del pie, la política de privacidad y, detrás de ella,
+   Analytics y AdSense.
+4. **Cargar una fecha de la tabla de posiciones**, que es lo único que falta para
+   que la tabla de la ficha se vea en producción.
+5. **Decidir, no programar**: qué hacer con los embeds de Instagram y X, y cómo
+   son los huecos de publicidad. Las dos están frenadas por una decisión y no
+   por el código.
