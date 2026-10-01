@@ -1,4 +1,6 @@
+import { firmaDe } from '@/lib/nota'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getAutorDeLaSesion } from '@/lib/supabase/queries/autores'
 import { createClient, createStaticClient } from '@/lib/supabase/server'
 import type { Categoria, NotaConRelaciones, NotaResumen, ResultadoBusqueda } from '@/types'
 
@@ -265,10 +267,22 @@ export async function getNotasDePartido(
  */
 export async function getNotasDelAdmin(): Promise<NotaResumen[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const yo = await getAutorDeLaSesion()
+
+  let consulta = supabase
     .from('notas')
     .select(CAMPOS_RESUMEN)
     .order('updated_at', { ascending: false })
+
+  // **El filtro de un redactor se hace acá y no lo hace RLS, y es a propósito.**
+  // Desde la 0014 un redactor sólo edita lo suyo, pero la política que deja
+  // leer lo publicado es pública: sin este filtro, su listado traería todas las
+  // notas publicadas del medio, que puede abrir y no puede guardar. El criterio
+  // es el mismo con el que se firma —`firmaDe()`—, no `auth.uid()`: una cuenta
+  // técnica tiene que ver las notas que cargó con la firma del titular.
+  if (yo && yo.rol !== 'editor') consulta = consulta.eq('autor_id', firmaDe(yo))
+
+  const { data } = await consulta
 
   return (data ?? []) as unknown as NotaResumen[]
 }

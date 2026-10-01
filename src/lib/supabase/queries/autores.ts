@@ -53,3 +53,27 @@ export async function getAutorQueFirma(): Promise<Autor | null> {
 
   return (data as Autor | null) ?? autor
 }
+
+/**
+ * Todas las cuentas del panel, para la pantalla de autores.
+ *
+ * Ordenadas por rol y después por nombre: los editores primero, que son pocos y
+ * los que mandan. Sin paginar, a propósito — esto es una redacción de tres
+ * personas, no un CMS.
+ *
+ * **No trae el mail de cada uno.** El mail vive en `auth.users` y leerlo pide
+ * la service role; la tabla `autores` no lo copia porque sería un dato que
+ * queda viejo el día que alguien lo cambia desde Auth. La pantalla muestra el
+ * nombre, el slug y el rol, que es con lo que se decide algo.
+ */
+export async function getAutores(): Promise<Autor[]> {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('autores')
+    .select('*')
+    .order('rol')
+    .order('nombre')
+
+  return (data as Autor[] | null) ?? []
+}

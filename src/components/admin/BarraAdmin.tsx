@@ -35,6 +35,10 @@ export function BarraAdmin({ autor }: { autor: Autor }) {
               en un celular. */}
           <Seccion href="/admin/temporadas">Temporadas</Seccion>
           <Seccion href="/admin/posteos">Posteos</Seccion>
+          {/* Sólo para editores: un redactor no puede dar de alta una cuenta ni
+              cambiar un rol, así que el link lo llevaría a una pantalla que lo
+              rebota. La puerta de verdad está en la página y en RLS. */}
+          {autor.rol === 'editor' && <Seccion href="/admin/autores">Autores</Seccion>}
         </nav>
 
         {/* El nombre lleva al perfil: es donde se edita la firma y la bio, y

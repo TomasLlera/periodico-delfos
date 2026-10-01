@@ -25,6 +25,12 @@ se creó y quedó una hora sin ningún link que llevara ahí.
 | `/admin/partidos/[id]/formacion` | Quiénes juegan: titulares y suplentes | 12 |
 | `/admin/partidos/[id]/planilla` | Cargar goles, tarjetas y cambios | 13 ★ |
 | `/admin/posteos` | Qué pasó con los posteos, y reintentar | 18 |
+| `/admin/perfil` | La firma, la bio y los handles de quien entró | pedido |
+| `/admin/autores` · `/nuevo` | Las cuentas del panel y su rol. **Sólo editores** | pedido |
+
+**El link de `Autores` sólo lo ve un editor**, y la pantalla rebota a `/admin`
+al que no lo sea. La puerta de verdad está en la base: `gestion_de_autores` y el
+trigger `autores_rol_solo_por_editor` de la `0014`.
 
 **El plantel y la tabla no tienen link en la barra**: cuelgan de una temporada
 y se entra desde el listado de temporadas, que es donde ya se sabe de cuál. Una
@@ -114,6 +120,16 @@ mitad sólo el panel.
   cliente de `supabase/admin.ts` bypassea RLS y es para procesos sin usuario
   —Inngest, los scripts—. Si una pantalla del admin lo necesitara, está mal
   pensada: lo que falta es una política.
+- **Cada autor edita sólo sus notas; un editor edita todas.** Es el rol de
+  `autores.rol` (`0014_roles_de_autor.sql`). Lo sostiene RLS, pero el listado
+  del panel filtra además por `autor_id`: la política que deja leer lo publicado
+  es pública, así que sin ese filtro un redactor vería en su listado notas de
+  otros que puede abrir y no puede guardar. Los datos deportivos no se reparten:
+  partidos, jugadoras, planillas y tabla los carga cualquiera de los dos.
+- **El rol no se cambia desde el perfil propio.** Cada uno puede escribir su
+  fila de `autores`, y en esa fila está la columna que decide si ve las notas de
+  los demás: lo impide un trigger, porque RLS decide por fila y esto es por
+  columna.
 - **El layout re-verifica fila en `autores`.** Tener sesión de Auth no es ser el
   autor; es el mismo criterio que `es_autor()` en RLS.
   Es el error que más cuesta diagnosticar del panel: el login anda y la pantalla
