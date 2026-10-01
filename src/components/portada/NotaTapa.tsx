@@ -42,11 +42,17 @@ export function NotaTapa({ nota, palabras }: Props) {
           {etiquetaCategoria(nota.categoria)}
         </p>
 
-        <h1 className="marca mt-[1.1rem] text-[clamp(2rem,3.6vw,3.4rem)] uppercase leading-[0.98] tracking-[-0.02em]">
+        {/* `h2` y no `h1`: la tapa es la nota más grande de la portada, pero
+            el título de la página lo pone la portada —un `h1` propio, oculto—
+            porque la página no se llama como la nota del día. Con las dos cosas
+            en `h1` la portada quedaba con dos, que es justo lo que el barrido
+            del Step 20 vigila; no se veía porque hacía falta una nota publicada
+            para que la tapa existiera. */}
+        <h2 className="marca mt-[1.1rem] text-[clamp(2rem,3.6vw,3.4rem)] leading-[1.02] tracking-[-0.02em]">
           <Link href={`/nota/${nota.slug}`} className="hover:text-block-accent">
             {nota.titulo}
           </Link>
-        </h1>
+        </h2>
 
         <p className="mt-4 max-w-medida font-body text-[1.05rem] leading-relaxed text-block-text/80">
           {nota.bajada}

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Archivo, Source_Serif_4, IBM_Plex_Mono } from 'next/font/google'
+import { Analitica } from '@/components/layout/Analitica'
 import { BarraEstado } from '@/components/layout/BarraEstado'
 import { ProveedorTema } from '@/components/layout/ProveedorTema'
 import { COLOR_BARRA_NAVEGADOR } from '@/lib/colores'
@@ -124,6 +125,10 @@ export default async function RootLayout({
               franja sin recargar la página. */}
           {modal}
         </ProveedorTema>
+
+        {/* Fuera de `<ProveedorTema>` y al final del body: no participa del
+            render del sitio, se carga despues de que la pagina respondio. */}
+        <Analitica />
       </body>
     </html>
   )

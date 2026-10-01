@@ -43,6 +43,13 @@ export function FilaNota({ nota }: { nota: NotaResumen }) {
 
       <span className="meta text-text-muted">{etiquetaCategoria(nota.categoria)}</span>
 
+      {/* Quién firma. Hoy el medio lo escribe una sola persona y el dato parece
+          de más, pero `notas.autor_id` ya existe y el panel está preparado para
+          varias cuentas: el día que entre un colaborador, un listado que no
+          dice de quién es cada nota obliga a abrirlas de a una. Lo pidió
+          Charlie después de cargar la primera nota. */}
+      <span className="text-[0.85rem] text-text-muted">{nota.autor.nombre}</span>
+
       <span className="ml-auto flex items-center gap-3 text-[0.85rem] text-text-muted">
         {/* La fecha que importa en el panel es la del último cambio: un
             borrador nunca tiene fecha de publicación. */}

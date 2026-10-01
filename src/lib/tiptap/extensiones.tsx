@@ -3,7 +3,8 @@
 import { Node, mergeAttributes } from '@tiptap/core'
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
 import { ClipboardList } from 'lucide-react'
-import { ATRIBUTOS_IMAGEN, ATRIBUTOS_PLANILLA } from '@/lib/tiptap/esquema'
+import { ATRIBUTOS_IMAGEN, ATRIBUTOS_PLANILLA, ATRIBUTOS_VIDEO } from '@/lib/tiptap/esquema'
+import { miniaturaDeYouTube } from '@/lib/tiptap/video'
 
 /**
  * Los dos nodos propios del proyecto, para el editor.
@@ -176,3 +177,48 @@ function VistaPlanilla({
     </NodeViewWrapper>
   )
 }
+
+// ============================================
+// video
+// ============================================
+
+/**
+ * Un video de YouTube embebido en el cuerpo.
+ *
+ * `atom: true` como los otros dos: no tiene contenido editable adentro. El
+ * título es un atributo, no un hijo, porque es texto accesible y no algo que se
+ * edite con el cursor dentro del bloque.
+ *
+ * **Guarda el id, nunca la URL.** Ver `idDeYouTube()`: lo que llega a un
+ * `<iframe src>` lo arma el código, no lo que alguien pegó.
+ *
+ * En el editor se dibuja como una tarjeta con la miniatura y no como el
+ * reproductor: un `<iframe>` adentro de un editable se come los clics, el
+ * cursor no lo puede pasar y cada video cargado suma medio megabyte de scripts
+ * de YouTube a una pantalla donde sólo se está escribiendo.
+ */
+export const NodoVideo = Node.create({
+  name: 'video',
+  group: 'block',
+  atom: true,
+  draggable: true,
+
+  addAttributes() {
+    return conDefaults(ATRIBUTOS_VIDEO)
+  },
+
+  parseHTML() {
+    return [{ tag: 'figure[data-video]' }]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const { videoId, titulo } = HTMLAttributes as Record<string, string | null>
+
+    return [
+      'figure',
+      mergeAttributes({ 'data-video': '', 'data-video-id': videoId ?? '' }),
+      ['img', { src: videoId ? miniaturaDeYouTube(videoId) : '', alt: '' }],
+      ['figcaption', {}, titulo || 'Video de YouTube'],
+    ]
+  },
+})

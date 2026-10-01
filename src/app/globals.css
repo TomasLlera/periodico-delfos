@@ -498,6 +498,26 @@ body {
     line-height: 1.05;
   }
 
+  /* El titular de una nota: igual que `.titular` pero en la caja que escribió
+     el autor.
+
+     La caja alta está bien para lo deportivo —"ARQUERAS", "FECHA A FECHA",
+     "PLANTEL"— que son rótulos cortos y fijos. Un titular de nota no: lo
+     escribe el autor con sus mayúsculas y sus minúsculas, y forzarlo a
+     versalita le saca los nombres propios, le saca las siglas y lo hace más
+     largo, que en un celular son dos renglones más. Es un pedido de Charlie
+     después de cargar la primera nota de verdad.
+
+     No es una variante de `.titular` con `normal-case` encima porque eso deja
+     la decisión en cada llamada y basta que alguien copie una clase para
+     perderla. */
+  .titular-nota {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+
   /* La tarjeta del rediseño: fondo propio sobre el fondo de página. */
   .tarjeta {
     background: var(--bg-elevated);

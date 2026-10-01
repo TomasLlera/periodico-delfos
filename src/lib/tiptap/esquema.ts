@@ -24,6 +24,7 @@
  */
 
 import { z } from 'zod'
+import { idDeYouTube } from '@/lib/tiptap/video'
 import type { DocumentoTipTap, NodoTipTap } from '@/types'
 
 // ============================================
@@ -286,4 +287,41 @@ export function hrefDeMarcas(marcas: NodoTipTap['marks']): string | null {
 /** `true` si el nodo de texto lleva la marca pedida. */
 export function tieneMarca(marcas: NodoTipTap['marks'], tipo: string): boolean {
   return marcas?.some((marca) => marca.type === tipo) ?? false
+}
+
+// ============================================
+// video
+// ============================================
+
+export const ATRIBUTOS_VIDEO = {
+  videoId: null,
+  titulo: null,
+} as const
+
+export interface AtributosVideo {
+  videoId: string
+  /**
+   * Lo que anuncia el `<iframe>` a un lector de pantalla. Lo escribe quien
+   * inserta: YouTube no entrega el título sin pedírselo a su API, y un iframe
+   * que se anuncia como "video" no dice nada de qué video es.
+   */
+  titulo: string | null
+}
+
+/**
+ * Atributos de un nodo `video`, o `null` si el id no es de YouTube.
+ *
+ * **Se revalida al renderizar y no sólo al insertar.** El documento es un JSON
+ * guardado en la base: puede venir de la migración de WordPress, de un copiar y
+ * pegar entre notas o de una fila editada a mano. `idDeYouTube()` es lo único
+ * que decide qué termina adentro de un `<iframe src>`.
+ */
+export function atributosVideo(attrs: unknown): AtributosVideo | null {
+  if (!attrs || typeof attrs !== 'object') return null
+
+  const { videoId, titulo } = attrs as Record<string, unknown>
+  const id = idDeYouTube(videoId)
+  if (!id) return null
+
+  return { videoId: id, titulo: textoOpcional(titulo) }
 }

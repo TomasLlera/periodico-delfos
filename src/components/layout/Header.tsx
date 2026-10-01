@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { etiquetaTemperatura, temperaturaAccesible } from '@/lib/clima'
 import { BuscadorHeader } from './BuscadorHeader'
 import { FechaDeHoy } from './FechaDeHoy'
+import { RedesDelMedio } from './RedesDelMedio'
 import { NavPrincipal } from './NavPrincipal'
 import { ToggleTema } from './ToggleTema'
 
@@ -88,6 +89,13 @@ export function Header({ temperatura = null }: Props) {
             )}
           </span>
           <FechaDeHoy />
+
+          {/* Las redes, debajo de la fecha y alineadas con ella. Es donde las
+              pidió Charlie —"al lado del clima y la fecha"— y donde menos
+              estorban: son un destino que se busca una vez, no algo que se usa
+              en cada visita. Mientras no haya handles cargados no se dibuja
+              nada; ver `redesDelMedio()`. */}
+          <RedesDelMedio className="mt-1 justify-end" />
         </div>
       </div>
 

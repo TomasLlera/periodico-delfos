@@ -5,6 +5,8 @@ import { NotasRelacionadas } from '@/components/content/NotasRelacionadas'
 import { PlanillaPartido } from '@/components/partido/PlanillaPartido'
 import { partidoCompleto } from '@/app/demo/planilla/datos-demo'
 import { cronicas } from '@/app/demo/portada/datos-demo'
+import { FECHA_TABLA_DEMO, tablaDemo, temporadaDemo } from '@/app/demo/temporada/datos-demo'
+import { TablaPosiciones } from '@/components/temporada/TablaPosiciones'
 
 /**
  * La ficha de partido con datos falsos.
@@ -40,6 +42,26 @@ export default function DemoPartido() {
         <div className="mt-12">
           <PlanillaPartido partido={partidoCompleto} variante="completa" nivelTitulo={2} />
         </div>
+
+        {/* La tabla a la fecha del partido, que en la ficha real sale de
+            `tabla_posiciones` y hoy no se ve porque esa tabla está vacía. Acá
+            va con los datos de prueba para poder mirarla. */}
+        <section aria-labelledby="demo-tabla-a-la-fecha" className="mt-12">
+          <h2 id="demo-tabla-a-la-fecha" className="titular text-[22px]">
+            La tabla después de esta fecha
+          </h2>
+          <p className="mt-1 font-body text-[0.9rem] text-text-muted">
+            Cómo quedaba el campeonato una vez jugada la fecha {FECHA_TABLA_DEMO}.
+          </p>
+
+          <div className="mt-4">
+            <TablaPosiciones
+              filas={tablaDemo}
+              fecha={FECHA_TABLA_DEMO}
+              temporada={temporadaDemo.nombre}
+            />
+          </div>
+        </section>
 
         <NotasRelacionadas
           notas={cronicas.slice(0, 3)}

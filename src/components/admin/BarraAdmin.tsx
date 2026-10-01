@@ -37,7 +37,14 @@ export function BarraAdmin({ autor }: { autor: Autor }) {
           <Seccion href="/admin/posteos">Posteos</Seccion>
         </nav>
 
-        <span className="ml-auto text-[0.85rem] text-block-text/70">{autor.nombre}</span>
+        {/* El nombre lleva al perfil: es donde se edita la firma y la bio, y
+            el lugar donde alguien la busca es justo donde ve su nombre. */}
+        <Link
+          href="/admin/perfil"
+          className="tactil ml-auto flex items-center px-2 text-[0.85rem] text-block-text/70 hover:underline"
+        >
+          {autor.nombre}
+        </Link>
 
         <ToggleTema />
 

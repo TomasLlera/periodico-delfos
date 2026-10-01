@@ -1,3 +1,5 @@
+import { RedesDelMedio } from '@/components/layout/RedesDelMedio'
+import { redesDelMedio } from '@/lib/redes-del-medio'
 import Link from 'next/link'
 
 /**
@@ -53,6 +55,8 @@ const SECCIONES = [
 ] as const
 
 export function Footer() {
+  const hayRedes = redesDelMedio().length > 0
+
   const anio = new Date().getFullYear()
 
   return (
@@ -94,6 +98,19 @@ export function Footer() {
               </ul>
             </nav>
           ))}
+
+          {/* La cuarta columna del boceto, que faltaba desde el principio por
+              no tener adónde mandar. Ahora los handles salen del entorno, así
+              que la columna aparece sola el día que se carguen y sigue sin
+              dibujarse mientras no estén —`<RedesDelMedio />` devuelve `null`
+              con la lista vacía, y entonces este `<nav>` tampoco tiene sentido,
+              por eso se pregunta antes de abrirlo—. */}
+          {hayRedes && (
+            <nav aria-label="Seguinos">
+              <h2 className="meta text-block-accent">Seguinos</h2>
+              <RedesDelMedio variante="pie" className="mt-1 lg:mt-3" />
+            </nav>
+          )}
         </div>
 
         <div className="dato flex flex-col gap-2 border-t border-block-text/15 py-4 text-[0.72rem] sm:flex-row sm:justify-between">
