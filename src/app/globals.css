@@ -461,6 +461,28 @@ body {
 }
 
 /* ============================================================
+   El posteo de Instagram o de X citado en el cuerpo
+
+   `<PosteoCitado />` es un <figure> con un <blockquote> adentro, y el
+   blockquote del cuerpo lleva filete dorado a la izquierda y sangría. La
+   tarjeta ya tiene su propio borde: sin esto quedan dos marcos, uno adentro
+   del otro, y el texto corrido un espacio sin motivo.
+
+   La bastardilla sí se queda —es una cita— pero el gris no: adentro de una
+   tarjeta sobre `bg-elevated`, `text-muted` deja la cita más apagada que el
+   pie que la atribuye, al revés de lo que importa.
+
+   Las utilidades de Tailwind no alcanzan: `.prose-nota blockquote` no está en
+   ninguna capa y le gana a cualquier clase.
+   ============================================================ */
+
+.prose-nota .posteo blockquote {
+  border-left: 0;
+  padding-left: 0;
+  color: inherit;
+}
+
+/* ============================================================
    Utilidades
 
    Van en `@layer components` y no sueltas: las capas mandan por encima de la

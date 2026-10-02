@@ -17,19 +17,14 @@
  * mientras no haya adónde mandar.
  */
 
+import { NOMBRE_DE_RED, type ClaveDeRed } from '@/lib/logos-redes'
+
 export interface RedDelMedio {
   /** Qué red es. Decide el ícono. */
-  clave: 'instagram' | 'x' | 'youtube' | 'facebook'
+  clave: ClaveDeRed
   /** Lo que lee un lector de pantalla: "Periódico Delfos en Instagram". */
   etiqueta: string
   url: string
-}
-
-const NOMBRE: Record<RedDelMedio['clave'], string> = {
-  instagram: 'Instagram',
-  x: 'X',
-  youtube: 'YouTube',
-  facebook: 'Facebook',
 }
 
 /**
@@ -76,6 +71,6 @@ export function redesDelMedio(
   return claves.flatMap((clave) => {
     const url = urlDeRedValida(entorno[clave])
     if (!url) return []
-    return [{ clave, etiqueta: `Periódico Delfos en ${NOMBRE[clave]}`, url }]
+    return [{ clave, etiqueta: `Periódico Delfos en ${NOMBRE_DE_RED[clave]}`, url }]
   })
 }

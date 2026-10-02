@@ -16,14 +16,16 @@
  * Los atributos sí se validan estrictamente, pero nodo por nodo y al momento de
  * renderizarlo: una imagen sin `alt` se cae sola, sin llevarse el resto.
  *
- * Contrato de atributos de los dos nodos propios (lo tiene que respetar
- * `extensions.ts` cuando se escriba el editor):
+ * Contrato de atributos de los nodos propios, que respeta `extensiones.tsx`:
  *
  *     { type: 'imagen',   attrs: { src, alt, epigrafe?, credito? } }
  *     { type: 'planilla', attrs: { partidoId } }
+ *     { type: 'video',    attrs: { videoId, titulo? } }
+ *     { type: 'posteo',   attrs: { url, usuario, texto } }
  */
 
 import { z } from 'zod'
+import { datosDePosteo, type RedDePosteo } from '@/lib/tiptap/posteo'
 import { idDeYouTube } from '@/lib/tiptap/video'
 import type { DocumentoTipTap, NodoTipTap } from '@/types'
 
@@ -324,4 +326,58 @@ export function atributosVideo(attrs: unknown): AtributosVideo | null {
   if (!id) return null
 
   return { videoId: id, titulo: textoOpcional(titulo) }
+}
+
+// ============================================
+// posteo
+// ============================================
+
+export const ATRIBUTOS_POSTEO = {
+  url: null,
+  usuario: '',
+  texto: '',
+} as const
+
+export interface AtributosPosteo {
+  red: RedDePosteo
+  /** La URL canónica, armada por `datosDePosteo()` y no la que se pegó. */
+  url: string
+  /** El handle sin arroba. La tarjeta le pone una sola. */
+  usuario: string
+  /** La cita. Es lo único que sobrevive si borran el posteo. */
+  texto: string
+}
+
+/**
+ * Atributos de un nodo `posteo`, o `null` si la tarjeta no se puede armar.
+ *
+ * **El texto citado es obligatorio, igual que el `alt` de una imagen.** Es la
+ * decisión entera del nodo: la tarjeta existe porque el embed oficial
+ * desaparece cuando borran el posteo, y una tarjeta sin la cita adentro
+ * desaparece del mismo modo, sólo que más despacio. Un nodo sin texto se
+ * descarta completo —se pierde el link, nunca la nota—, y el panel no deja
+ * insertarlo así.
+ *
+ * **La URL se revalida acá y no sólo al insertar.** El documento es un JSON
+ * guardado en la base: puede venir de un copiar y pegar entre notas, de la
+ * migración de WordPress o de una fila editada a mano. `datosDePosteo()` es lo
+ * único que decide qué termina adentro de un `href`.
+ */
+export function atributosPosteo(attrs: unknown): AtributosPosteo | null {
+  if (!attrs || typeof attrs !== 'object') return null
+
+  const { url, usuario, texto } = attrs as Record<string, unknown>
+
+  const datos = datosDePosteo(url)
+  if (!datos) return null
+
+  const cita = textoOpcional(texto)
+  if (!cita) return null
+
+  // La arroba se saca al guardar y la pone la tarjeta: alguien va a pegar
+  // "@aldosivi" y otro "aldosivi", y sin esto una de las dos queda con dos.
+  const quien = textoOpcional(usuario)?.replace(/^@+/, '').trim()
+  if (!quien) return null
+
+  return { red: datos.red, url: datos.url, usuario: quien, texto: cita }
 }

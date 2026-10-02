@@ -3,11 +3,18 @@
 import { Node, mergeAttributes } from '@tiptap/core'
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
 import { ClipboardList } from 'lucide-react'
-import { ATRIBUTOS_IMAGEN, ATRIBUTOS_PLANILLA, ATRIBUTOS_VIDEO } from '@/lib/tiptap/esquema'
+import { NOMBRE_DE_RED } from '@/lib/logos-redes'
+import {
+  ATRIBUTOS_IMAGEN,
+  ATRIBUTOS_PLANILLA,
+  ATRIBUTOS_POSTEO,
+  ATRIBUTOS_VIDEO,
+} from '@/lib/tiptap/esquema'
+import { datosDePosteo } from '@/lib/tiptap/posteo'
 import { miniaturaDeYouTube } from '@/lib/tiptap/video'
 
 /**
- * Los dos nodos propios del proyecto, para el editor.
+ * Los nodos propios del proyecto, para el editor.
  *
  * El renderer del sitio (`render.tsx`) ya los dibujaba y el esquema
  * (`esquema.ts`) ya los validaba desde hace tiempo; lo que faltaba era la
@@ -18,13 +25,15 @@ import { miniaturaDeYouTube } from '@/lib/tiptap/video'
  *
  *     { type: 'imagen',   attrs: { src, alt, epigrafe?, credito? } }
  *     { type: 'planilla', attrs: { partidoId } }
+ *     { type: 'video',    attrs: { videoId, titulo? } }
+ *     { type: 'posteo',   attrs: { url, usuario, texto } }
  *
- * Los nombres no están escritos dos veces: `addAttributes()` los saca de
- * `ATRIBUTOS_IMAGEN` y `ATRIBUTOS_PLANILLA`, que viven en `esquema.ts` porque
- * ahí es donde se validan. Repetirlos era la forma más fácil de que el editor
- * guardara `epigrafe` mientras el renderer leía otra cosa.
+ * Los nombres no están escritos dos veces: `addAttributes()` los saca de las
+ * constantes `ATRIBUTOS_*`, que viven en `esquema.ts` porque ahí es donde se
+ * validan. Repetirlos era la forma más fácil de que el editor guardara
+ * `epigrafe` mientras el renderer leía otra cosa.
  *
- * Los dos son `atom: true`: no tienen contenido editable adentro. Un epígrafe
+ * Los cuatro son `atom: true`: no tienen contenido editable adentro. Un epígrafe
  * escrito como texto libre dentro del nodo podría quedar con negritas y links,
  * y el renderer lo dibuja como una línea de pie de foto: es un atributo, no
  * contenido.
@@ -219,6 +228,63 @@ export const NodoVideo = Node.create({
       mergeAttributes({ 'data-video': '', 'data-video-id': videoId ?? '' }),
       ['img', { src: videoId ? miniaturaDeYouTube(videoId) : '', alt: '' }],
       ['figcaption', {}, titulo || 'Video de YouTube'],
+    ]
+  },
+})
+
+// ============================================
+// posteo
+// ============================================
+
+/**
+ * Un posteo de Instagram o de X citado en el cuerpo.
+ *
+ * **No es el embed de la plataforma, y es la decisión del nodo**: lo que se
+ * guarda es la cita —texto, autor y link— y la tarjeta la dibuja el sitio. El
+ * motivo está escrito en `lib/tiptap/posteo.ts`, y el que manda es que el embed
+ * oficial desaparece si borran el posteo.
+ *
+ * `atom: true` como los otros tres. El texto citado es un atributo y no
+ * contenido editable: es una cita textual de otra persona, y si fuera contenido
+ * del editor se le podrían poner negritas y links encima a algo que alguien
+ * dijo en otro lado.
+ *
+ * En el editor se dibuja con `renderHTML` y sin `NodeView`, igual que la
+ * imagen: lo que hay que ver mientras se escribe —qué dice la cita y de quién
+ * es— está en los atributos. La tarjeta terminada se mira en la vista previa,
+ * que usa el renderer del sitio.
+ */
+export const NodoPosteo = Node.create({
+  name: 'posteo',
+  group: 'block',
+  atom: true,
+  draggable: true,
+
+  addAttributes() {
+    return conDefaults(ATRIBUTOS_POSTEO)
+  },
+
+  parseHTML() {
+    return [{ tag: 'figure[data-posteo]' }]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const { url, usuario, texto } = HTMLAttributes as Record<string, string | null>
+
+    // La red no es un atributo del nodo: sale de la URL, que es el único dato
+    // que la decide. Guardarla aparte deja dos fuentes para lo mismo y una de
+    // las dos queda vieja el día que se pegue un link de la otra plataforma.
+    const datos = datosDePosteo(url)
+
+    return [
+      'figure',
+      mergeAttributes({ 'data-posteo': '', 'data-red': datos?.red ?? '' }),
+      ['blockquote', {}, texto || 'Un posteo sin la cita cargada'],
+      [
+        'figcaption',
+        {},
+        `${datos ? NOMBRE_DE_RED[datos.red] : 'Un link que no es un posteo'} · @${usuario ?? ''}`,
+      ],
     ]
   },
 })

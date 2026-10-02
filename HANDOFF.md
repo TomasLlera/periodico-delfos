@@ -3593,3 +3593,86 @@ CÓMO TRABAJAR ACÁ:
 - Verificar con `npx tsc --noEmit`, `npx vitest run` y `npx next build` antes de
   decir que algo está hecho.
 ````
+
+---
+
+## Instagram y X en el cuerpo: la decisión, tomada
+
+> **Esto reemplaza el punto 1 del prompt de arriba.** Ya no es una decisión
+> pendiente: la rama `feat/front-posteos-citados` tiene el nodo hecho.
+
+### Qué se eligió, y qué se descartó
+
+**Tarjeta propia.** Lo que se guarda en el cuerpo es una cita: el texto del
+posteo, el handle de quien lo escribió y el link al original. La tarjeta la
+dibuja el sitio con sus propios tokens (`<PosteoCitado />`), no le pide un byte a
+la plataforma y **sigue diciendo lo mismo cuando el posteo ya no está**.
+
+Se descartó el embed oficial de las dos plataformas, que es un `<blockquote>` más
+un `<script>` propio. Los tres motivos, en orden de peso:
+
+1. **El bloque desaparece si borran el posteo**, y deja un hueco en una nota de
+   hace dos años que nadie mira hasta que lo mira.
+2. Deja cookies de terceros y el sitio no tiene política de privacidad. Es el
+   mismo criterio por el que el nodo `video` va a `youtube-nocookie.com`.
+3. Pesa cientos de kilobytes por posteo, en la misma pantalla donde alguien está
+   leyendo una crónica de 4 kB.
+
+**Lo que se pierde es la foto y el video del posteo.** Es el precio y conviene
+decirlo en voz alta: la tarjeta muestra texto, autor y link, nada más. Si Charlie
+quiere que se vea la foto, la foto se sube como `imagen` del cuerpo, con su
+crédito, que además es lo que corresponde cuando la foto es de otro.
+
+### Cómo quedó armado
+
+| Pieza | Dónde |
+|---|---|
+| El parser y la URL canónica | `src/lib/tiptap/posteo.ts` (+ 18 tests) |
+| Los atributos y su validación | `atributosPosteo()` en `src/lib/tiptap/esquema.ts` |
+| La tarjeta del sitio | `src/components/content/PosteoCitado.tsx` |
+| El nodo del editor | `NodoPosteo` en `src/lib/tiptap/extensiones.tsx` |
+| El panel de carga | `src/components/admin/InsertarPosteo.tsx` |
+| Los logos, compartidos | `src/lib/logos-redes.ts` · `src/components/layout/LogoDeRed.tsx` |
+
+Contrato del nodo: `{ type: 'posteo', attrs: { url, usuario, texto } }`.
+
+**La cita es obligatoria y el nodo se descarta sin ella.** Es la regla entera:
+una tarjeta sin el texto adentro desaparece igual que el embed, sólo que más
+despacio. Mismo criterio que el `alt` de una imagen.
+
+**La URL la arma el código y nunca es la que se pegó.** `datosDePosteo()` parsea,
+valida contra una lista blanca de dominios y vuelve a armar la canónica desde las
+piezas; se revalida al renderizar y no sólo al insertar, porque el cuerpo es un
+JSON que puede venir de WordPress o de una fila editada a mano. Entiende `/p/`,
+`/reel/`, `/reels/`, `/tv/` y `/usuario/p/` de Instagram, y `/handle/status/`,
+`statuses` y `/i/web/status/` de X. `twitter.com` entra y se normaliza a `x.com`.
+
+**La red no es un atributo**: sale de la URL, que es el único dato que la decide.
+
+### Lo que falta de esto, y es manual
+
+Nadie cargó todavía un posteo desde el panel. Lo que conviene mirar, con el dev
+levantado:
+
+1. El botón nuevo de la barra del editor (el de la cita, al lado del de video).
+2. Pegar un link de Instagram y uno de X y ver que reconozca cada uno.
+3. Que el handle se prellene solo con el link de X y haya que escribirlo con el
+   de Instagram.
+4. La tarjeta en la vista previa, en tema claro y en oscuro, a 375 y a 1280.
+
+Mientras tanto se la puede ver dibujada en `/demo/nota`, sección 1, y comprobar
+en la sección 2 que un posteo sin cita y uno de un dominio parecido se descartan.
+
+### El estado de la rama
+
+`feat/front-posteos-citados`, un commit sobre `feat/pedidos-de-charlie` —y no
+sobre `main`, porque el nodo se apoya en el `esquema.ts` y el `extensiones.tsx`
+que trae esa rama—. Entra después de ella.
+
+Verificado: `npx tsc --noEmit` limpio, **674 tests en 42 archivos**, `npx next
+build` exit 0.
+
+**Y una trampa nueva, de la misma familia que la vieja:** el `next build` de esta
+sesión se corrió con el dev server levantado y hubo que bajarlo. Es la tercera
+vez que pasa. Lo que conviene hacer antes de buildear es mirar quién tiene el
+puerto: `Get-NetTCPConnection -LocalPort 3000`.

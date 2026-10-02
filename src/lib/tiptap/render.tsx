@@ -16,11 +16,13 @@
 
 import { Fragment, type ReactNode } from 'react'
 import { ImagenResponsive } from '@/components/content/ImagenResponsive'
+import { PosteoCitado } from '@/components/content/PosteoCitado'
 import { VideoEmbebido } from '@/components/content/VideoEmbebido'
 import { PlanillaPartido } from '@/components/partido/PlanillaPartido'
 import {
   PROFUNDIDAD_MAXIMA,
   atributosImagen,
+  atributosPosteo,
   atributosVideo,
   esExterno,
   hrefDeMarcas,
@@ -188,6 +190,19 @@ function renderNodo(
       const video = atributosVideo(nodo.attrs)
       if (!video) return null
       return <VideoEmbebido videoId={video.videoId} titulo={video.titulo} />
+    }
+
+    case 'posteo': {
+      const posteo = atributosPosteo(nodo.attrs)
+      if (!posteo) return null
+      return (
+        <PosteoCitado
+          red={posteo.red}
+          url={posteo.url}
+          usuario={posteo.usuario}
+          texto={posteo.texto}
+        />
+      )
     }
 
     case 'planilla': {

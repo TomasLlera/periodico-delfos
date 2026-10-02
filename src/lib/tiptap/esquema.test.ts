@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   ATRIBUTOS_IMAGEN,
   ATRIBUTOS_PLANILLA,
+  ATRIBUTOS_POSTEO,
   atributosImagen,
+  atributosPosteo,
   esExterno,
   hrefDeMarcas,
   hrefSeguro,
@@ -396,5 +398,77 @@ describe('el contrato de atributos de los nodos propios', () => {
       ],
     }
     expect(partidoIdsDelCuerpo(cuerpo)).toEqual(['p-1'])
+  })
+})
+
+// ============================================
+// posteo
+// ============================================
+
+/**
+ * `datosDePosteo()` tiene su propia batería en `posteo.test.ts`: lo que se mira
+ * acá es la otra mitad, la que decide si el nodo se dibuja o se descarta.
+ */
+describe('atributosPosteo', () => {
+  const ATTRS = {
+    ...ATRIBUTOS_POSTEO,
+    url: 'https://x.com/aldosivi/status/1783456789012345678',
+    usuario: 'aldosivi',
+    texto: 'Las Tiburonas se traen los tres puntos de Claypole.',
+  }
+
+  it('devuelve la red, la URL canónica, el handle y la cita', () => {
+    expect(atributosPosteo(ATTRS)).toEqual({
+      red: 'x',
+      url: 'https://x.com/aldosivi/status/1783456789012345678',
+      usuario: 'aldosivi',
+      texto: 'Las Tiburonas se traen los tres puntos de Claypole.',
+    })
+  })
+
+  it('rearma la URL en lugar de confiar en la guardada', () => {
+    // Una fila editada a mano, con el dominio viejo y basura de seguimiento.
+    const posteo = atributosPosteo({
+      ...ATTRS,
+      url: 'https://mobile.twitter.com/aldosivi/status/1783456789012345678?s=20&t=xyz',
+    })
+    expect(posteo?.url).toBe('https://x.com/aldosivi/status/1783456789012345678')
+  })
+
+  it('saca la arroba, la ponga quien la ponga', () => {
+    expect(atributosPosteo({ ...ATTRS, usuario: '@aldosivi' })?.usuario).toBe('aldosivi')
+    expect(atributosPosteo({ ...ATTRS, usuario: '  @@aldosivi  ' })?.usuario).toBe('aldosivi')
+  })
+
+  it('descarta el nodo sin la cita, que es la razón de ser de la tarjeta', () => {
+    expect(atributosPosteo({ ...ATTRS, texto: '' })).toBe(null)
+    expect(atributosPosteo({ ...ATTRS, texto: '   ' })).toBe(null)
+    expect(atributosPosteo({ ...ATTRS, texto: 42 })).toBe(null)
+  })
+
+  it('descarta el nodo sin autor', () => {
+    expect(atributosPosteo({ ...ATTRS, usuario: '' })).toBe(null)
+    // Una arroba sola no es un handle.
+    expect(atributosPosteo({ ...ATTRS, usuario: '@' })).toBe(null)
+  })
+
+  it('descarta el nodo si la URL no es un posteo', () => {
+    expect(atributosPosteo({ ...ATTRS, url: 'https://x.com/aldosivi' })).toBe(null)
+    expect(atributosPosteo({ ...ATTRS, url: 'javascript:alert(1)' })).toBe(null)
+    expect(atributosPosteo({ ...ATTRS, url: null })).toBe(null)
+  })
+
+  it('no explota con lo que no es un objeto', () => {
+    expect(atributosPosteo(null)).toBe(null)
+    expect(atributosPosteo('un posteo')).toBe(null)
+    expect(atributosPosteo(undefined)).toBe(null)
+  })
+
+  /**
+   * El nodo recién insertado nace sin URL y sin texto porque TipTap necesita un
+   * default. El que no lo deja publicar así es esto, más el panel.
+   */
+  it('un posteo recién insertado, todavía vacío, no se renderiza', () => {
+    expect(atributosPosteo({ ...ATRIBUTOS_POSTEO })).toBe(null)
   })
 })
