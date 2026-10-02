@@ -18,6 +18,7 @@ const FIJAS = [
   { ruta: '/cronicas', priority: 0.8 },
   { ruta: '/analisis', priority: 0.8 },
   { ruta: '/quienes-somos', priority: 0.5 },
+  { ruta: '/contacto', priority: 0.4 },
 ] as const
 
 /**
@@ -27,9 +28,9 @@ const FIJAS = [
  * de `/nota/[slug]`: si la base no está, salen las rutas fijas y nada más. Un
  * sitemap que revienta el build es peor que uno corto.
  *
- * `/contacto` y `/privacidad` **no están todavía**: las rutas no existen y un
- * sitemap que apunta a un 404 le enseña al crawler a desconfiar del archivo.
- * Entran cuando entren las páginas.
+ * `/contacto` entró el 02/10/2026, con el mail que pasó Charlie. `/privacidad`
+ * **sigue sin estar**: la ruta no existe, y un sitemap que apunta a un 404 le
+ * enseña al crawler a desconfiar del archivo. Entra cuando entre la página.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = SITE_URL.replace(/\/+$/, '')

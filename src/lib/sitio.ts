@@ -40,3 +40,18 @@ export function urlDelSitio(): string {
 
   return 'http://localhost:3000'
 }
+
+/**
+ * El mail del medio, el que se publica para que le escriban.
+ *
+ * **Es una constante y no una variable de entorno, al revés que los handles de
+ * las redes.** La diferencia no es de gusto: los handles son opcionales y el
+ * sitio se dibuja igual sin ellos, pero este mail lo cita la página de Contacto
+ * y lo tiene que citar la política de privacidad, que es un documento legal. Una
+ * variable definida y vacía —lo que queda al importar un `.env.example` en
+ * Vercel— publicaría una política sin a quién reclamarle, que es peor que un
+ * redeploy el día que el mail cambie.
+ *
+ * Lo pasó Charlie el 02/10/2026.
+ */
+export const MAIL_DEL_MEDIO = 'contacto@periodicodelfos.com'
