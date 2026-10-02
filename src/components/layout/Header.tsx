@@ -8,20 +8,31 @@ import { NavPrincipal } from './NavPrincipal'
 import { ToggleTema } from './ToggleTema'
 
 /**
- * La cabecera del sitio: fija arriba, y más chica a medida que se baja.
+ * La cabecera del sitio: la marca y los controles quedan fijos arriba y se
+ * achican al bajar; las secciones se van con el scroll.
  *
  * Un solo bloque oscuro con la marca a la izquierda, la línea de fecha y clima
- * a la derecha y, al final, los botones. La navegación va abajo, separada por un
- * filete tenue. La marca usa `.marca`, que es Archivo en su eje `wdth` 110: el
- * "eje expandido" que pide el blueprint, y lo único que distingue la marca de un
- * titular cualquiera.
+ * a la derecha y, al final, los botones. La marca usa `.marca`, que es Archivo
+ * en su eje `wdth` 110: el "eje expandido" que pide el blueprint, y lo único que
+ * distingue la marca de un titular cualquiera.
  *
- * **Queda fija y se compacta al bajar.** Al scrollear, la marca se achica, la
- * bajada y la línea de fecha se apagan y la cabecera entera pasa de unos 150px a
- * unos 90px contando la nav: lo que se gana es que las secciones y el buscador
- * siguen a mano en una nota larga, que es donde más se usan. Quién prende el
- * estado es `<CompactarCabecera />` —un componente que no dibuja nada—, y qué se
- * achica lo decide el CSS de `globals.css`, bajo `html[data-scrolleado]`.
+ * **Lo que queda fijo es sólo esta fila**, y por eso `<NavPrincipal />` quedó
+ * afuera del `<header>` en lugar de adentro. `position: sticky` pega el elemento
+ * entero y lo encierra en el alto de su padre: con la nav adentro, o se pegaban
+ * las dos —unos 150px de chrome persiguiendo al lector por una crónica— o no se
+ * pegaba ninguna. Son dos cajas porque son dos comportamientos.
+ *
+ * **Nada se pierde de semántica**: la nav tiene su propio landmark
+ * (`<nav aria-label="Secciones">`), así que un lector de pantalla la encuentra
+ * igual estando al lado del `<header>` y no adentro. Lo que sí se mudó son el
+ * fondo y el filete, que antes heredaba de acá: ahora los lleva ella.
+ *
+ * **Se compacta al bajar.** Se apagan la bajada de la marca y la línea de fecha,
+ * y la marca se achica: la fila pasa de unos 90px a unos 56px. La fecha y el
+ * clima son datos de diario impreso: valen en la tapa, no persiguiendo al lector
+ * hasta el pie. Quién prende el estado es `<CompactarCabecera />` —un componente
+ * que no dibuja nada—, y qué se achica lo decide el CSS de `globals.css`, bajo
+ * `html[data-scrolleado]`.
  *
  * **El buscador es una lupa en todos los anchos, y no un campo.** Antes era un
  * campo desplegable en celular y un campo siempre visible de 768 para arriba.
@@ -64,74 +75,80 @@ interface Props {
 
 export function Header({ temperatura = null }: Props) {
   return (
-    <header className="cabecera sticky top-0 z-30 border-b border-block-border bg-header-bg text-header-text">
-      <CompactarCabecera />
+    <>
+      <header className="cabecera sticky top-0 z-30 border-b border-block-border bg-header-bg text-header-text">
+        <CompactarCabecera />
 
-      {/* `relative` para el panel del buscador, que se despliega posicionado
-          contra esta caja en lugar de empujar la nav hacia abajo. */}
-      <div className="cabecera-fila contenedor relative flex items-center justify-between gap-4 py-3 md:gap-8 md:py-4">
-        <Link href="/" className="marca cabecera-marca min-w-0 text-[1.7rem] md:text-[2.3rem]">
-          Periódico <span className="text-block-accent">Delfos</span>
-          <span className="cabecera-bajada mt-[0.3rem] block text-[0.6rem] font-medium uppercase tracking-[0.14em] text-block-accent [font-variation-settings:'wdth'_100] md:mt-[0.55rem] md:text-[0.72rem]">
-            La voz de las Tiburonas
-          </span>
-        </Link>
-
-        <div className="flex items-center gap-2 md:gap-4">
-          {/* La línea de fecha del diario: dónde se escribe, cuándo y qué tiempo
-              hace. Las dos líneas van con interlineado corto para que se lean
-              como un bloque y no como dos datos sueltos. Se apaga en celular
-              —son datos de diario impreso y ahí le ganan el lugar al titular— y
-              también al compactar, por lo mismo. */}
-          <div className="cabecera-datos dato hidden text-[0.78rem] leading-snug text-header-text/60 md:block md:text-right">
-            <span className="block">
-              Mar del Plata
-              {temperatura !== null && (
-                <>
-                  <span aria-hidden="true" className="px-1.5 text-header-text/25">
-                    ·
-                  </span>
-                  <span className="font-semibold text-block-accent">
-                    <span aria-hidden="true">{etiquetaTemperatura(temperatura)}</span>
-                    <span className="sr-only">{temperaturaAccesible(temperatura)}</span>
-                  </span>
-                </>
-              )}
+        {/* `relative` para el panel del buscador, que se despliega posicionado
+            contra esta caja en lugar de empujar la nav hacia abajo. */}
+        <div className="cabecera-fila contenedor relative flex items-center justify-between gap-4 py-3 md:gap-8 md:py-4">
+          <Link href="/" className="marca cabecera-marca min-w-0 text-[1.7rem] md:text-[2.3rem]">
+            Periódico <span className="text-block-accent">Delfos</span>
+            <span className="cabecera-bajada mt-[0.3rem] block text-[0.6rem] font-medium uppercase tracking-[0.14em] text-block-accent [font-variation-settings:'wdth'_100] md:mt-[0.55rem] md:text-[0.72rem]">
+              La voz de las Tiburonas
             </span>
-            <FechaDeHoy />
+          </Link>
 
-            {/* Las redes, debajo de la fecha y alineadas con ella. Es donde las
-                pidió Charlie —"al lado del clima y la fecha"— y donde menos
-                estorban: son un destino que se busca una vez, no algo que se usa
-                en cada visita. Mientras no haya handles cargados no se dibuja
-                nada; ver `redesDelMedio()`. */}
-            <RedesDelMedio className="mt-1 justify-end" />
-          </div>
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* La línea de fecha del diario: dónde se escribe, cuándo y qué tiempo
+                hace. Las dos líneas van con interlineado corto para que se lean
+                como un bloque y no como dos datos sueltos. Se apaga en celular
+                —son datos de diario impreso y ahí le ganan el lugar al titular— y
+                también al compactar, por lo mismo. */}
+            <div className="cabecera-datos dato hidden text-[0.78rem] leading-snug text-header-text/60 md:block md:text-right">
+              <span className="block">
+                Mar del Plata
+                {temperatura !== null && (
+                  <>
+                    <span aria-hidden="true" className="px-1.5 text-header-text/25">
+                      ·
+                    </span>
+                    <span className="font-semibold text-block-accent">
+                      <span aria-hidden="true">{etiquetaTemperatura(temperatura)}</span>
+                      <span className="sr-only">{temperaturaAccesible(temperatura)}</span>
+                    </span>
+                  </>
+                )}
+              </span>
+              <FechaDeHoy />
 
-          {/* Los controles. Son los únicos que sobreviven a la compactación:
-              lo que se usa en cada visita se queda, lo que se lee una vez se va. */}
-          <div className="flex items-center gap-2">
-            <BuscadorHeader />
-            <ToggleTema />
+              {/* Las redes, debajo de la fecha y alineadas con ella. Es donde las
+                  pidió Charlie —"al lado del clima y la fecha"— y donde menos
+                  estorban: son un destino que se busca una vez, no algo que se usa
+                  en cada visita. Mientras no haya handles cargados no se dibuja
+                  nada; ver `redesDelMedio()`. */}
+              <RedesDelMedio className="mt-1 justify-end" />
+            </div>
 
-            {/* EL HUECO DEL INGRESO, todavía sin botón.
+            {/* Los controles. Son los únicos que sobreviven a la compactación:
+                lo que se usa en cada visita se queda, lo que se lee una vez se va. */}
+            <div className="flex items-center gap-2">
+              <BuscadorHeader />
+              <ToggleTema />
+
+              {/* EL HUECO DEL INGRESO, todavía sin botón.
                 
-                Está reservado y no es un olvido: el día que haya cuentas de
-                lector —o un acceso directo al panel— el botón entra acá, con el
-                mismo tamaño que los otros dos, y nada se mueve de lugar. Pedido
-                de Charlie, que lo quiso previsto desde ahora.
+                  Está reservado y no es un olvido: el día que haya cuentas de
+                  lector —o un acceso directo al panel— el botón entra acá, con el
+                  mismo tamaño que los otros dos, y nada se mueve de lugar. Pedido
+                  de Charlie, que lo quiso previsto desde ahora.
 
-                Va `aria-hidden` y vacío: un botón que todavía no hace nada se
-                anuncia igual a quien usa lector de pantalla y se aprieta igual
-                con el teclado. Un hueco no. En celular no se reserva: ahí el
-                ancho es el recurso escaso y el botón, cuando exista, va a tener
-                que entrar sacando otra cosa. */}
-            <div aria-hidden="true" className="hidden w-11 shrink-0 md:block" />
+                  Va `aria-hidden` y vacío: un botón que todavía no hace nada se
+                  anuncia igual a quien usa lector de pantalla y se aprieta igual
+                  con el teclado. Un hueco no. En celular no se reserva: ahí el
+                  ancho es el recurso escaso y el botón, cuando exista, va a tener
+                  que entrar sacando otra cosa. */}
+              <div aria-hidden="true" className="hidden w-11 shrink-0 md:block" />
+            </div>
           </div>
         </div>
-      </div>
 
+      </header>
+
+      {/* Afuera del `<header>` y sin pegarse: las secciones se leen al entrar y
+          se eligen una vez. Es `sticky` lo que obliga a separarlas —ver el
+          comentario de arriba—, no el gusto. */}
       <NavPrincipal />
-    </header>
+    </>
   )
 }

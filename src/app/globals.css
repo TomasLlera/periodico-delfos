@@ -575,9 +575,10 @@ body {
    Server Component.
 
    Qué se va y qué se queda no es una lista arbitraria: se queda lo que se usa
-   en cada visita —la marca como vuelta a la portada, el buscador, el tema, las
-   secciones— y se va lo que se lee una vez, que es la bajada de la marca y la
-   línea de fecha y clima. Son datos de diario impreso: valen en la tapa, no
+   en cada visita —la marca como vuelta a la portada, el buscador y el tema— y se
+   va lo que se lee una vez: la bajada de la marca y la línea de fecha y clima.
+   Las secciones no entran en la discusión, que ya quedó zanjada un escalón más
+   arriba: viven afuera del `<header>` y se van con el scroll. Son datos de diario impreso: valen en la tapa, no
    persiguiendo al lector por una crónica de 1.200 palabras.
 
    Va en CSS plano y no en utilidades porque una variante por atributo del
@@ -615,8 +616,8 @@ html[data-scrolleado] .cabecera-datos {
 }
 
 /* El ancla de una sección no puede quedar tapada por la cabecera fija. Son los
-   112px de la cabecera compacta más aire; `scroll-padding-top` lo resuelve para
+   56px de la fila compacta más aire; `scroll-padding-top` lo resuelve para
    todo el documento, incluido el salto que hace el navegador al volver atrás. */
 html {
-  scroll-padding-top: 7.5rem;
+  scroll-padding-top: 5rem;
 }
