@@ -621,3 +621,18 @@ html[data-scrolleado] .cabecera-datos {
 html {
   scroll-padding-top: 5rem;
 }
+
+/* Con el buscador abierto, la línea de fecha y clima se apaga.
+
+   El campo ya la tapa con su propio fondo, pero en los anchos donde el campo es
+   más angosto que esa línea asomaba una punta por la izquierda, y el resultado
+   era peor que el problema: dos textos encimados.
+
+   Va con `visibility` y no con `display`: así la línea sigue ocupando su lugar y
+   los botones no se corren cuando el buscador abre y cierra.
+
+   `:has()` lee el estado del `<details>` sin una línea de JavaScript, que es lo
+   que mantiene en pie la regla del buscador — anda sin JS, y esto también. */
+.cabecera-fila:has(details[open]) .cabecera-datos {
+  visibility: hidden;
+}

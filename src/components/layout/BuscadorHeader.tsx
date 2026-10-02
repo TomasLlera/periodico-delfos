@@ -89,7 +89,7 @@ export function BuscadorHeader() {
           campo de 26rem se saldría de la pantalla por la izquierda y la mitad
           quedaría fuera de alcance. Las 9rem que se restan son lo que ocupan la
           lupa, el toggle de tema y el aire entre ellos. */}
-      <div className="absolute top-0 right-full z-20 mr-2 w-[min(26rem,calc(100vw-9rem))]">
+      <div className="absolute top-0 right-full z-20 mr-2 w-[min(26rem,calc(100vw-9rem))] bg-header-bg">
         <Formulario refCampo={campo} />
       </div>
     </details>
