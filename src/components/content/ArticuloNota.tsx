@@ -91,7 +91,7 @@ export function ArticuloNota({
         {!nota.partido && nota.temporada && ` · ${nota.temporada.nombre}`}
       </p>
 
-      <h1 className="titular mt-2 max-w-[20ch] text-[32px] md:text-[48px]">
+      <h1 className="titular-nota mt-2 max-w-[24ch] text-[32px] md:text-[48px]">
         {nota.titulo}
       </h1>
 

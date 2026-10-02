@@ -40,7 +40,7 @@ export type Categoria =
   | 'plantel'
   | 'institucional'
 
-export type EstadoNota = 'borrador' | 'publicada' | 'archivada'
+export type EstadoNota = 'borrador' | 'programada' | 'publicada' | 'archivada'
 
 export type Red = 'facebook' | 'instagram' | 'x'
 export type EstadoPosteo = 'pending' | 'processing' | 'success' | 'failed'
@@ -241,6 +241,8 @@ export interface Nota {
   autor_id: string
   estado: EstadoNota
   publicada_en: string | null
+  /** Cuándo tiene que salir, si está programada. Lo lee el cron de Inngest. */
+  publicar_en: string | null
   destacada: boolean
   auto_post: boolean
   redes: Red[]

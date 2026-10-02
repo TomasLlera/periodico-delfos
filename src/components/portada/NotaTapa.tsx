@@ -7,6 +7,16 @@ import type { NotaResumen } from '@/types'
  * La nota de tapa: un bloque oscuro a dos columnas, foto a la izquierda y
  * texto a la derecha, alineado abajo.
  *
+ * **El alto lo decide la columna de texto y no la foto.** La foto va con
+ * `h-full`, y una altura en porcentaje no cuenta para medir la fila: se estira
+ * hasta donde llegue el texto. Por eso, cuando la tapa quedó demasiado alta, lo
+ * que se tocó fue el cuerpo del titular —ver el comentario del `h2`— y no la
+ * relación de aspecto de la imagen, que en escritorio no hace nada.
+ *
+ * La columna de texto pasó de 5/12 a 5/11 del ancho por lo mismo: cada píxel
+ * que gana el texto es un renglón menos de titular, y el recorte que la foto
+ * pierde a lo ancho lo nota mucho menos que el lector a lo alto.
+ *
  * Es el único lugar de la portada donde el titular va sobre fondo oscuro, así
  * que el texto es `block-text` y no `text-text`: la superficie es oscura en
  * los dos temas. Medido, `block-text` sobre `block-bg`: 15.27:1 en claro,
@@ -27,7 +37,7 @@ interface Props {
 
 export function NotaTapa({ nota, palabras }: Props) {
   return (
-    <article className="mt-8 grid border border-block-border bg-block-bg text-block-text md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+    <article className="mt-8 grid border border-block-border bg-block-bg text-block-text md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)]">
       <FotoNota
         src={nota.imagen_portada}
         alt={nota.imagen_portada ? nota.imagen_alt : ''}
@@ -42,11 +52,24 @@ export function NotaTapa({ nota, palabras }: Props) {
           {etiquetaCategoria(nota.categoria)}
         </p>
 
-        <h1 className="marca mt-[1.1rem] text-[clamp(2rem,3.6vw,3.4rem)] uppercase leading-[0.98] tracking-[-0.02em]">
+        {/* `h2` y no `h1`: la tapa es la nota más grande de la portada, pero
+            el título de la página lo pone la portada —un `h1` propio, oculto—
+            porque la página no se llama como la nota del día. Con las dos cosas
+            en `h1` la portada quedaba con dos, que es justo lo que el barrido
+            del Step 20 vigila; no se veía porque hacía falta una nota publicada
+            para que la tapa existiera. */}
+        {/* El tamaño del titular es lo que decide el alto del bloque entero: la
+            foto lleva `h-full` y se estira hasta donde llegue esta columna, no
+            al revés. A 3.6vw un titular de doce palabras —los hay: "Las
+            Tiburonas perdieron en la ida de los octavos de final de la Primera
+            B"— caía en seis renglones y la tapa se comía la pantalla entera
+            antes de la segunda nota. A 2.8vw entra en cuatro y sigue siendo,
+            por lejos, lo más grande de la portada. */}
+        <h2 className="marca mt-[1.1rem] text-[clamp(1.9rem,2.8vw,2.7rem)] leading-[1.05] tracking-[-0.02em]">
           <Link href={`/nota/${nota.slug}`} className="hover:text-block-accent">
             {nota.titulo}
           </Link>
-        </h1>
+        </h2>
 
         <p className="mt-4 max-w-medida font-body text-[1.05rem] leading-relaxed text-block-text/80">
           {nota.bajada}

@@ -4,10 +4,12 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { NotasRelacionadas } from '@/components/content/NotasRelacionadas'
 import { PlanillaPartido } from '@/components/partido/PlanillaPartido'
+import { TablaPosiciones } from '@/components/temporada/TablaPosiciones'
 import { etiquetaFecha, marcador } from '@/lib/formato'
 import { jsonLdPartido, openGraphBase, urlDePartido } from '@/lib/seo'
 import { getNotasDePartido } from '@/lib/supabase/queries/notas'
 import { getPartidoPorSlug, getSlugsPartidos } from '@/lib/supabase/queries/partidos'
+import { getTablaPosiciones } from '@/lib/supabase/queries/temporadas'
 import { haySupabase } from '@/lib/supabase/server'
 import type { PartidoCompleto } from '@/types'
 import { urlDelSitio } from '@/lib/sitio'
@@ -94,7 +96,21 @@ export default async function PaginaPartido({
 
   if (!partido) notFound()
 
-  const notas = await getNotasDePartido(partido.id)
+  // La tabla **de esa fecha**, no la de hoy. Es lo que convierte el archivo en
+  // algo que se puede recorrer: entrar a la fecha 4 de 2024 y ver cómo estaba
+  // el campeonato ese día, en lugar de la foto final que ya se sabe. Lo pidió
+  // Charlie y los datos estaban: `tabla_posiciones` guarda una fila por equipo
+  // y por fecha desde la migración 0004, y `getTablaPosiciones()` ya recibía el
+  // número de fecha; nadie se la había pedido con uno.
+  //
+  // Sin `fecha_numero` —un amistoso— o sin tabla cargada para esa fecha, la
+  // query devuelve vacío y el bloque no se dibuja.
+  const [notas, tabla] = await Promise.all([
+    getNotasDePartido(partido.id),
+    partido.fecha_numero
+      ? getTablaPosiciones(partido.temporada.id, partido.fecha_numero)
+      : Promise.resolve({ filas: [], fecha: null }),
+  ])
 
   return (
     <>
@@ -104,6 +120,25 @@ export default async function PaginaPartido({
         {/* El `<h1>` lo pone la planilla en su variante completa, con el
             marcador adentro: duplicarlo acá dejaría dos h1 en la página. */}
         <PlanillaPartido partido={partido} variante="completa" nivelTitulo={2} />
+
+        {tabla.filas.length > 0 && (
+          <section aria-labelledby="tabla-a-la-fecha" className="mt-12">
+            <h2 id="tabla-a-la-fecha" className="titular text-[22px]">
+              La tabla después de esta fecha
+            </h2>
+            <p className="mt-1 font-body text-[0.9rem] text-text-muted">
+              Cómo quedaba el campeonato una vez jugada la fecha {tabla.fecha}.
+            </p>
+
+            <div className="mt-4">
+              <TablaPosiciones
+                filas={tabla.filas}
+                fecha={tabla.fecha}
+                temporada={partido.temporada.nombre}
+              />
+            </div>
+          </section>
+        )}
 
         <NotasRelacionadas notas={notas} titulo="Lo que se escribió sobre este partido" />
       </main>

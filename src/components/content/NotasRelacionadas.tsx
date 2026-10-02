@@ -85,7 +85,7 @@ function TarjetaNota({ nota }: { nota: NotaResumen }) {
           {nota.publicada_en && fechaCorta(nota.publicada_en)}
         </p>
 
-        <h3 className="titular mt-2 text-[17px] leading-[1.15] group-hover:text-accent-text">
+        <h3 className="titular-nota mt-2 text-[17px] leading-[1.15] group-hover:text-accent-text">
           {nota.titulo}
         </h3>
 

@@ -12,7 +12,7 @@ import type { Categoria, NotaConRelaciones, NotaResumen, ResultadoBusqueda } fro
 
 const CAMPOS_RESUMEN = `
   id, titulo, slug, bajada, imagen_portada, imagen_alt, imagen_credito,
-  categoria, temporada_id, partido_id, autor_id, estado, publicada_en,
+  categoria, temporada_id, partido_id, autor_id, estado, publicada_en, publicar_en,
   destacada, auto_post, redes, created_at, updated_at,
   autor:autores(nombre, slug)
 `

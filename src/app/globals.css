@@ -498,6 +498,26 @@ body {
     line-height: 1.05;
   }
 
+  /* El titular de una nota: igual que `.titular` pero en la caja que escribió
+     el autor.
+
+     La caja alta está bien para lo deportivo —"ARQUERAS", "FECHA A FECHA",
+     "PLANTEL"— que son rótulos cortos y fijos. Un titular de nota no: lo
+     escribe el autor con sus mayúsculas y sus minúsculas, y forzarlo a
+     versalita le saca los nombres propios, le saca las siglas y lo hace más
+     largo, que en un celular son dos renglones más. Es un pedido de Charlie
+     después de cargar la primera nota de verdad.
+
+     No es una variante de `.titular` con `normal-case` encima porque eso deja
+     la decisión en cada llamada y basta que alguien copie una clase para
+     perderla. */
+  .titular-nota {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+
   /* La tarjeta del rediseño: fondo propio sobre el fondo de página. */
   .tarjeta {
     background: var(--bg-elevated);
@@ -541,4 +561,78 @@ body {
     min-height: 44px;
     min-width: 44px;
   }
+}
+
+/* ============================================================
+   La cabecera fija, y lo que se achica al bajar
+
+   `<Header />` queda pegado arriba con `sticky` —eso es una utilidad, está en
+   el componente— y acá vive lo otro: qué desaparece cuando la página bajó.
+
+   El estado lo prende `<CompactarCabecera />`, que pone `data-scrolleado` en
+   el `<html>` y no dibuja nada. Está separado así a propósito: lo que necesita
+   JavaScript es saber cuánto se scrolleó, no la cabecera, que sigue siendo un
+   Server Component.
+
+   Qué se va y qué se queda no es una lista arbitraria: se queda lo que se usa
+   en cada visita —la marca como vuelta a la portada, el buscador y el tema— y se
+   va lo que se lee una vez: la bajada de la marca y la línea de fecha y clima.
+   Las secciones no entran en la discusión, que ya quedó zanjada un escalón más
+   arriba: viven afuera del `<header>` y se van con el scroll. Son datos de diario impreso: valen en la tapa, no
+   persiguiendo al lector por una crónica de 1.200 palabras.
+
+   Va en CSS plano y no en utilidades porque una variante por atributo del
+   `<html>` ancestro se escribe peor que esto, y porque la transición y el
+   respeto por `prefers-reduced-motion` viven mejor acá, juntos.
+   ============================================================ */
+
+.cabecera-fila,
+.cabecera-marca {
+  transition:
+    padding 160ms ease,
+    font-size 160ms ease;
+}
+
+html[data-scrolleado] .cabecera-fila {
+  padding-block: 0.4rem;
+}
+
+html[data-scrolleado] .cabecera-marca {
+  font-size: 1.25rem;
+}
+
+html[data-scrolleado] .cabecera-bajada,
+html[data-scrolleado] .cabecera-datos {
+  display: none;
+}
+
+/* Un encogimiento animado es decoración: quien pidió menos movimiento lo
+   recibe igual de compacto, pero de una. */
+@media (prefers-reduced-motion: reduce) {
+  .cabecera-fila,
+  .cabecera-marca {
+    transition: none;
+  }
+}
+
+/* El ancla de una sección no puede quedar tapada por la cabecera fija. Son los
+   56px de la fila compacta más aire; `scroll-padding-top` lo resuelve para
+   todo el documento, incluido el salto que hace el navegador al volver atrás. */
+html {
+  scroll-padding-top: 5rem;
+}
+
+/* Con el buscador abierto, la línea de fecha y clima se apaga.
+
+   El campo ya la tapa con su propio fondo, pero en los anchos donde el campo es
+   más angosto que esa línea asomaba una punta por la izquierda, y el resultado
+   era peor que el problema: dos textos encimados.
+
+   Va con `visibility` y no con `display`: así la línea sigue ocupando su lugar y
+   los botones no se corren cuando el buscador abre y cierra.
+
+   `:has()` lee el estado del `<details>` sin una línea de JavaScript, que es lo
+   que mantiene en pie la regla del buscador — anda sin JS, y esto también. */
+.cabecera-fila:has(details[open]) .cabecera-datos {
+  visibility: hidden;
 }

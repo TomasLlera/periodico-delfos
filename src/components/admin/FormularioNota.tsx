@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useTransition } from 'react'
 import { subirImagen } from '@/actions/imagenes'
-import { guardarNota, publicarNota } from '@/actions/notas'
+import { guardarNota, programarNota, publicarNota } from '@/actions/notas'
 import { chequearImagen } from '@/lib/imagen'
 import { entradaDesdeNota, esquemaNota, slugDesdeTitulo, type EntradaNota } from '@/lib/nota'
 import { esSobrePublicada, notaDePrevisualizacion } from '@/lib/vista-previa'
@@ -185,6 +185,29 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
     if (validar()) setPrevia(true)
   }
 
+  /**
+   * Igual que publicar, con la hora adentro. Comparte el mismo camino —subir la
+   * imagen primero, mandar al servidor después— porque una nota programada va a
+   * salir sin que nadie la mire de nuevo: lo que falla acá, falla de madrugada.
+   */
+  function alProgramar(publicarEn: string) {
+    empezar(async () => {
+      const lista = await conImagenSubida()
+      if (!lista) {
+        setPrevia(false)
+        return
+      }
+
+      const r = await programarNota(lista, nota?.id ?? null, publicarEn)
+      if (r.error) {
+        setPrevia(false)
+        setAviso([r.error, ...(r.motivos ?? [])].join(' · '))
+        return
+      }
+      router.push('/admin')
+    })
+  }
+
   function alPublicar() {
     empezar(async () => {
       const lista = await conImagenSubida()
@@ -285,6 +308,7 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
           sobrePublicada={esSobrePublicada(nota)}
           onVolver={() => setPrevia(false)}
           onPublicar={alPublicar}
+          onProgramar={alProgramar}
           publicando={guardando}
         />
       )}

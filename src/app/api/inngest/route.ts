@@ -1,6 +1,7 @@
 import { serve } from 'inngest/next'
 import { inngest } from '@/lib/inngest/client'
 import { postearNota } from '@/lib/inngest/funciones/nota-publicada'
+import { publicarProgramadas } from '@/lib/inngest/funciones/publicar-programadas'
 
 /**
  * El endpoint que Inngest llama para correr las funciones.
@@ -18,5 +19,5 @@ import { postearNota } from '@/lib/inngest/funciones/nota-publicada'
  */
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [postearNota],
+  functions: [postearNota, publicarProgramadas],
 })

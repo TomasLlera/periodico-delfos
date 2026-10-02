@@ -29,6 +29,7 @@ function nota(extra: Partial<NotaConRelaciones> = {}): NotaConRelaciones {
     autor_id: 'a-1',
     estado: 'publicada',
     publicada_en: '2026-08-08T18:30:00.000Z',
+    publicar_en: null,
     destacada: false,
     auto_post: true,
     redes: [],

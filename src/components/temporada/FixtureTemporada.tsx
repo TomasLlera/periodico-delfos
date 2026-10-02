@@ -29,10 +29,6 @@ export function FixtureTemporada({ partidos, temporada }: Props) {
         <p className="font-body text-[1.05rem] leading-relaxed text-text-soft">
           Todavía no hay partidos cargados en {temporada}.
         </p>
-        <p className="mt-3 font-body text-text-muted">
-          Cada partido se carga desde el admin con su planilla, y de ahí salen
-          solos el fixture, las goleadoras y las estadísticas de cada jugadora.
-        </p>
       </div>
     )
   }

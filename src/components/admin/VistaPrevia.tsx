@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowLeft, Eye, Send } from 'lucide-react'
+import { ArrowLeft, CalendarClock, Eye, Send } from 'lucide-react'
 import { ArticuloNota } from '@/components/content/ArticuloNota'
 import { ANCHO_VIEWPORT, SelectorViewport, type Viewport } from '@/components/admin/SelectorViewport'
+import { localAIso } from '@/lib/entidades/campos'
+import { chequearProgramacion } from '@/lib/nota'
 import type { NotaConRelaciones } from '@/types'
 
 /**
@@ -41,10 +43,24 @@ interface Props {
   onVolver: () => void
   onPublicar: () => void
   publicando: boolean
+  /** Programar para más tarde. La hora llega en ISO. */
+  onProgramar: (publicarEn: string) => void
 }
 
-export function VistaPrevia({ nota, sobrePublicada, onVolver, onPublicar, publicando }: Props) {
+export function VistaPrevia({
+  nota,
+  sobrePublicada,
+  onVolver,
+  onPublicar,
+  publicando,
+  onProgramar,
+}: Props) {
   const [viewport, setViewport] = useState<Viewport>('escritorio')
+  const [cuando, setCuando] = useState('')
+
+  // La hora del formulario viene en hora de Argentina y la base guarda UTC.
+  const enIso = localAIso(cuando)
+  const chequeo = chequearProgramacion(enIso)
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-bg">
@@ -82,6 +98,40 @@ export function VistaPrevia({ nota, sobrePublicada, onVolver, onPublicar, public
             <Send size={16} aria-hidden="true" />
             {publicando ? 'Publicando…' : 'Publicar'}
           </button>
+        </div>
+
+        {/* Programar va acá abajo y no al lado del botón grande: es la acción
+            rara. Lo normal es publicar ahora, y una fila entera de controles
+            compitiendo con el botón principal hace dudar en el caso común. */}
+        <div className="flex w-full flex-wrap items-center justify-end gap-2">
+          <label htmlFor="publicar-en" className="meta text-text-muted">
+            O programala para
+          </label>
+          <input
+            id="publicar-en"
+            type="datetime-local"
+            value={cuando}
+            onChange={(e) => setCuando(e.target.value)}
+            disabled={publicando}
+            className="tactil border border-border-control bg-bg px-2 font-display text-[0.85rem]"
+          />
+          <button
+            type="button"
+            onClick={() => enIso && onProgramar(enIso)}
+            disabled={publicando || !chequeo.puede}
+            className="tactil flex items-center gap-2 border border-border-control px-4 font-display text-[0.9rem] font-bold hover:bg-bg disabled:opacity-50"
+          >
+            <CalendarClock size={16} aria-hidden="true" />
+            Programar
+          </button>
+
+          {/* El motivo sólo cuando ya escribieron algo: con el campo vacío
+              diría «elegí cuándo» antes de que nadie haya intentado nada. */}
+          {cuando !== '' && chequeo.motivo && (
+            <p role="status" className="w-full text-right text-[0.85rem] text-danger">
+              {chequeo.motivo}
+            </p>
+          )}
         </div>
       </div>
 

@@ -15,12 +15,14 @@ import {
   Redo2,
   Undo2,
   Unlink,
+  Video as IconoVideo,
 } from 'lucide-react'
 import { EnlazarNota, type NotaEnlazable } from '@/components/admin/EnlazarNota'
 import { InsertarImagen } from '@/components/admin/InsertarImagen'
 import { InsertarPlanilla } from '@/components/admin/InsertarPlanilla'
+import { InsertarVideo } from '@/components/admin/InsertarVideo'
 import { etiquetaDePartido } from '@/lib/partido'
-import { NodoImagen, NodoPlanilla } from '@/lib/tiptap/extensiones'
+import { NodoImagen, NodoPlanilla, NodoVideo } from '@/lib/tiptap/extensiones'
 import type { DocumentoTipTap, PartidoConEquipos } from '@/types'
 
 /**
@@ -49,7 +51,7 @@ import type { DocumentoTipTap, PartidoConEquipos } from '@/types'
  */
 
 /** Cuál de los tres paneles está abierto. Uno solo a la vez: son excluyentes. */
-type Panel = 'enlazar' | 'imagen' | 'planilla'
+type Panel = 'enlazar' | 'imagen' | 'planilla' | 'video'
 
 interface Props {
   valor: DocumentoTipTap
@@ -69,6 +71,7 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
     extensions: [
       StarterKit,
       NodoImagen,
+      NodoVideo,
       // El nodo guarda sólo el id; el nombre del partido se lo da esta opción
       // para poder dibujar el bloque mientras se escribe. `partidos` lo trae
       // la página del editor y no cambia mientras la pantalla está abierta,
@@ -88,6 +91,8 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
         // line-height 1.7 (regla no negociable 3). Escribir con la misma
         // medida con la que se lee es media vista previa gratis.
         class: 'prose-nota min-h-[24rem] px-4 py-3 outline-none',
+        spellcheck: 'true',
+        lang: 'es-AR',
       },
     },
     onUpdate({ editor }) {
@@ -198,6 +203,19 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
         >
           <ClipboardList size={16} aria-hidden="true" />
         </button>
+
+        <button
+          type="button"
+          onClick={() => setPanel((p) => (p === 'video' ? null : 'video'))}
+          title="Insertar un video de YouTube"
+          aria-label="Insertar un video de YouTube"
+          aria-pressed={panel === 'video'}
+          className={`tactil flex min-w-11 items-center justify-center px-2 ${
+            panel === 'video' ? 'bg-text text-bg' : 'hover:bg-bg-muted'
+          }`}
+        >
+          <IconoVideo size={16} aria-hidden="true" />
+        </button>
       </div>
 
       {panel === 'enlazar' && (
@@ -228,6 +246,16 @@ export function EditorCuerpo({ valor, onCambio, notas, idActual, partidos }: Pro
           onCerrar={() => setPanel(null)}
           onElegir={(partidoId) => {
             editor.chain().focus().insertContent({ type: 'planilla', attrs: { partidoId } }).run()
+            setPanel(null)
+          }}
+        />
+      )}
+
+      {panel === 'video' && (
+        <InsertarVideo
+          onCerrar={() => setPanel(null)}
+          onInsertar={(video) => {
+            editor.chain().focus().insertContent({ type: 'video', attrs: video }).run()
             setPanel(null)
           }}
         />

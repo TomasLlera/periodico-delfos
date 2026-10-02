@@ -35,12 +35,19 @@ export function CampoTexto({ id, etiqueta, valor, onCambio, error, ayuda, largo 
         {etiqueta}
       </label>
 
+      {/* `spellCheck` y `lang` en los dos: el corrector del navegador no se
+          prende solo en un campo de formulario, y sin `lang` corrige contra el
+          idioma del sistema operativo —que en una máquina en inglés subraya la
+          nota entera—. Es un pedido de Charlie: el panel es donde se escribe,
+          y hasta ahora no avisaba de un solo error de tipeo. */}
       {largo ? (
         <textarea
           id={id}
           value={valor}
           rows={3}
           onChange={(e) => onCambio(e.target.value)}
+          spellCheck
+          lang="es-AR"
           aria-describedby={[idError, idAyuda].filter(Boolean).join(' ') || undefined}
           aria-invalid={error ? true : undefined}
           className={clases}
@@ -51,6 +58,8 @@ export function CampoTexto({ id, etiqueta, valor, onCambio, error, ayuda, largo 
           type="text"
           value={valor}
           onChange={(e) => onCambio(e.target.value)}
+          spellCheck
+          lang="es-AR"
           aria-describedby={[idError, idAyuda].filter(Boolean).join(' ') || undefined}
           aria-invalid={error ? true : undefined}
           className={clases}

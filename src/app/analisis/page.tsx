@@ -25,6 +25,15 @@ export const revalidate = 60
 
 const BASE = '/analisis'
 const TITULO = 'Análisis'
+/**
+ * Sólo para los metadatos: es el `<meta name="description">` y el texto de la
+ * tarjeta al compartir.
+ *
+ * **No se dibuja en la página.** Estaba además como copete bajo el título y se
+ * sacó: le explicaba al lector lo que el título ya dice. Lo que un buscador
+ * necesita leer y lo que un lector necesita leer no son lo mismo, y esto es lo
+ * primero.
+ */
 const DESCRIPCION =
   'Los números, la táctica y las cuentas del torneo, más allá del resultado de la fecha.'
 
@@ -70,7 +79,6 @@ export default async function Analisis({ searchParams }: Params) {
           id="listado-analisis"
           titulo={TITULO}
           nivel={1}
-          descripcion={DESCRIPCION}
           notas={notas}
           base={BASE}
           pagina={pagina}

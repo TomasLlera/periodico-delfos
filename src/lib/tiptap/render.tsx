@@ -16,10 +16,12 @@
 
 import { Fragment, type ReactNode } from 'react'
 import { ImagenResponsive } from '@/components/content/ImagenResponsive'
+import { VideoEmbebido } from '@/components/content/VideoEmbebido'
 import { PlanillaPartido } from '@/components/partido/PlanillaPartido'
 import {
   PROFUNDIDAD_MAXIMA,
   atributosImagen,
+  atributosVideo,
   esExterno,
   hrefDeMarcas,
   inicioDeLista,
@@ -180,6 +182,12 @@ function renderNodo(
           sizes="(min-width: 768px) 700px, 100vw"
         />
       )
+    }
+
+    case 'video': {
+      const video = atributosVideo(nodo.attrs)
+      if (!video) return null
+      return <VideoEmbebido videoId={video.videoId} titulo={video.titulo} />
     }
 
     case 'planilla': {

@@ -230,3 +230,58 @@ export type NotaParaEditar = Pick<
   | 'auto_post'
   | 'redes'
 >
+
+// ============================================
+// Programar la publicación
+// ============================================
+
+/** Margen mínimo entre que se aprieta "Programar" y la hora pedida. */
+export const MINUTOS_MINIMOS_PROGRAMADA = 5
+
+export interface ChequeoProgramacion {
+  puede: boolean
+  motivo?: string
+}
+
+/**
+ * Si una fecha sirve para programar una nota.
+ *
+ * **El margen de cinco minutos no es capricho: es el intervalo del cron.** La
+ * función que publica corre cada cinco minutos (ver `publicarProgramadas`), así
+ * que programar para dentro de uno promete una precisión que el sistema no
+ * tiene. Pedir el margen hace que la hora que se elige sea la hora que pasa, en
+ * lugar de una que casi siempre llega tarde.
+ *
+ * Programar para el pasado es el caso que más va a pasar: alguien deja la
+ * pantalla abierta, vuelve a la hora y aprieta. Sale en la próxima corrida, o
+ * sea en menos de cinco minutos, y mientras tanto la nota no está en el sitio
+ * ni es un borrador. Mejor decirlo y que publique a mano.
+ */
+export function chequearProgramacion(
+  publicarEn: string | null,
+  ahora: Date = new Date(),
+): ChequeoProgramacion {
+  if (!publicarEn) {
+    return { puede: false, motivo: 'Elegí cuándo tiene que salir.' }
+  }
+
+  const fecha = new Date(publicarEn)
+  if (Number.isNaN(fecha.getTime())) {
+    return { puede: false, motivo: 'Esa fecha no se entiende.' }
+  }
+
+  const minutos = (fecha.getTime() - ahora.getTime()) / 60000
+
+  if (minutos < 0) {
+    return { puede: false, motivo: 'Esa hora ya pasó. Si querés que salga ahora, publicala.' }
+  }
+
+  if (minutos < MINUTOS_MINIMOS_PROGRAMADA) {
+    return {
+      puede: false,
+      motivo: `Programá con al menos ${MINUTOS_MINIMOS_PROGRAMADA} minutos: el publicador corre cada ${MINUTOS_MINIMOS_PROGRAMADA}.`,
+    }
+  }
+
+  return { puede: true }
+}

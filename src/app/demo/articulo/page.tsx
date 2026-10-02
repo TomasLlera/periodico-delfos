@@ -51,6 +51,7 @@ const NOTA: NotaConRelaciones = {
   autor_id: AUTOR.id,
   estado: 'publicada',
   publicada_en: '2026-08-08T21:40:00.000Z',
+  publicar_en: null,
   destacada: true,
   auto_post: true,
   redes: ['facebook', 'instagram', 'x'],
@@ -76,6 +77,7 @@ function relacionada(
     categoria,
     slug: id,
     publicada_en: publicadaEn,
+    publicar_en: null,
     imagen_portada: null,
     autor: { nombre: AUTOR.nombre, slug: AUTOR.slug },
   }

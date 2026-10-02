@@ -40,6 +40,10 @@ export default function DemoPortada() {
       {/* Las mismas clases que `/`: sin padding arriba, porque la tapa abre la
           página y trae su propio margen. */}
       <main className="contenedor pb-4">
+        {/* El mismo `h1` oculto que pone la portada real: la tapa ahora es un
+            `h2`, así que sin esto la demo se quedaba sin ningún `h1`. */}
+        <h1 className="sr-only">Banco de pruebas de la portada</h1>
+
         <NotaTapa nota={notaDeTapa} palabras={1180} />
 
         <GrillaNotas

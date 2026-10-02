@@ -25,6 +25,15 @@ export const revalidate = 60
 
 const BASE = '/cronicas'
 const TITULO = 'Crónicas'
+/**
+ * Sólo para los metadatos: es el `<meta name="description">` y el texto de la
+ * tarjeta al compartir.
+ *
+ * **No se dibuja en la página.** Estaba además como copete bajo el título y se
+ * sacó: le explicaba al lector lo que el título ya dice. Lo que un buscador
+ * necesita leer y lo que un lector necesita leer no son lo mismo, y esto es lo
+ * primero.
+ */
 const DESCRIPCION =
   'El partido a partido de las Tiburonas: qué pasó en cada fecha, contado el mismo día.'
 
@@ -70,7 +79,6 @@ export default async function Cronicas({ searchParams }: Params) {
           id="listado-cronicas"
           titulo={TITULO}
           nivel={1}
-          descripcion={DESCRIPCION}
           notas={notas}
           base={BASE}
           pagina={pagina}

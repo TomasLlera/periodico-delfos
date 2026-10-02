@@ -42,8 +42,7 @@ export function FechaAFecha({ id, partidos, temporada, rutaBase, ventana }: Prop
 
       {visibles.length === 0 ? (
         <p className="max-w-medida font-body text-text-muted">
-          Todavía no hay partidos cargados en {temporada.nombre}. Cada uno se
-          carga desde el admin con su planilla, y de ahí sale sola esta franja.
+          Todavía no hay partidos cargados en {temporada.nombre}.
         </p>
       ) : (
         <ol className="flex items-stretch gap-3 overflow-x-auto pb-2">

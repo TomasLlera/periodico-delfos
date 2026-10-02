@@ -35,7 +35,7 @@ export default async function Fixture() {
       <Header />
       <SinTemporada
         titulo="Fixture y tabla"
-        explicacion="Todavía no hay una temporada cargada. Cuando esté, acá van el fixture completo, la tabla de posiciones y las goleadoras, y se actualizan solos con cada planilla de partido que se carga."
+        explicacion="Todavía no hay una temporada cargada. Cuando esté, acá van el fixture completo, la tabla de posiciones y las goleadoras."
       />
       <Footer />
     </>

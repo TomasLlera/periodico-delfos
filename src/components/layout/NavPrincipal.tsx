@@ -78,7 +78,16 @@ export function NavPrincipal() {
   return (
     // En 375px la nav scrollea en lugar de apilarse: no se come el alto del
     // viewport antes de que aparezca la primera nota.
-    <nav aria-label="Secciones" className="border-t border-header-text/15">
+    //
+    // **El fondo y los filetes los lleva ella y no los hereda.** Vivía adentro
+    // del `<header>`, que le ponía la superficie oscura; quedó afuera cuando la
+    // cabecera pasó a ser fija, porque `sticky` pega el elemento entero y con la
+    // nav adentro se pegaban las dos. El `border-t` tenue sigue separándola de
+    // la marca y el `border-b` es el que antes cerraba la cabecera.
+    <nav
+      aria-label="Secciones"
+      className="border-t border-b border-header-text/15 border-b-block-border bg-header-bg text-header-text"
+    >
       {/* `relative` porque el degradado va posicionado contra esta caja. Es la
           regla 5 de CLAUDE.md mirada del otro lado: un contenedor con scroll
           horizontal y algo absoluto adentro necesita ser el ancestro
