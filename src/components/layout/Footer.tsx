@@ -33,24 +33,26 @@ const SECCIONES = [
     ],
   },
   /**
-   * Acá faltan Contacto y Privacidad, y es a propósito.
+   * Contacto volvió el 02/10/2026, cuando Charlie pasó el mail del medio.
    *
-   * Las dos rutas no existen, así que los dos links daban **404 desde el pie de
-   * todas las páginas del sitio**. Un 404 en el pie de cada pantalla es peor
-   * que un pie con una sección más corta, y en una URL pública lo ve cualquiera.
+   * Estuvo afuera desde el principio y era a propósito: la ruta no existía
+   * —faltaba saber a qué dirección quiere que le escriban— y el link daba **404
+   * desde el pie de todas las páginas del sitio**, que es peor que un pie con
+   * una sección más corta.
    *
-   * No se escriben las páginas porque dependen de cuatro datos que sólo tiene
-   * Charlie: el mail del medio, los handles de las redes, el responsable de
-   * datos y si el sitio va a usar analítica —de eso depende si la política
-   * tiene que hablar de cookies—. **Una política de privacidad inventada es un
-   * documento legal falso.**
-   *
-   * Cuando estén los datos, esto se revierte agregando las dos líneas de vuelta
-   * y creando las rutas. Está contado en `docs/encargos/accesibilidad-y-pie.md`.
+   * **Privacidad sigue faltando**, por la misma regla. Ya están el responsable
+   * de datos y el mail, pero la política tiene que decir la verdad sobre
+   * cookies, y eso depende de si se prenden la analítica y la publicidad, que
+   * todavía no se prendieron. Entra cuando esté escrita y no antes: **una
+   * política de privacidad inventada es un documento legal falso.** Está
+   * contado en `docs/encargos/accesibilidad-y-pie.md`.
    */
   {
     titulo: 'El medio',
-    links: [{ href: '/quienes-somos', label: 'Quiénes somos' }],
+    links: [
+      { href: '/quienes-somos', label: 'Quiénes somos' },
+      { href: '/contacto', label: 'Contacto' },
+    ],
   },
 ] as const
 

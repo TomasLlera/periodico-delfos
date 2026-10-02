@@ -1,12 +1,21 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
+import { RedesDelMedio } from '@/components/layout/RedesDelMedio'
 import { fechaHoraPartido, rival } from '@/lib/formato'
+import { redesDelMedio } from '@/lib/redes-del-medio'
 import { ETIQUETA_ESTADO, ladosDelPartido, tituloAccesible } from '@/lib/partido'
 import type { FilaTablaConEquipo, PartidoConEquipos, Temporada } from '@/types'
 
 /**
- * La tira de datos que los dos bocetos tienen arriba de la cabecera: último
- * resultado, próximo partido y posición en la tabla.
+ * La tira de arriba de todo: los datos deportivos a la izquierda —último
+ * resultado, próximo partido y posición en la tabla— y las cuentas del medio
+ * contra el borde derecho.
+ *
+ * **Las redes vivían en la cabecera, abajo de la fecha**, donde se veían sólo en
+ * escritorio y desaparecían al compactarse la cabecera al scrollear. Acá se ven
+ * siempre y en todos los anchos, que es como las tiene Olé. Es la decisión de
+ * Tomás del 02/10/2026, cuando se cargaron los handles y se las pudo ver por
+ * primera vez.
  *
  * **No consulta nada**: recibe los tres datos ya leídos. Es lo que permite
  * mirarla en `/demo/widgets` sin base, y lo que la deja fuera de `/` hasta que
@@ -41,30 +50,53 @@ export function BarraEstado({ temporada, ultimo, proximo, posicion }: Props) {
     piezas.push({ id: 'tabla', nodo: <Posicion fila={posicion} temporada={temporada} /> })
   }
 
-  // Sin ninguno de los tres datos la barra no se dibuja. Una franja que diga
-  // "todavía no hay resultados" arriba de todas las páginas es ruido fijo.
-  if (piezas.length === 0) return null
+  const hayRedes = redesDelMedio().length > 0
+
+  // Sin datos y sin redes la tira no se dibuja. Una franja que diga "todavía no
+  // hay resultados" arriba de todas las páginas es ruido fijo.
+  if (piezas.length === 0 && !hayRedes) return null
 
   return (
-    <aside
-      aria-label={`Aldosivi en ${temporada.nombre}`}
-      className="border-b border-header-text/15 bg-header-bg text-header-text"
-    >
-      {/* En 375px scrollea esta tira y no el documento: los tres datos no
-          entran en una línea y ninguno se puede abreviar más. */}
-      <div className="contenedor flex items-center gap-4 overflow-x-auto whitespace-nowrap py-2 text-[0.8rem] sm:gap-5">
-        {piezas.map((pieza, indice) => (
-          <div key={pieza.id} className="flex shrink-0 items-center gap-4 sm:gap-5">
-            {indice > 0 && (
-              <span aria-hidden="true" className="text-header-text/25">
-                |
-              </span>
-            )}
-            {pieza.nodo}
-          </div>
-        ))}
+    <div className="border-b border-header-text/15 bg-header-bg text-header-text">
+      <div className="contenedor flex items-center gap-4">
+        {/* El `<aside>` envuelve sólo los datos deportivos, que es lo que su
+            etiqueta nombra. Las redes quedan afuera a propósito: son del medio
+            y no de la temporada, y meterlas adentro haría que un lector de
+            pantalla las anunciara como parte de "Aldosivi en Primera B 2026".
+
+            En 375px scrollea esta tira y no el documento: los tres datos no
+            entran en una línea y ninguno se puede abreviar más. El `flex-1` con
+            `min-w-0` es lo que mantiene el scroll acá adentro en vez de
+            empujar los íconos fuera de la pantalla. */}
+        {piezas.length > 0 && (
+          <aside
+            aria-label={`Aldosivi en ${temporada.nombre}`}
+            className="flex min-w-0 flex-1 items-center gap-4 overflow-x-auto whitespace-nowrap py-2 text-[0.8rem] sm:gap-5"
+          >
+            {piezas.map((pieza, indice) => (
+              <div key={pieza.id} className="flex shrink-0 items-center gap-4 sm:gap-5">
+                {indice > 0 && (
+                  <span aria-hidden="true" className="text-header-text/25">
+                    |
+                  </span>
+                )}
+                {pieza.nodo}
+              </div>
+            ))}
+          </aside>
+        )}
+
+        {/* Las cuentas del medio, arriba de todo y contra el borde derecho, como
+            las tiene Olé. Estaban en la cabecera, abajo de la fecha, donde se
+            veían sólo en escritorio y se apagaban al compactarse la cabecera:
+            acá se ven siempre y en todos los anchos.
+
+            `ml-auto` y no `justify-between` en el padre: sin datos deportivos
+            cargados no hay nada a la izquierda, y los íconos tienen que quedar
+            igual a la derecha y no centrados. */}
+        <RedesDelMedio className="ml-auto shrink-0" />
       </div>
-    </aside>
+    </div>
   )
 }
 
