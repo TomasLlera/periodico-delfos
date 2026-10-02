@@ -12,6 +12,14 @@ import type { NotaResumen } from '@/types'
  * primera nota ocupa dos columnas porque es la más nueva de todas, pero en la
  * página 3 de un archivo esa jerarquía no significa nada.
  *
+ * **Debajo del título no va ningún copete**, y se sacó el que había. Decía "El
+ * partido a partido de las Tiburonas: qué pasó en cada fecha", que es lo que ya
+ * dice el título "Crónicas" más la primera tarjeta. El texto que explica una
+ * sección es útil para un buscador —ahí sigue, como `description` de la página—
+ * y le roba la primera pantalla a quien entró a leer. Lo que se queda en el
+ * sitio es lo que dice algo que no se puede ver solo: "actualizada a la fecha
+ * 4", "todavía no hay goles cargados".
+ *
  * No consulta: recibe la página ya leída. Se lo puede mirar entero, con
  * paginador y todo, en `/demo/listado`.
  */
@@ -28,8 +36,6 @@ interface Props {
    * con lector de pantalla sin saber en qué página está.
    */
   nivel?: 1 | 2
-  /** Bajo el título, qué hay en este listado. */
-  descripcion: string
   notas: readonly NotaResumen[]
   base: string
   pagina: number
@@ -41,7 +47,6 @@ export function ListadoNotas({
   id,
   titulo,
   nivel = 2,
-  descripcion,
   notas,
   base,
   pagina,
@@ -51,10 +56,6 @@ export function ListadoNotas({
   return (
     <section aria-labelledby={id}>
       <CabeceraBloque id={id} titulo={titulo} nivel={nivel} />
-
-      <p className="max-w-medida font-body text-[1.05rem] leading-relaxed text-text-soft">
-        {descripcion}
-      </p>
 
       {notas.length === 0 ? (
         <p className="mt-8 border-l-4 border-accent bg-bg-muted py-6 pl-5 font-body text-text-muted">

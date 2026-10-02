@@ -169,9 +169,8 @@ function SinTabla({ temporada }: { temporada: string }) {
         Todavía no se cargó ninguna fecha de la tabla de {temporada}.
       </p>
       <p className="mt-3 font-body text-text-muted">
-        La tabla se carga a mano, fecha por fecha: el medio cubre a Aldosivi y
-        no todos los partidos de la zona, así que no se puede calcular desde los
-        partidos que hay acá.
+Se carga a mano, fecha por fecha: Delfos sigue a Aldosivi y no a toda la
+        zona, así que la tabla no sale sola de los partidos que hay acá.
       </p>
     </div>
   )

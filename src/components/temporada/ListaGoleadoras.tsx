@@ -25,10 +25,6 @@ export function ListaGoleadoras({ goleadoras, temporada }: Props) {
         <p className="font-body text-[1.05rem] leading-relaxed text-text-soft">
           Todavía no hay goles cargados en {temporada}.
         </p>
-        <p className="mt-3 font-body text-text-muted">
-          Esta lista se arma sola con los goles de cada planilla de partido: no
-          se escribe a mano en ningún lado.
-        </p>
       </div>
     )
   }

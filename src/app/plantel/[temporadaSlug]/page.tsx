@@ -97,10 +97,6 @@ export default async function PaginaPlantel({ params }: Params) {
               <p className="font-body text-[1.05rem] leading-relaxed text-text-soft">
                 Todavía no hay jugadoras cargadas en {temporada.nombre}.
               </p>
-              <p className="mt-3 font-body text-text-muted">
-                El plantel se carga desde el admin, y de ahí salen la ficha de
-                cada jugadora y sus estadísticas.
-              </p>
             </div>
           ) : (
             <GrillaPlantel plantel={plantel} />

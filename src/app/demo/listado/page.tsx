@@ -44,7 +44,6 @@ export default function DemoListado() {
           <ListadoNotas
             id="demo-listado-lleno"
             titulo="Crónicas"
-            descripcion="El partido a partido de las Tiburonas: qué pasó en cada fecha, contado el mismo día."
             notas={[...cronicas, ...analisis]}
             base="/cronicas"
             pagina={2}
@@ -57,7 +56,6 @@ export default function DemoListado() {
           <ListadoNotas
             id="demo-listado-vacio"
             titulo="Análisis"
-            descripcion="Los números, la táctica y las cuentas del torneo, más allá del resultado de la fecha."
             notas={[]}
             base="/analisis"
             pagina={1}
