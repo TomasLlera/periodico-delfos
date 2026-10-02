@@ -71,6 +71,16 @@ export interface Equipo {
   es_aldosivi: boolean
 }
 
+/**
+ * Qué puede hacer una cuenta del panel.
+ *
+ * `editor` ve y edita todas las notas y da de alta cuentas; `redactor` sólo las
+ * suyas. No es una escala de confianza sino de alcance: los datos deportivos
+ * —partidos, jugadoras, planillas, tabla— los carga cualquiera de los dos.
+ * Ver `0014_roles_de_autor.sql`.
+ */
+export type RolDeAutor = 'editor' | 'redactor'
+
 export interface Autor {
   id: string
   nombre: string
@@ -87,6 +97,7 @@ export interface Autor {
    * salgan con la firma del titular. Ver `0011_firma_autor.sql`.
    */
   firma_como: string | null
+  rol: RolDeAutor
 }
 
 // ============================================

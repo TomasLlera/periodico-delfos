@@ -179,9 +179,14 @@ async function main(): Promise<void> {
   }
 
   // `autores.id` es FK a `auth.users(id)`: el UUID no se inventa, sale de Auth.
+  //
+  // `rol: 'editor'` desde la 0014: un redactor sólo ve sus propias notas, y la
+  // suite del panel abre el listado esperando las que haya. El trigger que
+  // protege la columna hace una excepción con el service role, que es con el
+  // que corre esto.
   const { error: errorAutor } = await supabase
     .from('autores')
-    .upsert({ id, nombre: NOMBRE, slug: SLUG }, { onConflict: 'id' })
+    .upsert({ id, nombre: NOMBRE, slug: SLUG, rol: 'editor' }, { onConflict: 'id' })
   if (errorAutor) throw errorAutor
   console.log(`Fila en autores: ${SLUG}`)
 

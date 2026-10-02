@@ -12,6 +12,7 @@ const AUTOR: Autor = {
   instagram: null,
   x_handle: null,
   firma_como: null,
+  rol: 'editor',
 }
 
 const ENTRADA: EntradaNota = {

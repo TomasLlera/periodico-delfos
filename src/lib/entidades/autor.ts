@@ -47,3 +47,41 @@ export function handleLimpio(valor: string | null | undefined): string | null {
 
   return limpio === '' ? null : limpio
 }
+
+/**
+ * El alta de una cuenta del panel.
+ *
+ * **Es otra pantalla que el perfil, y otro esquema.** El perfil lo edita cada
+ * uno sobre su propia fila; el alta la hace un editor sobre una cuenta que
+ * todavía no existe, y las dos cosas piden datos distintos: acá hace falta un
+ * mail —al que va la invitación— y un rol, y no hace falta nada de lo que se
+ * escribe después (bio, foto, handles). Quien entre los completa en su perfil.
+ *
+ * **El slug no se pide, se deriva del nombre.** Es la URL de la página del
+ * autor y el criterio de slug del proyecto es uno solo (`slugificar()`): dejarlo
+ * escribir acá habilita dos autores con el mismo slug, y la base lo rebota con
+ * un 23505 que nadie entiende.
+ *
+ * Hasta ahora un autor nacía creando el usuario a mano en el panel de Supabase
+ * Auth y después insertando la fila con SQL, que es lo que pidió Charlie que
+ * dejara de ser así.
+ */
+export const esquemaAltaDeAutor = z.object({
+  nombre: textoRequerido('El nombre'),
+  /**
+   * A dónde va la invitación. Se guarda en Auth y no en `autores`: la tabla no
+   * tiene columna de mail y no conviene que la tenga, porque sería una copia
+   * del dato que puede quedar vieja cuando alguien lo cambia desde Auth.
+   */
+  // `z.email()` y no `z.string().email()`: en Zod 4 el segundo está deprecado.
+  // El `min(1)` va primero para que un campo vacío diga que falta y no que no
+  // tiene forma de mail, que es lo que diría el validador de formato solo.
+  mail: z
+    .string()
+    .trim()
+    .min(1, 'El mail es obligatorio: es a donde va la invitación')
+    .pipe(z.email('Ese mail no tiene forma de mail')),
+  rol: z.enum(['editor', 'redactor']),
+})
+
+export type EntradaAltaDeAutor = z.infer<typeof esquemaAltaDeAutor>

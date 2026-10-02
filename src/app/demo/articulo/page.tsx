@@ -32,6 +32,7 @@ const AUTOR: Autor = {
   instagram: 'periodicodelfos',
   x_handle: 'periodicodelfos',
   firma_como: null,
+  rol: 'editor',
 }
 
 const NOTA: NotaConRelaciones = {

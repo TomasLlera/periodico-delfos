@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { FormularioNota } from '@/components/admin/FormularioNota'
+import { firmaDe } from '@/lib/nota'
+import { getAutorDeLaSesion } from '@/lib/supabase/queries/autores'
 import { getNotaPorId, getNotasParaEnlazar } from '@/lib/supabase/queries/notas'
 import { getPartidosParaEditor } from '@/lib/supabase/queries/partidos'
 import { getTemporadas } from '@/lib/supabase/queries/temporadas'
@@ -27,14 +29,21 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function EditarNota({ params }: Params) {
   const { id } = await params
-  const [nota, temporadas, partidos, enlazables] = await Promise.all([
+  const [nota, temporadas, partidos, enlazables, yo] = await Promise.all([
     getNotaPorId(id),
     getTemporadas(),
     getPartidosParaEditor(),
     getNotasParaEnlazar(),
+    getAutorDeLaSesion(),
   ])
 
   if (!nota) notFound()
+
+  // La nota de otro, abierta por un redactor. RLS la deja **leer** si está
+  // publicada —publicado es público— pero no la deja guardar, así que sin esto
+  // el editor se abre entero y el error aparece recién al apretar Guardar.
+  // `notFound()` por lo mismo que arriba: es el estado que no confirma nada.
+  if (yo && yo.rol !== 'editor' && nota.autor_id !== firmaDe(yo)) notFound()
 
   return (
     <main className="mx-auto max-w-[900px] px-4 py-8">
