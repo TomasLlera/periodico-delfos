@@ -66,9 +66,13 @@ en el request.
   `aria-current`) y `FechaDeHoy` (la portada se prerenderiza y la fecha se
   congelaría en el build) y `Ventana` (`<dialog>` nativo: `showModal()` es lo
   que da trampa de foco, Escape y foco restaurado sin escribirlos),
-  `ProveedorTema` y `ToggleTema` (el tema claro/oscuro), más todo
-  `/admin` cuando exista. **El buscador no es
-  cliente**: es un `<form method="get">` que anda sin JS.
+  `ProveedorTema` y `ToggleTema` (el tema claro/oscuro), `CompactarCabecera`
+  (no dibuja nada: marca el `<html>` cuando la página bajó, para que la cabecera
+  fija se achique sin volver cliente al `Header`), más todo `/admin`.
+  **El buscador anda sin JS**: es un `<form method="get">` adentro de un
+  `<details>`, y `BuscadorHeader` es cliente sólo por dos cortesías que
+  `<details>` no trae —el foco al campo y el cierre con Escape—, las dos
+  degradables a nada.
 - Todas las queries en `lib/supabase/queries/*`. Nunca inline en un componente.
 - Todo posteo pasa por `lib/social/*` y se registra en `social_posts` (un row por red por nota).
 - Idempotencia: chequear `social_posts (nota_id, platform)` antes de postear.

@@ -562,3 +562,61 @@ body {
     min-width: 44px;
   }
 }
+
+/* ============================================================
+   La cabecera fija, y lo que se achica al bajar
+
+   `<Header />` queda pegado arriba con `sticky` —eso es una utilidad, está en
+   el componente— y acá vive lo otro: qué desaparece cuando la página bajó.
+
+   El estado lo prende `<CompactarCabecera />`, que pone `data-scrolleado` en
+   el `<html>` y no dibuja nada. Está separado así a propósito: lo que necesita
+   JavaScript es saber cuánto se scrolleó, no la cabecera, que sigue siendo un
+   Server Component.
+
+   Qué se va y qué se queda no es una lista arbitraria: se queda lo que se usa
+   en cada visita —la marca como vuelta a la portada, el buscador, el tema, las
+   secciones— y se va lo que se lee una vez, que es la bajada de la marca y la
+   línea de fecha y clima. Son datos de diario impreso: valen en la tapa, no
+   persiguiendo al lector por una crónica de 1.200 palabras.
+
+   Va en CSS plano y no en utilidades porque una variante por atributo del
+   `<html>` ancestro se escribe peor que esto, y porque la transición y el
+   respeto por `prefers-reduced-motion` viven mejor acá, juntos.
+   ============================================================ */
+
+.cabecera-fila,
+.cabecera-marca {
+  transition:
+    padding 160ms ease,
+    font-size 160ms ease;
+}
+
+html[data-scrolleado] .cabecera-fila {
+  padding-block: 0.4rem;
+}
+
+html[data-scrolleado] .cabecera-marca {
+  font-size: 1.25rem;
+}
+
+html[data-scrolleado] .cabecera-bajada,
+html[data-scrolleado] .cabecera-datos {
+  display: none;
+}
+
+/* Un encogimiento animado es decoración: quien pidió menos movimiento lo
+   recibe igual de compacto, pero de una. */
+@media (prefers-reduced-motion: reduce) {
+  .cabecera-fila,
+  .cabecera-marca {
+    transition: none;
+  }
+}
+
+/* El ancla de una sección no puede quedar tapada por la cabecera fija. Son los
+   112px de la cabecera compacta más aire; `scroll-padding-top` lo resuelve para
+   todo el documento, incluido el salto que hace el navegador al volver atrás. */
+html {
+  scroll-padding-top: 7.5rem;
+}
