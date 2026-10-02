@@ -79,9 +79,7 @@ export function Header({ temperatura = null }: Props) {
       <header className="cabecera sticky top-0 z-30 border-b border-block-border bg-header-bg text-header-text">
         <CompactarCabecera />
 
-        {/* `relative` para el panel del buscador, que se despliega posicionado
-            contra esta caja en lugar de empujar la nav hacia abajo. */}
-        <div className="cabecera-fila contenedor relative flex items-center justify-between gap-4 py-3 md:gap-8 md:py-4">
+        <div className="cabecera-fila contenedor flex items-center justify-between gap-4 py-3 md:gap-8 md:py-4">
           <Link href="/" className="marca cabecera-marca min-w-0 text-[1.7rem] md:text-[2.3rem]">
             Periódico <span className="text-block-accent">Delfos</span>
             <span className="cabecera-bajada mt-[0.3rem] block text-[0.6rem] font-medium uppercase tracking-[0.14em] text-block-accent [font-variation-settings:'wdth'_100] md:mt-[0.55rem] md:text-[0.72rem]">

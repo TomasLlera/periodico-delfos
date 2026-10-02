@@ -60,7 +60,7 @@ export function BuscadorHeader() {
   }, [])
 
   return (
-    <details ref={caja} className="group">
+    <details ref={caja} className="group relative">
       <summary
         className="tactil flex w-11 cursor-pointer items-center justify-center rounded-sm border border-header-text/20 bg-header-text/10 text-header-text transition-colors marker:content-none hover:border-block-accent hover:text-block-accent [&::-webkit-details-marker]:hidden"
         aria-label="Buscar"
@@ -69,14 +69,28 @@ export function BuscadorHeader() {
         <X size={18} aria-hidden="true" className="hidden group-open:block" />
       </summary>
 
-      {/* `absolute` contra la cabecera y no en el flujo: empujar la nav hacia
-          abajo al abrir mueve la página entera debajo del dedo. El panel cruza
-          el ancho completo, pero el formulario se alinea a la derecha en
-          escritorio, debajo de la lupa que lo abrió. */}
-      <div className="absolute inset-x-0 top-full z-20 border-b border-block-border bg-header-bg px-[clamp(1rem,4vw,2rem)] pb-3 pt-1">
-        <div className="md:ml-auto md:max-w-[34rem]">
-          <Formulario refCampo={campo} />
-        </div>
+      {/* **Se abre hacia la izquierda, encima de la fecha y el clima.**
+          `right-full` apoya el campo contra el borde izquierdo de la lupa, que
+          queda libre —ahí está la X para cerrarlo— y `top-0` lo alinea con
+          ella: las dos cosas miden 44px, así que el campo entra en la fila sin
+          moverla.
+
+          Tapar el clima es la decisión, no un efecto colateral: es el dato más
+          prescindible de la cabecera, y es lo que evita las dos alternativas
+          peores. Un panel en el flujo empuja la fila y mueve la marca de lugar
+          mientras se escribe; uno que baja a todo el ancho obliga a mirar abajo
+          cuando el cursor está arriba.
+
+          `absolute` y no en el flujo, además, porque la cabecera es fija: un
+          panel que la agranda al abrirse le cambia el alto a algo que está
+          pegado arriba de todo.
+
+          El ancho se corta contra el viewport y no sólo en rem: en 375px un
+          campo de 26rem se saldría de la pantalla por la izquierda y la mitad
+          quedaría fuera de alcance. Las 9rem que se restan son lo que ocupan la
+          lupa, el toggle de tema y el aire entre ellos. */}
+      <div className="absolute top-0 right-full z-20 mr-2 w-[min(26rem,calc(100vw-9rem))]">
+        <Formulario refCampo={campo} />
       </div>
     </details>
   )
