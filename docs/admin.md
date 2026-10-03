@@ -27,6 +27,7 @@ se creó y quedó una hora sin ningún link que llevara ahí.
 | `/admin/posteos` | Qué pasó con los posteos, y reintentar | 18 |
 | `/admin/perfil` | La firma, la bio y los handles de quien entró | pedido |
 | `/admin/autores` · `/nuevo` | Las cuentas del panel y su rol. **Sólo editores** | pedido |
+| `/admin/sponsors` · `/nuevo` · `/[id]` | La publicidad propia, con vigencia. **Sólo editores** | pedido |
 
 **El link de `Autores` sólo lo ve un editor**, y la pantalla rebota a `/admin`
 al que no lo sea. La puerta de verdad está en la base: `gestion_de_autores` y el
@@ -120,6 +121,16 @@ mitad sólo el panel.
   cliente de `supabase/admin.ts` bypassea RLS y es para procesos sin usuario
   —Inngest, los scripts—. Si una pantalla del admin lo necesitara, está mal
   pensada: lo que falta es una política.
+- **La publicidad la carga un editor y nadie más.** Vender un espacio no es una
+  tarea de redacción. Un sponsor no se borra cuando termina la campaña: se le
+  pone fecha de fin o se destilda «Al aire», y así queda el registro de lo que
+  se publicó. El aviso sale siempre rotulado como **Publicidad**, y eso no se
+  puede apagar desde el panel.
+- **La publicidad la carga un editor y nadie más.** Vender un espacio no es una
+  tarea de redacción. Un sponsor no se borra cuando termina la campaña: se le
+  pone fecha de fin o se destilda «Al aire», y así queda el registro de lo que
+  se publicó. El aviso sale siempre rotulado como **Publicidad**, y eso no se
+  puede apagar desde el panel.
 - **Cada autor edita sólo sus notas; un editor edita todas.** Es el rol de
   `autores.rol` (`0014_roles_de_autor.sql`). Lo sostiene RLS, pero el listado
   del panel filtra además por `autor_id`: la política que deja leer lo publicado

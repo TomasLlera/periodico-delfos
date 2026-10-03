@@ -12,11 +12,13 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { ArticuloNota } from '@/components/content/ArticuloNota'
+import { HuecoSponsors } from '@/components/layout/HuecoSponsors'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { etiquetaCategoria } from '@/lib/formato'
 import { jsonLdNota, openGraphBase, urlDeNota } from '@/lib/seo'
 import { getNotaPorSlug, getNotasRelacionadas, getSlugsNotas } from '@/lib/supabase/queries/notas'
+import { getSponsors } from '@/lib/supabase/queries/sponsors'
 import { getPartidosPorIds } from '@/lib/supabase/queries/partidos'
 import { haySupabase } from '@/lib/supabase/server'
 import { mapaDePartidos } from '@/lib/tiptap/render'
@@ -108,9 +110,10 @@ export default async function PaginaNota({
   const idsDelCuerpo = partidoIdsDelCuerpo(nota.cuerpo)
   const ids = [...new Set([...idsDelCuerpo, ...(nota.partido_id ? [nota.partido_id] : [])])]
 
-  const [partidos, relacionadas] = await Promise.all([
+  const [partidos, relacionadas, sponsors] = await Promise.all([
     getPartidosPorIds(ids),
     getNotasRelacionadas(nota),
+    getSponsors(),
   ])
 
   const porId = mapaDePartidos(partidos)
@@ -119,13 +122,29 @@ export default async function PaginaNota({
     <>
       <Header />
 
-      <main>
+      {/* LA COLUMNA DE SPONSORS NO TOCA LA MEDIDA DE LECTURA, y por eso la
+          grilla recién aparece en `xl`: la nota conserva su contenedor de
+          1200px y sus 68ch, y la columna de 300px usa el aire que sobra a los
+          costados en una pantalla grande. Achicar el texto para hacerle lugar a
+          un aviso sería romper la regla no negociable 3 para cobrar.
+
+          Abajo de `xl` no se esconde: cae debajo de la nota, que es donde mejor
+          rinde en celular —el lector ya terminó— y es la mitad del tráfico de
+          un medio así. Un aviso que no se ve en el teléfono no se puede vender. */}
+      <main className="mx-auto grid max-w-[1200px] gap-8 xl:max-w-[1560px] xl:grid-cols-[minmax(0,1fr)_300px]">
         <ArticuloNota
           nota={nota}
           url={urlDeNota(nota.slug, SITE_URL)}
           partidos={porId}
           partidoDeLaNota={nota.partido_id ? (porId.get(nota.partido_id) ?? null) : null}
           relacionadas={relacionadas}
+        />
+
+        <HuecoSponsors
+          sponsors={sponsors}
+          ubicacion="nota_lateral"
+          apilado
+          className="px-4 pb-10 xl:pt-12"
         />
       </main>
 

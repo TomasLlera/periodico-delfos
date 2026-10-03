@@ -23,10 +23,18 @@ interface Props {
   ubicacion: UbicacionSponsor
   /** El de arriba de la portada entra en la primera pantalla. */
   prioridad?: boolean
+  /** En la columna de las notas van uno abajo del otro, nunca en fila. */
+  apilado?: boolean
   className?: string
 }
 
-export function HuecoSponsors({ sponsors, ubicacion, prioridad, className = '' }: Props) {
+export function HuecoSponsors({
+  sponsors,
+  ubicacion,
+  prioridad,
+  apilado = false,
+  className = '',
+}: Props) {
   const elegidos = sponsorsDeHueco(sponsors, ubicacion)
   if (elegidos.length === 0) return null
 
@@ -34,7 +42,11 @@ export function HuecoSponsors({ sponsors, ubicacion, prioridad, className = '' }
   // cuando se venden dos chicos en lugar de uno grande, y no hay por qué
   // obligar a elegir.
   return (
-    <div className={`flex flex-col gap-4 sm:flex-row sm:items-start ${className}`.trimEnd()}>
+    <div
+      className={`flex flex-col gap-4 ${
+        apilado ? '' : 'sm:flex-row sm:items-start'
+      } ${className}`.trim()}
+    >
       {elegidos.map((sponsor) => (
         <EspacioSponsor
           key={sponsor.id}

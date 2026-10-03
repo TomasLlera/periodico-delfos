@@ -29,7 +29,24 @@ interface Props {
   className?: string
 }
 
+/**
+ * La medida que se le pide al anunciante para cada hueco, y que sirve para
+ * reservar el espacio antes de que la imagen cargue.
+ *
+ * No la define la imagen sino el hueco, a proposito: si el anunciante manda una
+ * pieza con otra proporcion igual se dibuja sin deformarse —el alto es `auto`—
+ * pero el lugar que se reserva es el de la medida pedida, que es la que esta en
+ * el mail que se les manda.
+ */
+const MEDIDA: Record<Sponsor['ubicacion'], { ancho: number; alto: number }> = {
+  portada_arriba: { ancho: 728, alto: 90 },
+  portada_entre_notas: { ancho: 728, alto: 90 },
+  nota_lateral: { ancho: 300, alto: 250 },
+}
+
 export function EspacioSponsor({ sponsor, prioridad = false, className = '' }: Props) {
+  const medida = MEDIDA[sponsor.ubicacion]
+
   const imagen = (
     // Un `<img>` y no `<ImagenResponsive>`: ese componente arma un `srcset` con
     // el transformador de Supabase para fotos de nota, y un banner es una
@@ -37,8 +54,8 @@ export function EspacioSponsor({ sponsor, prioridad = false, className = '' }: P
     <img
       src={sponsor.imagen_url}
       alt={sponsor.alt}
-      width={728}
-      height={90}
+      width={medida.ancho}
+      height={medida.alto}
       loading={prioridad ? 'eager' : 'lazy'}
       className="h-auto w-full max-w-full"
     />
