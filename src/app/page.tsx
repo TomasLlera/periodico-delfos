@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
+import { HuecoSponsors } from '@/components/layout/HuecoSponsors'
 import { BloqueArchivo } from '@/components/portada/BloqueArchivo'
 import { Goleadoras } from '@/components/portada/Goleadoras'
 import { GrillaNotas } from '@/components/portada/GrillaNotas'
@@ -10,6 +11,7 @@ import { TarjetaPlantel } from '@/components/portada/TarjetaPlantel'
 import { UltimoResultado } from '@/components/portada/UltimoResultado'
 import { getTemperatura } from '@/lib/clima'
 import { getEstadoDelSitio } from '@/lib/supabase/queries/estado'
+import { getSponsors } from '@/lib/supabase/queries/sponsors'
 import { getNotaPrincipal, getUltimasNotas } from '@/lib/supabase/queries/notas'
 import { getEventosDePartido } from '@/lib/supabase/queries/partidos'
 import { haySupabase } from '@/lib/supabase/server'
@@ -100,10 +102,11 @@ export default async function Portada() {
   // Las tres lecturas son independientes: el clima no espera a la base, y lo
   // deportivo no espera a las notas. `getEstadoDelSitio()` está memoizada, así
   // que ésta es la misma lectura que ya hizo el layout para la barra.
-  const [{ tapa, cronicas, analisis }, temperatura, deportivo] = await Promise.all([
+  const [{ tapa, cronicas, analisis }, temperatura, deportivo, sponsors] = await Promise.all([
     leerContenido(),
     getTemperatura(),
     getEstadoDelSitio(),
+    getSponsors(),
   ])
 
   // Los goles van aparte y después, porque dependen de qué partido salió: el
@@ -159,6 +162,11 @@ export default async function Portada() {
           Periódico Delfos, fútbol femenino de Aldosivi desde Mar del Plata
         </h1>
 
+        {/* El hueco de arriba, el que pidió Charlie "en la cabecera, encima de las
+            secciones". Va adentro del `<main>` y no en el chrome: el chrome lo
+            comparten todas las páginas del sitio y esto es de la portada. */}
+        <HuecoSponsors sponsors={sponsors} ubicacion="portada_arriba" prioridad className="mt-6" />
+
         {tapa ? (
           <NotaTapa nota={tapa} />
         ) : (
@@ -190,6 +198,10 @@ export default async function Portada() {
           }
         />
 
+
+        {/* El segundo hueco: entre las crónicas y los análisis, que es donde
+            Charlie los quiso "mechados entre las filas de notas". */}
+        <HuecoSponsors sponsors={sponsors} ubicacion="portada_entre_notas" className="mt-bloque" />
 
         {/* Con análisis, el plantel y las goleadoras son la columna angosta de
             la derecha. Sin análisis no pueden quedarse en esa grilla: la

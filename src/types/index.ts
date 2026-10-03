@@ -81,6 +81,27 @@ export interface Equipo {
  */
 export type RolDeAutor = 'editor' | 'redactor'
 
+/** Dónde puede ir un sponsor. Cada valor tiene un componente que lo dibuja. */
+export type UbicacionSponsor = 'portada_arriba' | 'portada_entre_notas' | 'nota_lateral'
+
+/** Publicidad propia. La vigencia la decide `desde`/`hasta`, no un borrado. */
+export interface Sponsor {
+  id: string
+  nombre: string
+  imagen_url: string
+  alt: string
+  link: string | null
+  ubicacion: UbicacionSponsor
+  /** `YYYY-MM-DD`. */
+  desde: string
+  /** `YYYY-MM-DD`, inclusive. Null: sin fecha de fin. */
+  hasta: string | null
+  orden: number
+  activo: boolean
+  created_at: string
+  updated_at: string
+}
+
 export interface Autor {
   id: string
   nombre: string
