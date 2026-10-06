@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  chequearFechaDeArchivo,
   chequearProgramacion,
   chequearPublicacion,
+  decidirPorFecha,
   cuerpoVacio,
   documentoVacio,
   entradaDesdeNota,
@@ -229,5 +231,64 @@ describe('chequearProgramacion', () => {
   it('pide una fecha cuando no hay ninguna', () => {
     expect(chequearProgramacion(null, ahora).puede).toBe(false)
     expect(chequearProgramacion('cualquier cosa', ahora).puede).toBe(false)
+  })
+})
+
+describe('chequearFechaDeArchivo', () => {
+  const ahora = new Date('2026-10-06T12:00:00Z')
+
+  it('acepta una fecha pasada, que es para lo que existe', () => {
+    expect(chequearFechaDeArchivo('2023-05-14T18:00:00Z', ahora).puede).toBe(true)
+  })
+
+  it('rechaza el futuro y manda a programar', () => {
+    const r = chequearFechaDeArchivo('2026-10-07T12:00:00Z', ahora)
+    expect(r.puede).toBe(false)
+    expect(r.motivo).toContain('programala')
+  })
+
+  it('rechaza un ano mal tipeado', () => {
+    const r = chequearFechaDeArchivo('1026-05-14T18:00:00Z', ahora)
+    expect(r.puede).toBe(false)
+    expect(r.motivo).toContain('vieja')
+  })
+
+  it('rechaza lo que no es una fecha y el vacio', () => {
+    expect(chequearFechaDeArchivo('cualquier cosa', ahora).puede).toBe(false)
+    expect(chequearFechaDeArchivo(null, ahora).puede).toBe(false)
+  })
+})
+
+describe('decidirPorFecha', () => {
+  const ahora = new Date('2026-10-06T12:00:00Z')
+
+  it('sin fecha, publica ahora', () => {
+    expect(decidirPorFecha(null, ahora)).toEqual({ modo: 'ahora' })
+    expect(decidirPorFecha('', ahora)).toEqual({ modo: 'ahora' })
+  })
+
+  it('con fecha futura, programa', () => {
+    expect(decidirPorFecha('2026-10-06T18:00:00Z', ahora)).toEqual({
+      modo: 'programar',
+      iso: '2026-10-06T18:00:00Z',
+    })
+  })
+
+  /** Es lo que le paso a Charlie: fecha vieja en el campo de programar. */
+  it('con fecha pasada, archiva en vez de rebotar', () => {
+    expect(decidirPorFecha('2023-05-14T18:00:00Z', ahora)).toEqual({
+      modo: 'archivo',
+      iso: '2023-05-14T18:00:00Z',
+    })
+  })
+
+  /** El margen de cinco minutos del cron sigue valiendo para el futuro. */
+  it('un futuro demasiado cerca no se puede programar', () => {
+    const r = decidirPorFecha('2026-10-06T12:02:00Z', ahora)
+    expect(r.modo).toBe('ninguno')
+  })
+
+  it('una fecha ilegible no decide nada', () => {
+    expect(decidirPorFecha('ayer', ahora).modo).toBe('ninguno')
   })
 })

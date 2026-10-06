@@ -285,3 +285,89 @@ export function chequearProgramacion(
 
   return { puede: true }
 }
+
+/**
+ * La fecha más vieja que se acepta para una nota de archivo.
+ *
+ * No es una regla del negocio sino un atajo contra el error de tipeo: un año
+ * escrito mal —0202, 1026— entra igual en un `datetime-local` y deja la nota en
+ * un rincón del archivo donde nadie la va a buscar nunca. El fútbol femenino de
+ * Aldosivi en AFA es de este siglo, así que cualquier cosa anterior al 2000 es
+ * un dedo que resbaló.
+ */
+export const ARRANQUE_DEL_ARCHIVO = '2000-01-01T00:00:00.000Z'
+
+export interface ChequeoFecha {
+  puede: boolean
+  motivo?: string
+}
+
+/**
+ * Si una nota puede publicarse **con una fecha anterior**.
+ *
+ * Es lo que hace posible subir el archivo: Aldosivi femenino compite en AFA
+ * desde hace años y hay decenas de fichas de partidos viejos para cargar. Sin
+ * esto, todas saldrían fechadas hoy y la portada quedaría mostrando un partido
+ * de 2023 como la noticia del día.
+ *
+ * **El futuro no entra acá**: para eso está programar, que es otro mecanismo
+ * —lo publica un cron— y tiene su propio chequeo. Dos caminos para lo mismo
+ * terminan contradiciéndose.
+ */
+export function chequearFechaDeArchivo(
+  publicadaEn: string | null,
+  ahora: Date = new Date(),
+): ChequeoFecha {
+  if (!publicadaEn) return { puede: false, motivo: 'Elegí con qué fecha tiene que salir.' }
+
+  const fecha = new Date(publicadaEn)
+  if (Number.isNaN(fecha.getTime())) return { puede: false, motivo: 'Esa fecha no se entiende.' }
+
+  if (fecha.getTime() > ahora.getTime()) {
+    return { puede: false, motivo: 'Esa fecha es futura. Para eso programala.' }
+  }
+
+  if (fecha.getTime() < new Date(ARRANQUE_DEL_ARCHIVO).getTime()) {
+    return { puede: false, motivo: 'Esa fecha es demasiado vieja: revisá el año.' }
+  }
+
+  return { puede: true }
+}
+
+/**
+ * Qué significa la fecha que alguien eligió en la vista previa.
+ *
+ * **Un solo campo decide las tres cosas**, y es la respuesta a lo que le pasó a
+ * Charlie: puso una fecha pasada en el campo de programar —que es lo natural si
+ * lo que querés es fechar una nota vieja— y el sistema le dijo que esa hora ya
+ * había pasado. Tenía razón él: la fecha es una sola, lo que cambia es qué
+ * hacer con ella.
+ *
+ * - Vacía: publicar ahora.
+ * - Futura: programar, y la publica el cron.
+ * - Pasada: publicar ya, pero fechada entonces. Es el archivo.
+ */
+export type DecisionDeFecha =
+  | { modo: 'ahora' }
+  | { modo: 'programar'; iso: string }
+  | { modo: 'archivo'; iso: string }
+  | { modo: 'ninguno'; motivo: string }
+
+export function decidirPorFecha(iso: string | null, ahora: Date = new Date()): DecisionDeFecha {
+  if (!iso) return { modo: 'ahora' }
+
+  const fecha = new Date(iso)
+  if (Number.isNaN(fecha.getTime())) return { modo: 'ninguno', motivo: 'Esa fecha no se entiende.' }
+
+  if (fecha.getTime() > ahora.getTime()) {
+    const chequeo = chequearProgramacion(iso, ahora)
+    return chequeo.puede
+      ? { modo: 'programar', iso }
+      : { modo: 'ninguno', motivo: chequeo.motivo ?? 'No se puede programar para esa hora.' }
+  }
+
+  const chequeo = chequearFechaDeArchivo(iso, ahora)
+  return chequeo.puede
+    ? { modo: 'archivo', iso }
+    : { modo: 'ninguno', motivo: chequeo.motivo ?? 'No se puede usar esa fecha.' }
+}

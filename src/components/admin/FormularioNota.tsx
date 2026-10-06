@@ -208,7 +208,11 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
     })
   }
 
-  function alPublicar() {
+  /**
+   * Publicar. Con `publicadaEn` es una nota de archivo: sale ya, pero fechada
+   * entonces y sin postearse a las redes. Ver `publicarNota()`.
+   */
+  function alPublicar(publicadaEn: string | null = null) {
     empezar(async () => {
       const lista = await conImagenSubida()
       if (!lista) {
@@ -216,7 +220,7 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
         return
       }
 
-      const r = await publicarNota(lista, nota?.id ?? null)
+      const r = await publicarNota(lista, nota?.id ?? null, publicadaEn)
       if (r.error) {
         setPrevia(false)
         setAviso([r.error, ...(r.motivos ?? [])].join(' · '))
@@ -307,7 +311,8 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
           })}
           sobrePublicada={esSobrePublicada(nota)}
           onVolver={() => setPrevia(false)}
-          onPublicar={alPublicar}
+          onPublicar={() => alPublicar()}
+          onArchivar={(publicadaEn) => alPublicar(publicadaEn)}
           onProgramar={alProgramar}
           publicando={guardando}
         />
