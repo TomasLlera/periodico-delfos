@@ -334,6 +334,30 @@ export type Database = {
           },
         ]
       }
+      paginas: {
+        Row: {
+          cuerpo: Json
+          descripcion: string
+          slug: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          cuerpo: Json
+          descripcion: string
+          slug: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          cuerpo?: Json
+          descripcion?: string
+          slug?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partidos: {
         Row: {
           arbitra: string | null
