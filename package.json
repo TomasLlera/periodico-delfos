@@ -21,6 +21,7 @@
     "@tiptap/pm": "^3.29.2",
     "@tiptap/react": "^3.29.2",
     "@tiptap/starter-kit": "^3.29.2",
+    "@vercel/analytics": "^2.0.1",
     "date-fns": "^4.4.0",
     "inngest": "^4.16.0",
     "lucide-react": "^1.29.0",

@@ -40,18 +40,19 @@ const SECCIONES = [
    * desde el pie de todas las páginas del sitio**, que es peor que un pie con
    * una sección más corta.
    *
-   * **Privacidad sigue faltando**, por la misma regla. Ya están el responsable
-   * de datos y el mail, pero la política tiene que decir la verdad sobre
-   * cookies, y eso depende de si se prenden la analítica y la publicidad, que
-   * todavía no se prendieron. Entra cuando esté escrita y no antes: **una
-   * política de privacidad inventada es un documento legal falso.** Está
-   * contado en `docs/encargos/accesibilidad-y-pie.md`.
+   * **Privacidad entró el mismo día**, y describe lo que el sitio hace hoy: sin
+   * cookies, sin analítica y sin publicidad. No se escribió antes porque faltaba
+   * el responsable de los datos, y una política de privacidad inventada es un
+   * documento legal falso. El día que se prenda la analítica o entre la
+   * publicidad, esa página se actualiza **antes**. Está contado en
+   * `docs/encargos/accesibilidad-y-pie.md`.
    */
   {
     titulo: 'El medio',
     links: [
       { href: '/quienes-somos', label: 'Quiénes somos' },
       { href: '/contacto', label: 'Contacto' },
+      { href: '/privacidad', label: 'Privacidad' },
     ],
   },
 ] as const
