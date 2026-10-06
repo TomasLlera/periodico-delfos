@@ -28,6 +28,7 @@ se creó y quedó una hora sin ningún link que llevara ahí.
 | `/admin/perfil` | La firma, la bio y los handles de quien entró | pedido |
 | `/admin/autores` · `/nuevo` | Las cuentas del panel y su rol. **Sólo editores** | pedido |
 | `/admin/sponsors` · `/nuevo` · `/[id]` | La publicidad propia, con vigencia. **Sólo editores** | pedido |
+| `/admin/paginas` · `/[slug]` | El texto de las páginas fijas. **Sólo editores** | pedido |
 
 **El link de `Autores` sólo lo ve un editor**, y la pantalla rebota a `/admin`
 al que no lo sea. La puerta de verdad está en la base: `gestion_de_autores` y el
@@ -121,6 +122,11 @@ mitad sólo el panel.
   cliente de `supabase/admin.ts` bypassea RLS y es para procesos sin usuario
   —Inngest, los scripts—. Si una pantalla del admin lo necesitara, está mal
   pensada: lo que falta es una política.
+- **Las páginas fijas se editan, no se crean.** Cada fila de `paginas`
+  corresponde a una ruta que ya existe en `src/app/`: una fila nueva desde el
+  panel dejaría un texto que nadie puede ver. El cuerpo se guarda como documento
+  de TipTap, igual que el de una nota, para reusar el mismo editor y el mismo
+  renderer.
 - **La publicidad la carga un editor y nadie más.** Vender un espacio no es una
   tarea de redacción. Un sponsor no se borra cuando termina la campaña: se le
   pone fecha de fin o se destilda «Al aire», y así queda el registro de lo que

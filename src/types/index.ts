@@ -81,6 +81,22 @@ export interface Equipo {
  */
 export type RolDeAutor = 'editor' | 'redactor'
 
+/**
+ * El texto de una página fija, editable desde el panel.
+ *
+ * El `slug` corresponde a una ruta que ya existe en `src/app/`: esta tabla
+ * guarda lo que dicen las páginas, no qué páginas hay.
+ */
+export interface Pagina {
+  slug: string
+  titulo: string
+  /** La `<meta description>` y el texto de la tarjeta al compartir. */
+  descripcion: string
+  /** Documento de TipTap, como `notas.cuerpo`. */
+  cuerpo: DocumentoTipTap
+  updated_at: string
+}
+
 /** Dónde puede ir un sponsor. Cada valor tiene un componente que lo dibuja. */
 export type UbicacionSponsor = 'portada_arriba' | 'portada_entre_notas' | 'nota_lateral'
 

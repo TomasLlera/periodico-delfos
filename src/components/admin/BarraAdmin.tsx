@@ -40,6 +40,7 @@ export function BarraAdmin({ autor }: { autor: Autor }) {
               rebota. La puerta de verdad está en la página y en RLS. */}
           {autor.rol === 'editor' && <Seccion href="/admin/autores">Autores</Seccion>}
           {autor.rol === 'editor' && <Seccion href="/admin/sponsors">Sponsors</Seccion>}
+          {autor.rol === 'editor' && <Seccion href="/admin/paginas">Páginas</Seccion>}
         </nav>
 
         {/* El nombre lleva al perfil: es donde se edita la firma y la bio, y

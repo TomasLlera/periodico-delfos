@@ -4,71 +4,76 @@ import { Header } from '@/components/layout/Header'
 import { CabeceraBloque } from '@/components/portada/CabeceraBloque'
 import { openGraphBase } from '@/lib/seo'
 import { urlDelSitio } from '@/lib/sitio'
+import { getPagina } from '@/lib/supabase/queries/paginas'
+import { CuerpoTipTap } from '@/lib/tiptap/render'
 
 /**
- * Quiénes somos. Step 10 del Build Order.
+ * Quiénes somos.
  *
- * **Todo lo que dice acá sale de lo que ya está escrito en el proyecto** —el
- * README, `CLAUDE.md` y el blueprint— y nada está inventado: el medio, la
- * ciudad, el equipo que cubre y que lo escribe una sola persona. Lo que
- * corresponde y falta es lo que sólo puede escribir el autor: desde cuándo
- * existe el medio, por qué lo empezó y su biografía. Está anotado en
- * `HANDOFF.md`; mientras tanto la página dice lo cierto y no rellena.
+ * **El texto ya no vive en este archivo: lo escribe Charlie desde el panel.**
+ * Hasta el 06/10/2026 estaba acá adentro, así que corregir una coma era un
+ * commit, un PR y un deploy. Ahora sale de la tabla `paginas` y se edita en
+ * `/admin/paginas/quienes-somos`.
+ *
+ * **Se dibuja con el mismo renderer que el cuerpo de una nota** (`CuerpoTipTap`),
+ * porque se guarda con el mismo formato. Nada de un segundo camino para la misma
+ * clase de contenido: lo que se ve acá es lo que se ve en una crónica.
+ *
+ * **El respaldo no es decorativo.** Entre que se despliega este código y se
+ * aplica la migración hay una ventana donde la tabla no existe, y esta página
+ * está linkeada desde el pie de todo el sitio: no puede quedar en blanco ni
+ * tirar un 500. En esa ventana se muestra lo mínimo cierto, que es quién es el
+ * medio, y nada más.
+ *
+ * `revalidate` de 60 segundos como el resto del sitio, más el `revalidatePath`
+ * que hace el action al guardar: un cambio se ve enseguida y no cada minuto.
  */
+export const revalidate = 60
+
+const SLUG = 'quienes-somos'
 const SITE_URL = urlDelSitio()
 
-const DESCRIPCION =
-  'Periódico Delfos cubre el fútbol femenino de Aldosivi desde Mar del Plata. Lo escribe Charlie Redondo.'
-
-export const metadata: Metadata = {
-  title: 'Quiénes somos',
-  description: DESCRIPCION,
-  alternates: { canonical: `${SITE_URL}/quienes-somos` },
-  openGraph: {
-    ...openGraphBase({ titulo: 'Quiénes somos', descripcion: DESCRIPCION }, SITE_URL),
-    type: 'website',
-  },
+/** Lo que se muestra si la tabla todavía no está. Ver el comentario de arriba. */
+const RESPALDO = {
+  titulo: 'Quiénes somos',
+  descripcion:
+    'Periódico Delfos cubre el fútbol femenino de Aldosivi desde Mar del Plata. Lo escribe Charlie Redondo.',
 }
 
-export default function QuienesSomos() {
+export async function generateMetadata(): Promise<Metadata> {
+  const pagina = await getPagina(SLUG)
+  const titulo = pagina?.titulo ?? RESPALDO.titulo
+  const descripcion = pagina?.descripcion ?? RESPALDO.descripcion
+
+  return {
+    title: titulo,
+    description: descripcion,
+    alternates: { canonical: `${SITE_URL}/${SLUG}` },
+    openGraph: { ...openGraphBase({ titulo, descripcion }, SITE_URL), type: 'website' },
+  }
+}
+
+export default async function QuienesSomos() {
+  const pagina = await getPagina(SLUG)
+
   return (
     <>
       <Header />
 
       <main className="mx-auto max-w-[1200px] px-4 py-10">
-        <CabeceraBloque id="quienes-somos" titulo="Quiénes somos" nivel={1} />
+        <CabeceraBloque
+          id={SLUG}
+          titulo={pagina?.titulo ?? RESPALDO.titulo}
+          nivel={1}
+        />
 
-        <div className="prose-nota">
-          <p>
-            <strong>Periódico Delfos</strong> es un medio digital de Mar del
-            Plata dedicado al fútbol femenino de Aldosivi. Cubre a las Tiburonas
-            fecha a fecha: la crónica de cada partido, los análisis del torneo y
-            las estadísticas de la temporada.
-          </p>
-
-          <h2>Cómo se trabaja acá</h2>
-
-          <p>
-            Lo escribe una sola persona, <strong>Charlie Redondo</strong>. Eso
-            define el tamaño de lo que se publica y también su ritmo: no hay
-            cobertura minuto a minuto ni contenido de relleno entre fechas.
-          </p>
-
-          <p>
-            Los datos del partido —goles, formaciones, tarjetas, minutos— no se
-            escriben a mano adentro del texto de las notas. Se cargan una sola
-            vez en una planilla y de ahí salen la ficha del partido, las
-            estadísticas de cada jugadora y la tabla de goleadoras. Es lo que
-            permite que una nota de hace dos temporadas siga teniendo los datos
-            bien puestos, y que las cifras no se contradigan entre notas.
-          </p>
-
-          <p>
-            Cada foto publicada lleva su texto alternativo y su crédito. El
-            cuerpo de las notas se compone a una medida de lectura fija, pensada
-            para leer ochocientas palabras en un teléfono sin cansarse.
-          </p>
-        </div>
+        {pagina ? (
+          <CuerpoTipTap cuerpo={pagina.cuerpo} />
+        ) : (
+          <div className="prose-nota">
+            <p>{RESPALDO.descripcion}</p>
+          </div>
+        )}
       </main>
 
       <Footer />
