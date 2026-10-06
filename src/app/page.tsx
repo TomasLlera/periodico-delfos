@@ -135,6 +135,16 @@ export default async function Portada() {
     />
   )
 
+  // La tabla va en la columna angosta, con el plantel y las goleadoras: es un
+  // bloque de portada y no una pantalla de consulta. El detalle esta a un click.
+  const tabla = deportivo.temporada && (
+    <TablaDeLaPortada
+      temporada={deportivo.temporada}
+      filas={deportivo.tabla}
+      fecha={deportivo.fechaDeLaTabla}
+    />
+  )
+
   const goleadoras = deportivo.temporada && (
     <Goleadoras
       id="goleadoras"
@@ -224,25 +234,17 @@ export default async function Portada() {
             <div>
               {plantel}
               {goleadoras}
+              {tabla}
             </div>
           </div>
         ) : (
           <div className="mt-bloque grid items-start gap-bloque *:mt-0 lg:grid-cols-2">
             {plantel}
             {goleadoras}
+            {tabla}
           </div>
         )}
 
-        {/* La tabla, abajo de todo y antes del archivo: es lo que Charlie pidio
-            para la portada. Va despues de las notas porque esto es un diario,
-            no una pagina de estadisticas — primero lo que se escribio hoy. */}
-        {deportivo.temporada && (
-          <TablaDeLaPortada
-            temporada={deportivo.temporada}
-            filas={deportivo.tabla}
-            fecha={deportivo.fechaDeLaTabla}
-          />
-        )}
         <BloqueArchivo />
       </main>
 
