@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { HuecoSponsors } from '@/components/layout/HuecoSponsors'
+import { TablaDeLaPortada } from '@/components/portada/TablaDeLaPortada'
 import { BloqueArchivo } from '@/components/portada/BloqueArchivo'
 import { Goleadoras } from '@/components/portada/Goleadoras'
 import { GrillaNotas } from '@/components/portada/GrillaNotas'
@@ -232,6 +233,16 @@ export default async function Portada() {
           </div>
         )}
 
+        {/* La tabla, abajo de todo y antes del archivo: es lo que Charlie pidio
+            para la portada. Va despues de las notas porque esto es un diario,
+            no una pagina de estadisticas — primero lo que se escribio hoy. */}
+        {deportivo.temporada && (
+          <TablaDeLaPortada
+            temporada={deportivo.temporada}
+            filas={deportivo.tabla}
+            fecha={deportivo.fechaDeLaTabla}
+          />
+        )}
         <BloqueArchivo />
       </main>
 
