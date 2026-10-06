@@ -82,7 +82,7 @@ export function Header({ temperatura = null }: Props) {
           <Link href="/" className="marca cabecera-marca min-w-0 text-[1.7rem] md:text-[2.3rem]">
             Periódico <span className="text-block-accent">Delfos</span>
             <span className="cabecera-bajada mt-[0.3rem] block text-[0.6rem] font-medium uppercase tracking-[0.14em] text-block-accent [font-variation-settings:'wdth'_100] md:mt-[0.55rem] md:text-[0.72rem]">
-              La voz de las Tiburonas
+              El diario de las Tiburonas
             </span>
           </Link>
 
