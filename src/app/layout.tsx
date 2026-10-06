@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Archivo, Source_Serif_4, IBM_Plex_Mono } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 import { Analitica } from '@/components/layout/Analitica'
 import { BarraEstado } from '@/components/layout/BarraEstado'
 import { ProveedorTema } from '@/components/layout/ProveedorTema'
@@ -126,9 +127,22 @@ export default async function RootLayout({
           {modal}
         </ProveedorTema>
 
-        {/* Fuera de `<ProveedorTema>` y al final del body: no participa del
-            render del sitio, se carga despues de que la pagina respondio. */}
+        {/* Fuera de `<ProveedorTema>` y al final del body: no participan del
+            render del sitio, se cargan despues de que la pagina respondio. */}
         <Analitica />
+
+        {/* El medidor de visitas de Vercel, que es el que se eligio **porque no
+            usa cookies**: cuenta visitas sin identificadores persistentes y sin
+            seguir a nadie entre sitios, asi que no hace falta cartel de
+            consentimiento. Google Analytics quedo descartado por lo contrario.
+
+            Solo mide en produccion y solo si esta prendido en el panel de
+            Vercel: en local y en los previews no manda nada, que es lo que evita
+            que las pruebas del equipo ensucien las metricas del medio.
+
+            Lo declara la politica de privacidad, en `/privacidad`. Si alguna vez
+            se saca de aca, hay que sacarlo de alla el mismo dia. */}
+        <Analytics />
       </body>
     </html>
   )

@@ -20,15 +20,18 @@ import { MAIL_DEL_MEDIO, urlDelSitio } from '@/lib/sitio'
  *   no recibe ni una cookie. Si ese matcher cambia, esta página miente.
  * - **La preferencia de tema** la guarda `next-themes` en `localStorage` con la
  *   clave `tema`. No es una cookie y no viaja en ningún pedido.
- * - **Analítica: apagada.** `<Analitica />` no inyecta nada sin
- *   `NEXT_PUBLIC_GA_ID`, y la variable no está cargada.
+ * - **Analítica: Vercel Web Analytics, sin cookies.** Google Analytics sigue
+ *   apagado —`<Analitica />` no inyecta nada sin `NEXT_PUBLIC_GA_ID`, y la
+ *   variable no está cargada— y se descartó por lo contrario: deja cookies.
  * - **Publicidad: no hay.** Ni AdSense ni sponsors.
  * - **YouTube** sólo aparece si una nota tiene un video, y va al dominio
  *   `youtube-nocookie.com`, diferido.
  *
- * **El día que se prenda la analítica o entre la publicidad, esta página se
- * actualiza primero.** Las dos dejan cookies de terceros y son justo lo que una
- * política tiene que declarar antes de que pase, no después.
+ * **El medidor de Vercel entró el 06/10/2026, y esta página lo declaró en el
+ * mismo commit.** Ése es el orden que importa y el que hay que repetir: una
+ * política que declara lo que todavía no existe es tan falsa como una que
+ * esconde lo que ya está andando. Si mañana entra AdSense —que sí deja cookies
+ * de terceros— se actualiza acá antes de prenderlo.
  *
  * No es asesoramiento legal: es la descripción honesta de lo que el sitio hace,
  * para que el responsable la revise y la firme.
@@ -42,6 +45,19 @@ const DESCRIPCION =
 const ACTUALIZADA = '2 de octubre de 2026'
 
 const RESPONSABLE = 'Carlos Rogelio Redondo'
+
+/**
+ * El CUIT del responsable, que lo pasó él el 06/10/2026.
+ *
+ * **Su domicilio particular no se publica, y es una decisión.** Lo mandó junto
+ * con el nombre y el CUIT, pero una política de privacidad queda indexada para
+ * siempre y la leen los robots que juntan datos: un domicilio personal
+ * publicado no se puede despublicar, porque para cuando alguien se arrepiente
+ * ya está copiado en otro lado. Nombre, CUIT y un mail de contacto identifican
+ * al responsable igual de bien. Si él quiere que figure, que sea una decisión
+ * suya y no un efecto de habernos mandado los tres datos juntos.
+ */
+const CUIT = '20-38006487-2'
 
 export const metadata: Metadata = {
   title: 'Política de privacidad',
@@ -74,8 +90,9 @@ export default function Privacidad() {
 
           <p>
             El responsable del sitio y de los datos es <strong>{RESPONSABLE}</strong>,
-            editor de Periódico Delfos, en Mar del Plata, provincia de Buenos
-            Aires. Para cualquier cosa relacionada con esta política:{' '}
+            CUIT <span className="dato">{CUIT}</span>, editor de Periódico
+            Delfos, en Mar del Plata, provincia de Buenos Aires. Para cualquier
+            cosa relacionada con esta política:{' '}
             <a href={`mailto:${MAIL_DEL_MEDIO}`}>{MAIL_DEL_MEDIO}</a>.
           </p>
 
@@ -91,7 +108,8 @@ export default function Privacidad() {
 
           <p>
             <strong>El sitio público no usa cookies.</strong> Ni propias ni de
-            terceros, ni de medición ni de publicidad.
+            terceros. La medición de visitas que sí hacemos funciona sin ellas:
+            está explicada más abajo.
           </p>
 
           <p>
@@ -129,15 +147,28 @@ export default function Privacidad() {
           <h2>Medición de visitas y publicidad</h2>
 
           <p>
-            <strong>Hoy no hay ninguna de las dos.</strong> El sitio no mide a
-            sus lectores con Google Analytics ni con ninguna otra herramienta, y
-            no muestra publicidad.
+            <strong>Sí medimos cuántas visitas tiene el sitio, y lo hacemos sin
+            cookies.</strong> Usamos Vercel Web Analytics, que cuenta páginas
+            vistas, de dónde llegó cada visita y de qué país, sin guardar nada en
+            tu navegador y sin seguirte a otros sitios. No hay perfil, no hay
+            identificador y no se puede reconstruir quién sos a partir de eso.
           </p>
 
           <p>
-            Si eso cambia, <strong>esta página se actualiza antes</strong> de que
-            empiece a funcionar, y va a decir qué servicio es, qué cookies deja y
-            cómo rechazarlas.
+            Elegimos ese servicio en lugar de Google Analytics justamente por
+            eso: el de Google deja cookies y sigue a la misma persona entre
+            sitios distintos, y para contar visitas de un diario chico no hace
+            falta.
+          </p>
+
+          <p>
+            <strong>Publicidad todavía no hay.</strong> Cuando la haya, va a ser
+            de comercios que contratan el espacio directo con el medio: una
+            imagen, un link y una fecha, sin cookies ni seguimiento. Si alguna
+            vez entrara una red de publicidad que sí las use,{' '}
+            <strong>esta página se actualiza antes</strong> de que empiece a
+            funcionar, y va a decir qué servicio es, qué cookies deja y cómo
+            rechazarlas.
           </p>
 
           <h2>Derechos</h2>
