@@ -1,4 +1,5 @@
 import Script from 'next/script'
+import { Analytics } from '@vercel/analytics/next'
 
 /**
  * Google Analytics 4, si hay una medición cargada.
@@ -19,26 +20,40 @@ import Script from 'next/script'
  * no se escribió justamente porque dependía, entre otras cosas, de si el sitio
  * iba a usar analítica—. Cargar la variable sin publicar esa página deja al
  * medio midiendo gente sin decirlo en ningún lado.
+ *
+ * **Vercel Web Analytics**: Incluye `<Analytics />` de `@vercel/analytics/next`
+ * que captura métricas de rendimiento y navegación. A diferencia de GA, esta
+ * analítica de Vercel no usa cookies y es compatible con privacidad. Se carga
+ * automáticamente en producción cuando está habilitada en el dashboard de Vercel.
  */
 export function Analitica() {
   // `process.env.X` va escrito literal: Next reemplaza la expresión entera al
   // compilar y no se puede leer con una variable de por medio. Y se descarta el
   // string vacío, que es lo que deja un `.env.example` importado en Vercel.
   const medicion = process.env.NEXT_PUBLIC_GA_ID?.trim()
-  if (!medicion) return null
 
   return (
     <>
-      <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${medicion}`}
-        strategy="afterInteractive"
-      />
-      <Script id="ga-init" strategy="afterInteractive">
-        {`window.dataLayer = window.dataLayer || [];
+      {/* Vercel Web Analytics - no requiere configuración de variables de
+          entorno, se activa automáticamente cuando está habilitada en el
+          dashboard de Vercel */}
+      <Analytics />
+
+      {/* Google Analytics 4 - sólo si hay ID de medición configurado */}
+      {medicion && (
+        <>
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${medicion}`}
+            strategy="afterInteractive"
+          />
+          <Script id="ga-init" strategy="afterInteractive">
+            {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', '${medicion}');`}
-      </Script>
+          </Script>
+        </>
+      )}
     </>
   )
 }
