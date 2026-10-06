@@ -29,6 +29,16 @@ export interface EstadoDelSitio {
   ultimo: PartidoConEquipos | null
   proximo: PartidoConEquipos | null
   posicion: FilaTablaConEquipo | null
+  /**
+   * La tabla entera de la última fecha cargada, para el bloque de la portada.
+   *
+   * **No cuesta una consulta más**: ya se leía entera para sacar de ahí la fila
+   * de Aldosivi que muestra la barra de arriba. Lo que antes se tiraba, ahora se
+   * devuelve.
+   */
+  tabla: FilaTablaConEquipo[]
+  /** A qué fecha corresponde `tabla`. `null` si no hay ninguna cargada. */
+  fechaDeLaTabla: number | null
   /** El fixture entero: la franja de la portada se queda con una ventana. */
   fixture: PartidoConEquipos[]
   goleadoras: Goleadora[]
@@ -39,6 +49,8 @@ const VACIO: EstadoDelSitio = {
   ultimo: null,
   proximo: null,
   posicion: null,
+  tabla: [],
+  fechaDeLaTabla: null,
   fixture: [],
   goleadoras: [],
 }
@@ -102,6 +114,8 @@ async function leerEstadoDelSitio(): Promise<EstadoDelSitio> {
       ultimo,
       proximo,
       posicion: filaDeAldosivi(tabla),
+      tabla,
+      fechaDeLaTabla: tabla[0]?.fecha_numero ?? null,
       fixture,
       goleadoras: goleadoras.data ?? [],
     }
