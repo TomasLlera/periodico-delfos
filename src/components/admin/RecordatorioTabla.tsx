@@ -36,11 +36,15 @@ export function RecordatorioTabla({ temporadaId, fechas }: Props) {
     <Aviso tono="atencion">
       <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <ListOrdered size={16} aria-hidden="true" className="shrink-0" />
+        {/* Una línea. Antes explicaba además por qué la tabla no se actualiza
+            sola —que el resultado de un partido no mueve a los otros equipos—,
+            y eso se entiende una vez: después es un párrafo que hay que saltear
+            cada vez que se entra al listado. El botón de al lado dice qué
+            hacer, que es lo único que falta saber. */}
         <span>
-          {varias ? 'Las fechas' : 'La fecha'} <strong>{fechas.join(', ')}</strong>{' '}
-          {varias ? 'ya se jugaron' : 'ya se jugó'} y la tabla de posiciones todavía no{' '}
-          {varias ? 'las tiene' : 'la tiene'}. La tabla se carga a mano: el resultado del
-          partido no mueve a los otros equipos.
+          Falta cargar la tabla de {varias ? 'las fechas' : 'la fecha'}{' '}
+          <strong>{fechas.join(', ')}</strong>, que ya se{' '}
+          {varias ? 'jugaron' : 'jugó'}.
         </span>
 
         {/* Un link por fecha, cada uno ya apuntado a la suya: llegar a la
