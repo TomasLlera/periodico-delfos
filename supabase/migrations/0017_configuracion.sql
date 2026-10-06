@@ -1,4 +1,4 @@
--- 0015_configuracion.sql — los ajustes que se cargan desde el panel.
+-- 0017_configuracion.sql — los ajustes que se cargan desde el panel.
 --
 -- Pedido de Charlie: el id de Google Analytics como un casillero del panel y no
 -- como una variable de entorno. Hoy anda con `NEXT_PUBLIC_GA_ID`, que para
