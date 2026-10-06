@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowLeft, CalendarClock, Eye, Send } from 'lucide-react'
+import { Archive, ArrowLeft, CalendarClock, Eye, Send } from 'lucide-react'
 import { ArticuloNota } from '@/components/content/ArticuloNota'
 import { ANCHO_VIEWPORT, SelectorViewport, type Viewport } from '@/components/admin/SelectorViewport'
 import { localAIso } from '@/lib/entidades/campos'
-import { chequearProgramacion } from '@/lib/nota'
+import { decidirPorFecha } from '@/lib/nota'
 import type { NotaConRelaciones } from '@/types'
 
 /**
@@ -45,6 +45,8 @@ interface Props {
   publicando: boolean
   /** Programar para más tarde. La hora llega en ISO. */
   onProgramar: (publicarEn: string) => void
+  /** Publicar ya, pero fechada entonces: el archivo. La fecha llega en ISO. */
+  onArchivar: (publicadaEn: string) => void
 }
 
 export function VistaPrevia({
@@ -54,13 +56,21 @@ export function VistaPrevia({
   onPublicar,
   publicando,
   onProgramar,
+  onArchivar,
 }: Props) {
   const [viewport, setViewport] = useState<Viewport>('escritorio')
   const [cuando, setCuando] = useState('')
 
   // La hora del formulario viene en hora de Argentina y la base guarda UTC.
   const enIso = localAIso(cuando)
-  const chequeo = chequearProgramacion(enIso)
+
+  // **Un solo campo decide las tres cosas**, y es la respuesta a lo que le pasó
+  // a Charlie: puso una fecha vieja acá —que es lo natural si lo que querés es
+  // fechar una nota de archivo— y el sistema le contestó que esa hora ya había
+  // pasado. Tenía razón él: la fecha es una sola, lo que cambia es qué hacer
+  // con ella. Quién decide es `decidirPorFecha()`, que tiene sus tests.
+  const decision = decidirPorFecha(enIso)
+  const esArchivo = decision.modo === 'archivo'
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-bg">
@@ -100,12 +110,12 @@ export function VistaPrevia({
           </button>
         </div>
 
-        {/* Programar va acá abajo y no al lado del botón grande: es la acción
+        {/* La fecha va acá abajo y no al lado del botón grande: es la acción
             rara. Lo normal es publicar ahora, y una fila entera de controles
             compitiendo con el botón principal hace dudar en el caso común. */}
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <label htmlFor="publicar-en" className="meta text-text-muted">
-            O programala para
+            O con otra fecha
           </label>
           <input
             id="publicar-en"
@@ -115,21 +125,40 @@ export function VistaPrevia({
             disabled={publicando}
             className="tactil border border-border-control bg-bg px-2 font-display text-[0.85rem]"
           />
+          {/* El botón dice lo que va a pasar y no lo que es: con una fecha
+              pasada "Programar" sería mentira, y con una futura "Publicar"
+              también. */}
           <button
             type="button"
-            onClick={() => enIso && onProgramar(enIso)}
-            disabled={publicando || !chequeo.puede}
+            onClick={() => {
+              if (decision.modo === 'programar') onProgramar(decision.iso)
+              if (decision.modo === 'archivo') onArchivar(decision.iso)
+            }}
+            disabled={publicando || (decision.modo !== 'programar' && decision.modo !== 'archivo')}
             className="tactil flex items-center gap-2 border border-border-control px-4 font-display text-[0.9rem] font-bold hover:bg-bg disabled:opacity-50"
           >
-            <CalendarClock size={16} aria-hidden="true" />
-            Programar
+            {esArchivo ? (
+              <Archive size={16} aria-hidden="true" />
+            ) : (
+              <CalendarClock size={16} aria-hidden="true" />
+            )}
+            {esArchivo ? 'Publicar con esa fecha' : 'Programar'}
           </button>
 
           {/* El motivo sólo cuando ya escribieron algo: con el campo vacío
               diría «elegí cuándo» antes de que nadie haya intentado nada. */}
-          {cuando !== '' && chequeo.motivo && (
+          {cuando !== '' && decision.modo === 'ninguno' && (
             <p role="status" className="w-full text-right text-[0.85rem] text-danger">
-              {chequeo.motivo}
+              {decision.motivo}
+            </p>
+          )}
+
+          {/* Lo que más importa decir del archivo: que no sale a las redes. Si
+              alguien sube treinta fichas viejas, treinta posteos anunciando
+              partidos de hace tres años no se pueden deshacer. */}
+          {esArchivo && (
+            <p role="status" className="w-full text-right text-[0.85rem] text-text-muted">
+              Va al archivo con esa fecha, y no se postea a las redes.
             </p>
           )}
         </div>

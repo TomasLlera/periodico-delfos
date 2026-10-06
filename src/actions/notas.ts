@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { inngest, notaPublicada } from '@/lib/inngest/client'
 import {
+  chequearFechaDeArchivo,
   chequearProgramacion,
   chequearPublicacion,
   esquemaNota,
@@ -164,8 +165,19 @@ async function dispararPosteo(
  * `publicada_en` lo pone el servidor y no el formulario: es la fecha que va a
  * ver el lector y la que ordena la portada, y no puede depender del reloj de la
  * máquina de quien publica.
+ *
+ * **Salvo que se la pidan explícitamente, y ése es el archivo.** Aldosivi
+ * femenino compite en AFA desde hace años y hay decenas de fichas viejas para
+ * cargar: sin poder fecharlas entonces, todas saldrían con la fecha de hoy y la
+ * portada mostraría un partido de 2023 como la noticia del día. La fecha que
+ * llega se vuelve a validar acá —no puede ser futura ni anterior al 2000— porque
+ * esto es una ruta HTTP.
  */
-export async function publicarNota(datos: unknown, id: string | null): Promise<ResultadoNota> {
+export async function publicarNota(
+  datos: unknown,
+  id: string | null,
+  publicadaEn: string | null = null,
+): Promise<ResultadoNota> {
   const autor = await getAutorDeLaSesion()
   if (!autor) return { error: 'Se cerró la sesión. Entrá de nuevo.' }
 
@@ -181,11 +193,19 @@ export async function publicarNota(datos: unknown, id: string | null): Promise<R
     return { error: 'La nota todavía no se puede publicar', motivos: chequeo.motivos }
   }
 
+  // La fecha de archivo se valida de nuevo del lado del servidor: el chequeo
+  // del formulario es comodidad, no una garantía.
+  const esArchivo = publicadaEn !== null
+  if (esArchivo) {
+    const chequeo = chequearFechaDeArchivo(publicadaEn)
+    if (!chequeo.puede) return { error: chequeo.motivo ?? 'Esa fecha no se puede usar.' }
+  }
+
   const supabase = await createClient()
   const fila = {
     ...filaDesde(parseo.data),
     estado: 'publicada' as const,
-    publicada_en: new Date().toISOString(),
+    publicada_en: esArchivo ? new Date(publicadaEn).toISOString() : new Date().toISOString(),
   }
 
   const { data, error } = id
@@ -204,7 +224,12 @@ export async function publicarNota(datos: unknown, id: string | null): Promise<R
 
   revalidarRutasPublicas(data.slug)
 
-  await dispararPosteo(data.id, data.slug, parseo.data)
+  // **Una nota de archivo no se postea a las redes.** Es lo más importante de
+  // todo esto: subir treinta fichas viejas dispararía treinta posteos a
+  // Instagram y X anunciando partidos de hace tres años como si fueran de hoy,
+  // y eso no se puede deshacer. El auto-posteo existe para lo que acaba de
+  // pasar, no para lo que se está archivando.
+  if (!esArchivo) await dispararPosteo(data.id, data.slug, parseo.data)
 
   return { id: data.id, slug: data.slug }
 }
