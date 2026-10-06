@@ -39,6 +39,7 @@ export function BarraAdmin({ autor }: { autor: Autor }) {
               cambiar un rol, así que el link lo llevaría a una pantalla que lo
               rebota. La puerta de verdad está en la página y en RLS. */}
           {autor.rol === 'editor' && <Seccion href="/admin/autores">Autores</Seccion>}
+          {autor.rol === 'editor' && <Seccion href="/admin/sponsors">Sponsors</Seccion>}
         </nav>
 
         {/* El nombre lleva al perfil: es donde se edita la firma y la bio, y
