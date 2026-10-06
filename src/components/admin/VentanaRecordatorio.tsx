@@ -62,9 +62,13 @@ export function VentanaRecordatorio({ temporadaId, fecha, onCerrar }: Props) {
             Recordá modificar la tabla de posiciones.
           </h2>
 
+          {/* Lo que pasó y lo que falta, sin la explicación de por qué la tabla
+              no se mueve sola: eso se entiende la primera vez y después es un
+              párrafo para saltear con el partido recién cargado y las ganas de
+              cerrar la ventana. */}
           <p className="text-[0.9rem]">
-            El resultado ya quedó cargado y se actualizaron las goleadoras y el fixture. La
-            tabla de posiciones se carga a mano: el partido no mueve a los otros equipos.
+            El resultado quedó cargado, y las goleadoras y el fixture ya se
+            actualizaron solos. Falta la tabla.
           </p>
 
           <div className="flex flex-col gap-2 sm:flex-row">

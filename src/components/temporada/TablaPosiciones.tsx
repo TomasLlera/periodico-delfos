@@ -50,9 +50,12 @@ export function TablaPosiciones({ filas, fecha, temporada }: Props) {
     >
       <table className="w-full min-w-[520px] border-collapse text-left">
         <caption className="mb-4 max-w-medida text-left font-display text-[0.85rem] leading-snug text-text-muted">
+          {/* Sólo a qué fecha corresponde la tabla, que es el dato que el lector
+              no puede deducir mirándola. Decía además cómo se carga —"a mano,
+              fecha por fecha"— y eso es cómo trabaja la redacción, no
+              información para quien viene a ver la tabla. */}
           {temporada}
-          {fecha !== null ? ` · actualizada a la fecha ${fecha}` : ''}. Se carga
-          a mano, fecha por fecha: puede ir una fecha atrás de lo jugado.
+          {fecha !== null ? ` · actualizada a la fecha ${fecha}` : ''}.
         </caption>
 
         <thead>
@@ -165,12 +168,11 @@ function Celda({
 function SinTabla({ temporada }: { temporada: string }) {
   return (
     <div className="max-w-medida border-l-4 border-accent bg-bg-muted py-6 pl-5">
+      {/* Una línea y nada más. La explicación que había debajo —cómo se carga la
+          tabla y por qué no sale sola de los partidos del sitio— le hablaba al
+          que la carga, no al que vino a verla. */}
       <p className="font-body text-[1.05rem] leading-relaxed text-text-soft">
-        Todavía no se cargó ninguna fecha de la tabla de {temporada}.
-      </p>
-      <p className="mt-3 font-body text-text-muted">
-Se carga a mano, fecha por fecha: Delfos sigue a Aldosivi y no a toda la
-        zona, así que la tabla no sale sola de los partidos que hay acá.
+        Todavía no hay tabla cargada para {temporada}.
       </p>
     </div>
   )
