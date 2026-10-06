@@ -22,6 +22,7 @@ export type Database = {
           id: string
           instagram: string | null
           nombre: string
+          rol: Database["public"]["Enums"]["rol_autor"]
           slug: string
           x_handle: string | null
         }
@@ -32,6 +33,7 @@ export type Database = {
           id: string
           instagram?: string | null
           nombre: string
+          rol?: Database["public"]["Enums"]["rol_autor"]
           slug: string
           x_handle?: string | null
         }
@@ -42,6 +44,7 @@ export type Database = {
           id?: string
           instagram?: string | null
           nombre?: string
+          rol?: Database["public"]["Enums"]["rol_autor"]
           slug?: string
           x_handle?: string | null
         }
@@ -254,6 +257,7 @@ export type Database = {
           imagen_portada: string | null
           partido_id: string | null
           publicada_en: string | null
+          publicar_en: string | null
           redes: string[]
           slug: string
           temporada_id: string | null
@@ -276,6 +280,7 @@ export type Database = {
           imagen_portada?: string | null
           partido_id?: string | null
           publicada_en?: string | null
+          publicar_en?: string | null
           redes?: string[]
           slug: string
           temporada_id?: string | null
@@ -298,6 +303,7 @@ export type Database = {
           imagen_portada?: string | null
           partido_id?: string | null
           publicada_en?: string | null
+          publicar_en?: string | null
           redes?: string[]
           slug?: string
           temporada_id?: string | null
@@ -490,6 +496,51 @@ export type Database = {
           },
         ]
       }
+      sponsors: {
+        Row: {
+          activo: boolean
+          alt: string
+          created_at: string
+          desde: string
+          hasta: string | null
+          id: string
+          imagen_url: string
+          link: string | null
+          nombre: string
+          orden: number
+          ubicacion: Database["public"]["Enums"]["ubicacion_sponsor"]
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          alt: string
+          created_at?: string
+          desde?: string
+          hasta?: string | null
+          id?: string
+          imagen_url: string
+          link?: string | null
+          nombre: string
+          orden?: number
+          ubicacion: Database["public"]["Enums"]["ubicacion_sponsor"]
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          alt?: string
+          created_at?: string
+          desde?: string
+          hasta?: string | null
+          id?: string
+          imagen_url?: string
+          link?: string | null
+          nombre?: string
+          orden?: number
+          ubicacion?: Database["public"]["Enums"]["ubicacion_sponsor"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tabla_posiciones: {
         Row: {
           empatados: number
@@ -655,6 +706,8 @@ export type Database = {
         }[]
       }
       es_autor: { Args: never; Returns: boolean }
+      es_editor: { Args: never; Returns: boolean }
+      firma_de_la_sesion: { Args: never; Returns: string }
     }
     Enums: {
       categoria_t:
@@ -663,7 +716,7 @@ export type Database = {
         | "temporada"
         | "plantel"
         | "institucional"
-      estado_nota_t: "borrador" | "publicada" | "archivada"
+      estado_nota_t: "borrador" | "publicada" | "archivada" | "programada"
       estado_partido_t:
         | "programado"
         | "en_curso"
@@ -677,6 +730,7 @@ export type Database = {
         | "delantera"
         | "dt"
         | "ayudante"
+      rol_autor: "editor" | "redactor"
       social_platform: "facebook" | "instagram" | "x"
       social_status: "pending" | "processing" | "success" | "failed"
       tipo_evento_t:
@@ -689,6 +743,10 @@ export type Database = {
         | "doble_amarilla"
         | "cambio"
         | "lesion"
+      ubicacion_sponsor:
+        | "portada_arriba"
+        | "portada_entre_notas"
+        | "nota_lateral"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -823,7 +881,7 @@ export const Constants = {
         "plantel",
         "institucional",
       ],
-      estado_nota_t: ["borrador", "publicada", "archivada"],
+      estado_nota_t: ["borrador", "publicada", "archivada", "programada"],
       estado_partido_t: [
         "programado",
         "en_curso",
@@ -839,6 +897,7 @@ export const Constants = {
         "dt",
         "ayudante",
       ],
+      rol_autor: ["editor", "redactor"],
       social_platform: ["facebook", "instagram", "x"],
       social_status: ["pending", "processing", "success", "failed"],
       tipo_evento_t: [
@@ -851,6 +910,11 @@ export const Constants = {
         "doble_amarilla",
         "cambio",
         "lesion",
+      ],
+      ubicacion_sponsor: [
+        "portada_arriba",
+        "portada_entre_notas",
+        "nota_lateral",
       ],
     },
   },
