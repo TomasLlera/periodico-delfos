@@ -262,8 +262,14 @@ export async function getNotasDePartido(
  * No es un agujero: RLS deja leer borradores sólo a `es_autor()`. La misma
  * llamada hecha por un anónimo devuelve únicamente las publicadas.
  *
- * Ordena por `updated_at` y no por `publicada_en`: en el panel lo que importa
- * es qué tocaste último, y un borrador nunca tiene fecha de publicación.
+ * **Ordena por `publicada_en` y no por `updated_at`.** Ordenaba por lo último
+ * tocado, que sonaba bien hasta que se vio el efecto: corregir una coma en una
+ * nota de mayo la mandaba al tope del listado, encima de las de esta semana.
+ * El orden de un diario es cronológico aunque sea el de adentro.
+ *
+ * Los borradores van primero —`nullsFirst`— porque no tienen fecha de
+ * publicación todavía y son lo que está esperando que alguien lo termine.
+ * Entre ellos, el más nuevo arriba.
  */
 export async function getNotasDelAdmin(): Promise<NotaResumen[]> {
   const supabase = await createClient()
@@ -272,7 +278,8 @@ export async function getNotasDelAdmin(): Promise<NotaResumen[]> {
   let consulta = supabase
     .from('notas')
     .select(CAMPOS_RESUMEN)
-    .order('updated_at', { ascending: false })
+    .order('publicada_en', { ascending: false, nullsFirst: true })
+    .order('created_at', { ascending: false })
 
   // **El filtro de un redactor se hace acá y no lo hace RLS, y es a propósito.**
   // Desde la 0014 un redactor sólo edita lo suyo, pero la política que deja

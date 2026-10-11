@@ -1,6 +1,7 @@
 'use client'
 
 import { Casilla } from '@/components/admin/Casilla'
+import { isoALocal, localAIso } from '@/lib/entidades/campos'
 import { etiquetaDePartido } from '@/lib/partido'
 import type { EntradaNota } from '@/lib/nota'
 import type { PartidoConEquipos, Temporada } from '@/types'
@@ -105,6 +106,31 @@ export function CamposClasificacion({ entrada, temporadas, partidos, onCambio }:
           {partidos.length === 0
             ? 'Todavía no hay partidos cargados. Se crean en Partidos → Partido nuevo.'
             : 'Al elegirlo, la nota muestra el marcador y la planilla, y se enlaza con las otras notas de ese partido.'}
+        </p>
+      </div>
+
+      {/* LA FECHA DE PUBLICACION, que es la fuente de verdad.
+
+          Estaba solo adentro de la vista previa, al lado de un boton chico, y
+          el boton grande de Publicar la ignoraba: elegir una fecha y apretar
+          Publicar guardaba la de hoy. Aca es un campo mas del formulario, se
+          prellena con la que la nota ya tiene y vuelve igual si nadie la toca.
+
+          Vacia en una nota nueva: la toma al publicarse. */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="publicada_en" className="meta text-text-muted">
+          Fecha de publicación
+        </label>
+        <input
+          id="publicada_en"
+          type="datetime-local"
+          value={entrada.publicada_en ? isoALocal(entrada.publicada_en) : ''}
+          onChange={(e) => onCambio('publicada_en', localAIso(e.target.value))}
+          className="tactil w-full max-w-[16rem] border border-border-control bg-bg-elevated px-3 py-2 font-display text-[0.95rem] outline-none focus-visible:border-accent-text"
+        />
+        <p className="text-[0.8rem] text-text-muted">
+          En hora de Mar del Plata. Vacía, toma la del momento en que se publique.
+          Una nota vieja fechada hace más de un día no se postea a las redes.
         </p>
       </div>
 
