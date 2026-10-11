@@ -45,7 +45,7 @@ export async function getNotaPorSlug(slug: string): Promise<NotaConRelaciones | 
 
 /** La nota principal de la portada: la destacada más reciente. */
 export async function getNotaPrincipal(): Promise<NotaResumen | null> {
-  const supabase = await createClient()
+  const supabase = createStaticClient()
   const { data } = await supabase
     .from('notas')
     .select(CAMPOS_RESUMEN)
@@ -73,7 +73,7 @@ export async function getUltimasNotas(opciones: {
   offset?: number
 } = {}): Promise<NotaResumen[]> {
   const { limite = 4, excluirIds = [], categoria, temporadaId, offset = 0 } = opciones
-  const supabase = await createClient()
+  const supabase = createStaticClient()
 
   let query = supabase
     .from('notas')
