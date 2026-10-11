@@ -30,6 +30,33 @@ export type Dimension = 'day' | 'requestPath' | 'referrerHostname' | 'deviceType
 
 const BASE = 'https://api.vercel.com/v1/query/web-analytics/visits/aggregate'
 
+/**
+ * Lo que no cuenta como lectura: el panel y las paginas de prueba.
+ *
+ * **Sin esto, casi la mitad de lo medido es Charlie trabajando.** Medido de
+ * verdad el 11/10/2026 sobre los ultimos 30 dias: `/admin` 11 vistas,
+ * `/admin/login` 4, `/admin/autores` 4, `/admin/posteos` 4 — contra 17 de la
+ * portada. Un numero de audiencia que incluye al que escribe no sirve para
+ * decidir nada.
+ *
+ * El filtro va en sintaxis OData y la API lo aplica de su lado, asi que los
+ * totales, la serie diaria y los tops hablan todos del mismo universo. Filtrar
+ * despues, al dibujar, habria arreglado las listas y dejado los totales
+ * mintiendo.
+ *
+ * `startswith` y el `and` de dos `not` estan probados contra la API: la
+ * documentacion sola no alcanzaba —solo muestra `eq`— asi que se verificaron
+ * comparando las filas con y sin filtro antes de escribir esto.
+ */
+export const SIN_PANEL =
+  "not startswith(requestPath, '/admin') and not startswith(requestPath, '/demo')"
+
+/** Solo las notas: es lo que responde "que noticia se leyo mas". */
+export const SOLO_NOTAS = "startswith(requestPath, '/nota/')"
+
+/** El resto del sitio sin las notas: portada, secciones, fichas. */
+export const SIN_NOTAS = `${SIN_PANEL} and not startswith(requestPath, '/nota/')`
+
 /** Quince minutos. Ver el comentario de arriba. */
 const CACHE_SEGUNDOS = 15 * 60
 
@@ -67,6 +94,7 @@ export async function consultarVisitas(
   por: Dimension,
   rango: Rango,
   limite?: number,
+  filtro: string = SIN_PANEL,
 ): Promise<RespuestaAnalytics> {
   const config = configuracion()
   if (!config) {
@@ -78,6 +106,7 @@ export async function consultarVisitas(
   const parametros = new URLSearchParams({ projectId: config.projectId, since, until, by: por })
   if (config.teamId) parametros.set('teamId', config.teamId)
   if (limite) parametros.set('limit', String(limite))
+  if (filtro) parametros.set('filter', filtro)
 
   try {
     const respuesta = await fetch(`${BASE}?${parametros}`, {

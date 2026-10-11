@@ -15,7 +15,12 @@ import {
 } from '@/lib/estadisticas'
 import { getAutorDeLaSesion } from '@/lib/supabase/queries/autores'
 import { getTitulosPorSlugs } from '@/lib/supabase/queries/notas'
-import { consultarVisitas, hayCredenciales } from '@/lib/vercel-analytics'
+import {
+  consultarVisitas,
+  hayCredenciales,
+  SIN_NOTAS,
+  SOLO_NOTAS,
+} from '@/lib/vercel-analytics'
 
 /**
  * Las visitas del sitio, desde la API de Web Analytics de Vercel.
@@ -65,15 +70,20 @@ export default async function Estadisticas({ searchParams }: Params) {
 
   // Las cinco en paralelo: cinco viajes a una API de terceros, uno tras otro,
   // serían la suma de las cinco esperas en vez de la más larga.
-  const [dias, paginas, referentes, dispositivos, paises] = await Promise.all([
+  const [dias, notas, secciones, referentes, dispositivos, paises] = await Promise.all([
     consultarVisitas('day', rango),
-    consultarVisitas('requestPath', rango, 10),
+    // Las notas aparte del resto, que es lo que Charlie pregunto: "que noticia
+    // se leyo mas". Mezcladas con la portada y las secciones, la portada gana
+    // siempre y la lista no contesta nada.
+    consultarVisitas('requestPath', rango, 10, SOLO_NOTAS),
+    consultarVisitas('requestPath', rango, 10, SIN_NOTAS),
     consultarVisitas('referrerHostname', rango, 10),
     consultarVisitas('deviceType', rango),
     consultarVisitas('country', rango, 10),
   ])
 
-  const error = [dias, paginas, referentes, dispositivos, paises].find((r) => r.error)?.error
+  const error = [dias, notas, secciones, referentes, dispositivos, paises].find((r) => r.error)
+    ?.error
 
   if (error) {
     return (
@@ -88,11 +98,11 @@ export default async function Estadisticas({ searchParams }: Params) {
 
   const serie = serieDiaria(dias.filas)
   const totales = totalesDelRango(serie)
-  const topPaginas = filasTop(paginas.filas, 'requestPath')
+  const topNotas = filasTop(notas.filas, 'requestPath')
 
   // El título de verdad en vez de la URL. Una sola consulta para las diez.
   const titulos = await getTitulosPorSlugs(
-    topPaginas.map((fila) => slugDeNota(fila.clave)).filter((slug): slug is string => slug !== null),
+    topNotas.map((fila) => slugDeNota(fila.clave)).filter((slug): slug is string => slug !== null),
   )
 
   if (totales.vistas === 0) {
@@ -110,7 +120,11 @@ export default async function Estadisticas({ searchParams }: Params) {
   return (
     <Pantalla rango={rango}>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Total numero={totales.vistas} etiqueta="Páginas vistas" />
+        <Total
+          numero={totales.vistas}
+          etiqueta="Páginas vistas"
+          nota="Sin contar el panel: lo que leyó gente, no vos trabajando."
+        />
         <Total
           numero={totales.visitantes}
           etiqueta="Visitantes"
@@ -122,13 +136,20 @@ export default async function Estadisticas({ searchParams }: Params) {
 
       <div className="grid gap-8 lg:grid-cols-2">
         <TopDeVisitas
-          titulo="Lo más leído"
-          filas={topPaginas}
+          titulo="Las notas más leídas"
+          filas={topNotas}
           etiqueta={(ruta) => {
             const slug = slugDeNota(ruta)
-            return (slug && titulos.get(slug)) || nombreDeRuta(ruta)
+            return (slug && titulos.get(slug)) ?? nombreDeRuta(ruta)
           }}
-          vacio="Sin páginas registradas todavía."
+          vacio="Todavía nadie abrió una nota en este rango."
+        />
+
+        <TopDeVisitas
+          titulo="Las secciones"
+          filas={filasTop(secciones.filas, 'requestPath')}
+          etiqueta={nombreDeRuta}
+          vacio="Sin visitas a las secciones."
         />
 
         <TopDeVisitas
