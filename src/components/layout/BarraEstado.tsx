@@ -57,7 +57,7 @@ export function BarraEstado({ temporada, ultimo, proximo, posicion }: Props) {
   if (piezas.length === 0 && !hayRedes) return null
 
   return (
-    <div className="border-b border-header-text/15 bg-header-bg text-header-text">
+    <div className="barra-estado border-b border-header-text/15 bg-header-bg text-header-text">
       <div className="contenedor flex items-center gap-4">
         {/* El `<aside>` envuelve sólo los datos deportivos, que es lo que su
             etiqueta nombra. Las redes quedan afuera a propósito: son del medio

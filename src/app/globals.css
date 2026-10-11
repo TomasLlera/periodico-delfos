@@ -658,3 +658,23 @@ html {
 .cabecera-fila:has(details[open]) .cabecera-datos {
   visibility: hidden;
 }
+
+/* ============================================================
+   La tira de resultados no entra en el panel, en celular
+
+   `<BarraEstado />` la dibuja el layout raíz para todas las rutas del sitio, y
+   el panel es una de ellas. En escritorio sobra el lugar y queda bien; en un
+   teléfono son 48px de resultados del campeonato arriba de una pantalla de
+   carga de datos, donde lo que hace falta es la tabla y no el marcador.
+
+   `:has()` es lo que permite decirlo desde acá: el layout del panel marca su
+   contenedor con `data-panel-admin` y el CSS apaga la tira de arriba, que es su
+   hermana y no su ancestro. La alternativa era leer la ruta en el layout raíz,
+   y eso vuelve dinámico el sitio entero para esconder una franja.
+   ============================================================ */
+
+@media (max-width: 1023px) {
+  body:has([data-panel-admin]) .barra-estado {
+    display: none;
+  }
+}

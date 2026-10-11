@@ -1,46 +1,57 @@
 import Link from 'next/link'
 import { ExternalLink, LogOut } from 'lucide-react'
 import { salir } from '@/actions/sesion'
+import { MenuAdmin } from '@/components/admin/MenuAdmin'
+import { seccionesDe } from '@/components/admin/secciones'
 import { ToggleTema } from '@/components/layout/ToggleTema'
 import type { Autor } from '@/types'
 
 /**
  * El chrome del panel: quién está adentro, la salida al sitio y el logout.
  *
- * Es un Server Component aunque esté en `/admin`. La regla de CLAUDE.md —todo
- * `/admin` es `"use client"`— apunta a las pantallas con estado y mutaciones
- * optimistas; esta barra no tiene estado, y el logout es un `<form>` con un
- * Server Action, que anda sin JavaScript. Hacerla cliente sería mandar al
- * bundle algo que no lo necesita.
+ * **Son dos barras y no una que se adapta.** De `lg` para arriba, la de
+ * siempre: los links en fila y las acciones a la derecha. Abajo de `lg`,
+ * `<MenuAdmin />`: una sola fila de 56px con la marca, la sección actual y el
+ * botón del menú, y todo lo demás adentro de un cajón.
+ *
+ * El motivo es de medidas. En un teléfono de 380px los nueve links hacían tres
+ * renglones y debajo se apilaban el nombre, el tema, "Ver el sitio" y "Salir":
+ * más de 200px de chrome antes de la primera fila de la tabla que se venía a
+ * mirar. Hacer que la misma barra "se achique" habría terminado en links de
+ * 11px o en un scroll horizontal; son dos formas distintas para dos anchos
+ * distintos.
+ *
+ * **Las dos leen la misma lista** (`secciones.ts`). Antes estaba escrita a mano
+ * adentro de este JSX, y dos listas de nueve links que hay que acordarse de
+ * tocar juntas son nueve chances de que una pantalla exista en escritorio y no
+ * en el teléfono.
+ *
+ * Sigue siendo un Server Component. La regla de CLAUDE.md —todo `/admin` es
+ * `"use client"`— apunta a las pantallas con estado y mutaciones; esta barra no
+ * tiene ninguno. El que sí es cliente es el cajón, porque abre, cierra y
+ * necesita saber en qué ruta está.
  */
 export function BarraAdmin({ autor }: { autor: Autor }) {
+  const secciones = seccionesDe(autor.rol)
+
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-block-bg text-block-text">
-      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+      <MenuAdmin secciones={secciones} nombre={autor.nombre} />
+
+      <div className="mx-auto hidden max-w-[1200px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 lg:flex">
         <Link href="/admin" className="marca text-[1.1rem]">
           Delfos
         </Link>
 
-        {/* Las secciones del panel. Se agregan acá y en `docs/admin.md`: una
-            pantalla a la que no se llega desde esta barra es una pantalla que
-            nadie va a encontrar. */}
+        {/* Las secciones del panel. Se agregan en `secciones.ts` y en
+            `docs/admin.md`: una pantalla a la que no se llega desde esta barra
+            es una pantalla que nadie va a encontrar. */}
         <nav aria-label="Secciones del panel" className="flex flex-wrap items-center gap-1">
-          <Seccion href="/admin">Notas</Seccion>
-          <Seccion href="/admin/partidos">Partidos</Seccion>
-          <Seccion href="/admin/jugadoras">Jugadoras</Seccion>
-          <Seccion href="/admin/equipos">Equipos</Seccion>
-          {/* El plantel y la tabla de posiciones no tienen link propio: cuelgan
-              de una temporada y se entra desde su listado, que es donde ya se
-              sabe de cuál. Seis links en la barra la parten en dos renglones
-              en un celular. */}
-          <Seccion href="/admin/temporadas">Temporadas</Seccion>
-          <Seccion href="/admin/posteos">Posteos</Seccion>
-          {/* Sólo para editores: un redactor no puede dar de alta una cuenta ni
-              cambiar un rol, así que el link lo llevaría a una pantalla que lo
-              rebota. La puerta de verdad está en la página y en RLS. */}
-          {autor.rol === 'editor' && <Seccion href="/admin/autores">Autores</Seccion>}
-          {autor.rol === 'editor' && <Seccion href="/admin/sponsors">Sponsors</Seccion>}
-          {autor.rol === 'editor' && <Seccion href="/admin/paginas">Páginas</Seccion>}
+          {secciones.map((seccion) => (
+            <Seccion key={seccion.href} href={seccion.href}>
+              {seccion.etiqueta}
+            </Seccion>
+          ))}
         </nav>
 
         {/* El nombre lleva al perfil: es donde se edita la firma y la bio, y
@@ -78,12 +89,12 @@ export function BarraAdmin({ autor }: { autor: Autor }) {
 }
 
 /**
- * Un link de la barra.
+ * Un link de la barra de escritorio.
  *
  * Sin `aria-current`: marcar el activo necesita la ruta actual, que en un
  * Server Component no está, y volver cliente toda la barra por un subrayado
- * sería pagar de más. `NavPrincipal` del sitio público sí lo hace, y por eso
- * es el único `"use client"` del chrome.
+ * sería pagar de más. En el cajón de celular sí se marca, porque ahí ya hay un
+ * componente cliente que conoce la ruta.
  */
 function Seccion({ href, children }: { href: string; children: React.ReactNode }) {
   return (
