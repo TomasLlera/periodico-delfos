@@ -28,6 +28,7 @@ export const SECCIONES: readonly SeccionAdmin[] = [
   // temporada y se entra desde su listado, que es donde ya se sabe de cuál.
   { href: '/admin/temporadas', etiqueta: 'Temporadas' },
   { href: '/admin/posteos', etiqueta: 'Posteos' },
+  { href: '/admin/estadisticas', etiqueta: 'Estadísticas' },
   { href: '/admin/autores', etiqueta: 'Autores', soloEditor: true },
   { href: '/admin/sponsors', etiqueta: 'Sponsors', soloEditor: true },
   { href: '/admin/paginas', etiqueta: 'Páginas', soloEditor: true },

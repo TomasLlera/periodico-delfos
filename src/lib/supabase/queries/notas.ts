@@ -356,3 +356,28 @@ export async function getNotaParaPostear(id: string): Promise<NotaConRelaciones 
 
   return data as unknown as NotaConRelaciones | null
 }
+
+/**
+ * El título de cada nota, por slug.
+ *
+ * Lo usa la pantalla de estadísticas para cambiar `/nota/tiburonas-6-1-claypole`
+ * por el titular de verdad: una lista de URLs largas no se lee, y el que la
+ * mira quiere saber qué nota anduvo bien.
+ *
+ * **Una sola consulta con `in`** y no una por fila: el top son diez rutas y diez
+ * viajes a la base para diez títulos es exactamente lo que el mapa de partidos
+ * del renderer ya evita en el cuerpo de las notas.
+ *
+ * Devuelve un `Map` y no un objeto: las claves son slugs que salen de una API
+ * externa, y un `Record` respondería a claves como `constructor` con algo que
+ * no es un título.
+ */
+export async function getTitulosPorSlugs(slugs: readonly string[]): Promise<Map<string, string>> {
+  if (slugs.length === 0) return new Map()
+
+  const supabase = await createClient()
+  const { data } = await supabase.from('notas').select('slug, titulo').in('slug', [...slugs])
+
+  const filas = (data ?? []) as { slug: string; titulo: string }[]
+  return new Map(filas.map((fila) => [fila.slug, fila.titulo]))
+}
