@@ -17,6 +17,7 @@ const AUTOR: Autor = {
 
 const ENTRADA: EntradaNota = {
   titulo: 'Tiburonas 2-1 Defensores',
+  publicada_en: null,
   slug: 'tiburonas-2-1-defensores',
   bajada: 'Ganó de local en la primera fecha.',
   cuerpo: { type: 'doc', content: [{ type: 'paragraph' }] },

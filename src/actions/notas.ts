@@ -6,8 +6,10 @@ import {
   chequearFechaDeArchivo,
   chequearProgramacion,
   chequearPublicacion,
+  esDeArchivo,
   esquemaNota,
   firmaDe,
+  mismaFecha,
   redesAPostear,
 } from '@/lib/nota'
 import { getAutorDeLaSesion } from '@/lib/supabase/queries/autores'
@@ -102,7 +104,18 @@ export async function guardarNota(datos: unknown, id: string | null): Promise<Re
   }
 
   const supabase = await createClient()
-  const fila = filaDesde(parseo.data)
+
+  // **La fecha va sólo si cambió**, y por eso se compara contra la guardada en
+  // vez de mandarla siempre. Mandarla igual funcionaria —seria el mismo valor—
+  // pero deja la puerta abierta a que un formulario mal prellenado la pise, que
+  // es exactamente el bug que esto arregla.
+  const fecha = id ? await fechaGuardada(supabase, id) : null
+  const cambioLaFecha = !mismaFecha(parseo.data.publicada_en, fecha)
+
+  const fila = {
+    ...filaDesde(parseo.data),
+    ...(cambioLaFecha ? { publicada_en: parseo.data.publicada_en } : {}),
+  }
 
   const { data, error } = id
     ? await supabase.from('notas').update(fila).eq('id', id).select('id, slug').single()
@@ -160,6 +173,21 @@ async function dispararPosteo(
 }
 
 /**
+ * La fecha que la nota ya tiene guardada, o `null`.
+ *
+ * Una consulta de una columna para no pisar lo que no cambió. Es barata y es
+ * la unica forma de saber, del lado del servidor, si lo que llega del
+ * formulario es una fecha nueva o la misma de siempre.
+ */
+async function fechaGuardada(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  id: string,
+): Promise<string | null> {
+  const { data } = await supabase.from('notas').select('publicada_en').eq('id', id).maybeSingle()
+  return (data as { publicada_en: string | null } | null)?.publicada_en ?? null
+}
+
+/**
  * Publica: guarda, sella la fecha y refresca el sitio.
  *
  * `publicada_en` lo pone el servidor y no el formulario: es la fecha que va a
@@ -193,19 +221,31 @@ export async function publicarNota(
     return { error: 'La nota todavía no se puede publicar', motivos: chequeo.motivos }
   }
 
-  // La fecha de archivo se valida de nuevo del lado del servidor: el chequeo
-  // del formulario es comodidad, no una garantía.
-  const esArchivo = publicadaEn !== null
-  if (esArchivo) {
-    const chequeo = chequearFechaDeArchivo(publicadaEn)
+  const supabase = await createClient()
+
+  // **QUIEN GANA, EN ORDEN.** Era una sola linea —`new Date()`— y ahi estaba el
+  // bug: editar una nota de mayo en octubre y apretar Publicar la refechaba a
+  // octubre, porque el servidor volvia a sellarla cada vez.
+  //
+  // 1. Lo que eligio quien escribe en el formulario.
+  // 2. Si no eligio nada, la fecha que la nota YA TENIA. Publicar de nuevo algo
+  //    publicado no es volver a publicarlo.
+  // 3. Y recien si no hay ninguna de las dos, ahora.
+  const guardada = id ? await fechaGuardada(supabase, id) : null
+  const elegida = parseo.data.publicada_en ?? publicadaEn
+  const sello = elegida ?? guardada ?? new Date().toISOString()
+
+  // Se valida del lado del servidor aunque el formulario ya lo haya hecho: esto
+  // es una ruta HTTP y se puede llamar sin pasar por la pantalla.
+  if (elegida !== null) {
+    const chequeo = chequearFechaDeArchivo(elegida)
     if (!chequeo.puede) return { error: chequeo.motivo ?? 'Esa fecha no se puede usar.' }
   }
 
-  const supabase = await createClient()
   const fila = {
     ...filaDesde(parseo.data),
     estado: 'publicada' as const,
-    publicada_en: esArchivo ? new Date(publicadaEn).toISOString() : new Date().toISOString(),
+    publicada_en: new Date(sello).toISOString(),
   }
 
   const { data, error } = id
@@ -229,7 +269,10 @@ export async function publicarNota(
   // Instagram y X anunciando partidos de hace tres años como si fueran de hoy,
   // y eso no se puede deshacer. El auto-posteo existe para lo que acaba de
   // pasar, no para lo que se está archivando.
-  if (!esArchivo) await dispararPosteo(data.id, data.slug, parseo.data)
+  // **Decide la fecha final, no como se llego a ella.** Una nota fechada hace
+  // tres anios no se anuncia en las redes aunque se publique hoy; una fechada
+  // hace diez minutos si.
+  if (!esDeArchivo(sello)) await dispararPosteo(data.id, data.slug, parseo.data)
 
   return { id: data.id, slug: data.slug }
 }

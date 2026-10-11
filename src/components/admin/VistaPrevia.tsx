@@ -164,8 +164,6 @@ export function VistaPrevia({
         </div>
       </div>
 
-      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions --
-          no es un control: es una jaula para los clicks de adentro. */}
       <div
         className="flex-1 overflow-y-auto"
         onClickCapture={(e) => {

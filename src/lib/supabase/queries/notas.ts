@@ -45,7 +45,7 @@ export async function getNotaPorSlug(slug: string): Promise<NotaConRelaciones | 
 
 /** La nota principal de la portada: la destacada más reciente. */
 export async function getNotaPrincipal(): Promise<NotaResumen | null> {
-  const supabase = await createClient()
+  const supabase = createStaticClient()
   const { data } = await supabase
     .from('notas')
     .select(CAMPOS_RESUMEN)
@@ -73,7 +73,7 @@ export async function getUltimasNotas(opciones: {
   offset?: number
 } = {}): Promise<NotaResumen[]> {
   const { limite = 4, excluirIds = [], categoria, temporadaId, offset = 0 } = opciones
-  const supabase = await createClient()
+  const supabase = createStaticClient()
 
   let query = supabase
     .from('notas')
@@ -262,8 +262,14 @@ export async function getNotasDePartido(
  * No es un agujero: RLS deja leer borradores sólo a `es_autor()`. La misma
  * llamada hecha por un anónimo devuelve únicamente las publicadas.
  *
- * Ordena por `updated_at` y no por `publicada_en`: en el panel lo que importa
- * es qué tocaste último, y un borrador nunca tiene fecha de publicación.
+ * **Ordena por `publicada_en` y no por `updated_at`.** Ordenaba por lo último
+ * tocado, que sonaba bien hasta que se vio el efecto: corregir una coma en una
+ * nota de mayo la mandaba al tope del listado, encima de las de esta semana.
+ * El orden de un diario es cronológico aunque sea el de adentro.
+ *
+ * Los borradores van primero —`nullsFirst`— porque no tienen fecha de
+ * publicación todavía y son lo que está esperando que alguien lo termine.
+ * Entre ellos, el más nuevo arriba.
  */
 export async function getNotasDelAdmin(): Promise<NotaResumen[]> {
   const supabase = await createClient()
@@ -272,7 +278,8 @@ export async function getNotasDelAdmin(): Promise<NotaResumen[]> {
   let consulta = supabase
     .from('notas')
     .select(CAMPOS_RESUMEN)
-    .order('updated_at', { ascending: false })
+    .order('publicada_en', { ascending: false, nullsFirst: true })
+    .order('created_at', { ascending: false })
 
   // **El filtro de un redactor se hace acá y no lo hace RLS, y es a propósito.**
   // Desde la 0014 un redactor sólo edita lo suyo, pero la política que deja
@@ -355,4 +362,29 @@ export async function getNotaParaPostear(id: string): Promise<NotaConRelaciones 
     .maybeSingle()
 
   return data as unknown as NotaConRelaciones | null
+}
+
+/**
+ * El título de cada nota, por slug.
+ *
+ * Lo usa la pantalla de estadísticas para cambiar `/nota/tiburonas-6-1-claypole`
+ * por el titular de verdad: una lista de URLs largas no se lee, y el que la
+ * mira quiere saber qué nota anduvo bien.
+ *
+ * **Una sola consulta con `in`** y no una por fila: el top son diez rutas y diez
+ * viajes a la base para diez títulos es exactamente lo que el mapa de partidos
+ * del renderer ya evita en el cuerpo de las notas.
+ *
+ * Devuelve un `Map` y no un objeto: las claves son slugs que salen de una API
+ * externa, y un `Record` respondería a claves como `constructor` con algo que
+ * no es un título.
+ */
+export async function getTitulosPorSlugs(slugs: readonly string[]): Promise<Map<string, string>> {
+  if (slugs.length === 0) return new Map()
+
+  const supabase = await createClient()
+  const { data } = await supabase.from('notas').select('slug, titulo').in('slug', [...slugs])
+
+  const filas = (data ?? []) as { slug: string; titulo: string }[]
+  return new Map(filas.map((fila) => [fila.slug, fila.titulo]))
 }

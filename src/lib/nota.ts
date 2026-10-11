@@ -67,6 +67,14 @@ export const esquemaNota = z
     destacada: z.boolean(),
     auto_post: z.boolean(),
     redes: z.array(z.enum(REDES)),
+    /**
+     * Cuándo sale publicada. ISO, o `null` si todavía no se eligió.
+     *
+     **Es un campo del formulario y la fuente de verdad**: antes la ponía el
+     * servidor con `new Date()` en cada publicación, así que editar una nota
+     * de mayo en octubre la refechaba a octubre.
+     */
+    publicada_en: z.string().nullable(),
   })
   .refine((n) => !n.imagen_portada || n.imagen_alt.length > 0, {
     path: ['imagen_alt'],
@@ -193,6 +201,9 @@ export function entradaDesdeNota(nota: NotaParaEditar | null): EntradaNota {
       destacada: false,
       auto_post: true,
       redes: ['facebook', 'instagram', 'x'],
+      // Una nota nueva nace sin fecha: la toma al publicarse, salvo que quien
+      // escribe elija otra. Ver `publicarNota()`.
+      publicada_en: null,
     }
   }
 
@@ -210,12 +221,17 @@ export function entradaDesdeNota(nota: NotaParaEditar | null): EntradaNota {
     destacada: nota.destacada,
     auto_post: nota.auto_post,
     redes: nota.redes,
+    // La fecha que ya tiene entra al formulario y vuelve igual si nadie la
+    // toca: es lo que hace que editar una nota de mayo en octubre la deje en
+    // mayo.
+    publicada_en: nota.publicada_en,
   }
 }
 
 /** Los campos de una nota guardada que el editor sabe abrir. */
 export type NotaParaEditar = Pick<
   Nota,
+  | 'publicada_en'
   | 'titulo'
   | 'slug'
   | 'bajada'
@@ -370,4 +386,46 @@ export function decidirPorFecha(iso: string | null, ahora: Date = new Date()): D
   return chequeo.puede
     ? { modo: 'archivo', iso }
     : { modo: 'ninguno', motivo: chequeo.motivo ?? 'No se puede usar esa fecha.' }
+}
+
+/**
+ * Si dos fechas son el mismo instante.
+ *
+ * **No se comparan como texto, y ésa es toda la gracia.** La base devuelve
+ * `2026-05-09T03:00:00+00:00` y el formulario arma `2026-05-09T03:00:00.000Z`:
+ * el mismo instante escrito de dos formas. Comparándolas como strings, cada
+ * guardado creería que la fecha cambió y la reescribiría —que es justo lo que
+ * hay que evitar para que una edición no toque la fecha de publicación—.
+ */
+export function mismaFecha(a: string | null, b: string | null): boolean {
+  if (a === null || b === null) return a === b
+
+  const uno = new Date(a).getTime()
+  const otro = new Date(b).getTime()
+
+  // Dos fechas ilegibles no son "iguales": que las dos estén rotas no autoriza
+  // a dar por bueno que no cambió nada.
+  if (Number.isNaN(uno) || Number.isNaN(otro)) return false
+
+  return uno === otro
+}
+
+/** Lo que se considera "viejo" para no postear a las redes: un día. */
+const HORAS_DE_ARCHIVO = 24
+
+/**
+ * Si una nota, por su fecha, es archivo y no novedad.
+ *
+ * Decide una sola cosa: **si se postea a las redes**. Subir treinta fichas
+ * viejas no puede disparar treinta posteos anunciando partidos de hace tres
+ * años como si fueran de hoy, y eso no se deshace.
+ *
+ * El día de margen es para el caso normal: alguien publica ahora y la fecha
+ * del formulario quedó unos minutos atrás. Eso es una nota de hoy.
+ */
+export function esDeArchivo(publicadaEn: string, ahora: Date = new Date()): boolean {
+  const fecha = new Date(publicadaEn).getTime()
+  if (Number.isNaN(fecha)) return false
+
+  return ahora.getTime() - fecha > HORAS_DE_ARCHIVO * 60 * 60 * 1000
 }

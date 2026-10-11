@@ -7,8 +7,10 @@ import {
   cuerpoVacio,
   documentoVacio,
   entradaDesdeNota,
+  esDeArchivo,
   esquemaNota,
   firmaDe,
+  mismaFecha,
   redesAPostear,
   slugDesdeTitulo,
   type EntradaNota,
@@ -71,6 +73,7 @@ describe('cuerpoVacio', () => {
 
 const NOTA: EntradaNota = {
   titulo: 'Tiburonas 2-1 Defensores',
+  publicada_en: null,
   slug: 'tiburonas-2-1-defensores',
   bajada: 'Ganó de local en la primera fecha.',
   cuerpo: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Hola' }] }] },
@@ -195,6 +198,7 @@ describe('entradaDesdeNota', () => {
       destacada: true,
       auto_post: false,
       redes: ['x'] as const,
+      publicada_en: '2026-05-09T03:00:00.000Z',
     }
 
     expect(entradaDesdeNota({ ...guardada, redes: [...guardada.redes] })).toEqual({
@@ -290,5 +294,52 @@ describe('decidirPorFecha', () => {
 
   it('una fecha ilegible no decide nada', () => {
     expect(decidirPorFecha('ayer', ahora).modo).toBe('ninguno')
+  })
+})
+
+describe('mismaFecha', () => {
+  /**
+   * El caso que importa: la base devuelve `+00:00` y el formulario arma `Z`.
+   * Comparando como texto, cada guardado creeria que la fecha cambio.
+   */
+  it('el mismo instante escrito de dos formas es el mismo', () => {
+    expect(mismaFecha('2026-05-09T03:00:00+00:00', '2026-05-09T03:00:00.000Z')).toBe(true)
+  })
+
+  it('dos instantes distintos no', () => {
+    expect(mismaFecha('2026-05-09T03:00:00Z', '2026-05-10T03:00:00Z')).toBe(false)
+  })
+
+  it('null con null es lo mismo; null con fecha no', () => {
+    expect(mismaFecha(null, null)).toBe(true)
+    expect(mismaFecha(null, '2026-05-09T03:00:00Z')).toBe(false)
+    expect(mismaFecha('2026-05-09T03:00:00Z', null)).toBe(false)
+  })
+
+  /** Que las dos esten rotas no autoriza a dar por bueno que no cambio nada. */
+  it('dos fechas ilegibles no son iguales', () => {
+    expect(mismaFecha('ayer', 'ayer')).toBe(false)
+  })
+})
+
+describe('esDeArchivo', () => {
+  const ahora = new Date('2026-10-11T15:00:00Z')
+
+  it('una nota de hace tres anios es archivo', () => {
+    expect(esDeArchivo('2023-05-09T03:00:00Z', ahora)).toBe(true)
+  })
+
+  /** Publicar ahora con la fecha unos minutos atras es una nota de hoy. */
+  it('unos minutos atras no es archivo', () => {
+    expect(esDeArchivo('2026-10-11T14:30:00Z', ahora)).toBe(false)
+  })
+
+  it('el borde es un dia', () => {
+    expect(esDeArchivo('2026-10-10T15:30:00Z', ahora)).toBe(false)
+    expect(esDeArchivo('2026-10-10T14:30:00Z', ahora)).toBe(true)
+  })
+
+  it('una fecha ilegible no cuenta como archivo', () => {
+    expect(esDeArchivo('cualquier cosa', ahora)).toBe(false)
   })
 })

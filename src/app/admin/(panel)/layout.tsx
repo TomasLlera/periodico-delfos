@@ -29,7 +29,11 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   if (!autor) redirect('/admin/login')
 
   return (
-    <div className="min-h-dvh bg-bg">
+    // `data-panel-admin` lo lee el CSS para apagar la tira de resultados en
+    // celular: ver `globals.css`. Es la unica forma de que el layout raiz —que
+    // la dibuja para todo el sitio— sepa que esta pantalla es del panel, sin
+    // leer la ruta y volver dinamico todo.
+    <div data-panel-admin className="min-h-dvh bg-bg">
       <BarraAdmin autor={autor} />
       {children}
     </div>

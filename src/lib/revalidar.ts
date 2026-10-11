@@ -19,6 +19,10 @@ import { revalidatePath } from 'next/cache'
 function revalidarPortada(): void {
   revalidatePath('/')
   revalidatePath('/fixture')
+  // `/plantel` entro a esta lista cuando dejo de ser dinamica: hasta entonces se
+  // rearmaba en cada visita y no habia nada que invalidar. Las tres muestran lo
+  // mismo —la temporada activa— asi que caen juntas o se contradicen.
+  revalidatePath('/plantel')
 }
 
 /**

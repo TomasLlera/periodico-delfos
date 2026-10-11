@@ -4,7 +4,7 @@ import type { FilaTablaConEquipo, Goleadora, Temporada } from '@/types'
 
 /** La temporada en curso. Hay un índice único que garantiza que sea una sola. */
 export async function getTemporadaActiva(): Promise<Temporada | null> {
-  const supabase = await createClient()
+  const supabase = createStaticClient()
   const { data } = await supabase
     .from('temporadas')
     .select('*')
@@ -15,7 +15,7 @@ export async function getTemporadaActiva(): Promise<Temporada | null> {
 }
 
 export async function getTemporadaPorSlug(slug: string): Promise<Temporada | null> {
-  const supabase = await createClient()
+  const supabase = createStaticClient()
   const { data } = await supabase
     .from('temporadas')
     .select('*')
@@ -58,7 +58,7 @@ export async function getTablaPosiciones(
   temporadaId: string,
   fechaNumero?: number,
 ): Promise<{ filas: FilaTablaConEquipo[]; fecha: number | null }> {
-  const supabase = await createClient()
+  const supabase = createStaticClient()
 
   let fecha = fechaNumero ?? null
   if (fecha === null) {
