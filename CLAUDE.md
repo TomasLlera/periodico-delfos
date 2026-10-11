@@ -28,9 +28,10 @@ objetivo del blueprint, no necesariamente lo que hay hoy en `src/`.
 - `pnpm dlx supabase db push` — Aplicar migraciones
 - `pnpm dlx supabase gen types typescript --project-id <id> > src/lib/supabase/types.ts`
 
-> `eslint.config.mjs` está roto (quedó de un scaffolding de Next 16, importa
-> `eslint-config-next/core-web-vitals` sin extensión) — `pnpm lint` falla. No
-> afecta a `pnpm build`. Ver `HANDOFF.md` § "Pendiente manual" antes de tocarlo.
+> `pnpm lint` anda desde el 11/10/2026. Estuvo roto meses: el `eslint.config.mjs`
+> del scaffolding importaba `eslint-config-next/core-web-vitals` como si fuera
+> flat config, y no lo es. Ahora pasa por `FlatCompat`. Quedan 5 warnings de
+> `<img>`, todos deliberados y explicados en su componente.
 
 ## Tech Stack
 

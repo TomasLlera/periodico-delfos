@@ -62,7 +62,9 @@ export function ListaEventos({
             <span className="w-12 shrink-0 font-mono text-[0.95rem] font-bold">
               {e.minuto}
               {e.adicionado > 0 && `+${e.adicionado}`}
-              <span aria-hidden="true">'</span>
+              {/* La comilla del minuto —23'— escrita como entidad: en JSX una
+                  comilla suelta es ambigua y ESLint la marca. */}
+              <span aria-hidden="true">&rsquo;</span>
             </span>
 
             <IconoEvento tipo={e.tipo} />
