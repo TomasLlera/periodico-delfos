@@ -147,3 +147,39 @@ export function slugDeNota(ruta: string): string | null {
 export function nombreDeRuta(ruta: string): string {
   return ruta === '/' ? 'Portada' : ruta
 }
+
+/**
+ * Las cuatro vistas de la pantalla.
+ *
+ * **Son pestañas y no cuatro listas una abajo de la otra.** Con las cuatro a la
+ * vez, tres de ellas tienen una o dos filas —al principio de un medio siempre
+ * las tienen— y la pantalla se ve como un formulario a medio cargar en lugar de
+ * como un informe. De a una, cada lista ocupa el ancho entero y se lee.
+ *
+ * La vista vive en la URL, igual que en la página de temporada y por las
+ * mismas razones: se comparte, queda en el historial, anda sin JavaScript y
+ * cada pestaña se cachea por separado. El costo es una navegación por click.
+ */
+export const PESTANAS_ESTADISTICAS = [
+  { clave: 'notas', titulo: 'Notas' },
+  { clave: 'secciones', titulo: 'Secciones' },
+  { clave: 'origen', titulo: 'De dónde llegan' },
+  { clave: 'publico', titulo: 'Quién mira' },
+] as const
+
+export type PestanaEstadisticas = (typeof PESTANAS_ESTADISTICAS)[number]['clave']
+
+/** Las notas primero: es la pregunta que trajo a alguien a esta pantalla. */
+export const PESTANA_ESTADISTICAS_POR_OMISION: PestanaEstadisticas = 'notas'
+
+/**
+ * Qué pestaña pidió la URL.
+ *
+ * `?ver=` es entrada de usuario: cualquier cosa que no sea una de las cuatro
+ * cae en la primera en lugar de romper la página.
+ */
+export function pestanaDeEstadisticas(valor: string | string[] | undefined): PestanaEstadisticas {
+  const crudo = Array.isArray(valor) ? valor[0] : valor
+  const encontrada = PESTANAS_ESTADISTICAS.find((pestana) => pestana.clave === crudo)
+  return encontrada?.clave ?? PESTANA_ESTADISTICAS_POR_OMISION
+}

@@ -3,10 +3,14 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Aviso } from '@/components/admin/Aviso'
 import { GraficoVisitas } from '@/components/admin/GraficoVisitas'
+import { PestanasEstadisticas } from '@/components/admin/PestanasEstadisticas'
 import { TopDeVisitas } from '@/components/admin/TopDeVisitas'
 import {
   filasTop,
   nombreDeRuta,
+  PESTANA_ESTADISTICAS_POR_OMISION,
+  pestanaDeEstadisticas,
+  type PestanaEstadisticas,
   rangoPedido,
   serieDiaria,
   slugDeNota,
@@ -46,17 +50,21 @@ import {
 export const metadata: Metadata = { title: 'Estadísticas' }
 export const dynamic = 'force-dynamic'
 
-type Params = { searchParams: Promise<{ rango?: string | string[] }> }
+type Params = {
+  searchParams: Promise<{ rango?: string | string[]; ver?: string | string[] }>
+}
 
 export default async function Estadisticas({ searchParams }: Params) {
   const autor = await getAutorDeLaSesion()
   if (!autor) redirect('/admin/login')
 
-  const rango = rangoPedido((await searchParams).rango)
+  const parametros = await searchParams
+  const rango = rangoPedido(parametros.rango)
+  const pestana = pestanaDeEstadisticas(parametros.ver)
 
   if (!hayCredenciales()) {
     return (
-      <Pantalla rango={rango}>
+      <Pantalla rango={rango} pestana={pestana}>
         <Aviso tono="atencion">
           Faltan las variables en el servidor: <strong>VERCEL_TOKEN</strong> y{' '}
           <strong>VERCEL_PROJECT_ID</strong>, más <strong>VERCEL_TEAM_ID</strong> si
@@ -68,26 +76,33 @@ export default async function Estadisticas({ searchParams }: Params) {
     )
   }
 
-  // Las cinco en paralelo: cinco viajes a una API de terceros, uno tras otro,
-  // serían la suma de las cinco esperas en vez de la más larga.
-  const [dias, notas, secciones, referentes, dispositivos, paises] = await Promise.all([
+  // **Cada pestaña pide sólo lo suyo.** Con las cuatro dibujadas a la vez eran
+  // seis viajes a la API en cada carga para mostrar tres listas que nadie
+  // estaba mirando. Ahora son dos o tres, y el resto se piden cuando se los
+  // pide. Es la misma decisión que toma la página de temporada con sus vistas.
+  //
+  // Los que quedan sí van en paralelo: en serie, la pantalla tardaría la suma
+  // de las esperas en lugar de la más larga.
+  const [dias, ...resto] = await Promise.all([
     consultarVisitas('day', rango),
-    // Las notas aparte del resto, que es lo que Charlie pregunto: "que noticia
-    // se leyo mas". Mezcladas con la portada y las secciones, la portada gana
-    // siempre y la lista no contesta nada.
-    consultarVisitas('requestPath', rango, 10, SOLO_NOTAS),
-    consultarVisitas('requestPath', rango, 10, SIN_NOTAS),
-    consultarVisitas('referrerHostname', rango, 10),
-    consultarVisitas('deviceType', rango),
-    consultarVisitas('country', rango, 10),
+    ...(pestana === 'notas'
+      ? // Las notas aparte del resto, que es lo que preguntó Charlie: "qué
+        // noticia se leyó más". Mezcladas con la portada y las secciones, la
+        // portada gana siempre y la lista no contesta nada.
+        [consultarVisitas('requestPath', rango, 10, SOLO_NOTAS)]
+      : []),
+    ...(pestana === 'secciones' ? [consultarVisitas('requestPath', rango, 10, SIN_NOTAS)] : []),
+    ...(pestana === 'origen' ? [consultarVisitas('referrerHostname', rango, 10)] : []),
+    ...(pestana === 'publico'
+      ? [consultarVisitas('deviceType', rango), consultarVisitas('country', rango, 10)]
+      : []),
   ])
 
-  const error = [dias, notas, secciones, referentes, dispositivos, paises].find((r) => r.error)
-    ?.error
+  const error = [dias, ...resto].find((r) => r.error)?.error
 
   if (error) {
     return (
-      <Pantalla rango={rango}>
+      <Pantalla rango={rango} pestana={pestana}>
         <Aviso tono="error">
           {error} Si dice 403, suele ser el <strong>VERCEL_TEAM_ID</strong>: va sólo
           si el proyecto pertenece a un equipo, y sobra si es personal.
@@ -98,16 +113,30 @@ export default async function Estadisticas({ searchParams }: Params) {
 
   const serie = serieDiaria(dias.filas)
   const totales = totalesDelRango(serie)
-  const topNotas = filasTop(notas.filas, 'requestPath')
 
-  // El título de verdad en vez de la URL. Una sola consulta para las diez.
-  const titulos = await getTitulosPorSlugs(
-    topNotas.map((fila) => slugDeNota(fila.clave)).filter((slug): slug is string => slug !== null),
+  // Las filas de la pestaña que se está mirando. `resto` trae una respuesta, o
+  // dos en "Quién mira", que es la única que junta dos listas cortas: una tabla
+  // de dos renglones no merece una pestaña propia.
+  const [primera, segunda] = resto
+  const filasDeLaPestana = filasTop(
+    primera?.filas ?? [],
+    pestana === 'origen' ? 'referrerHostname' : pestana === 'publico' ? 'deviceType' : 'requestPath',
   )
+
+  // El título de verdad en vez de la URL, sólo cuando hace falta: una consulta
+  // a la base para las diez notas, y ninguna en las otras tres pestañas.
+  const titulos =
+    pestana === 'notas'
+      ? await getTitulosPorSlugs(
+          filasDeLaPestana
+            .map((fila) => slugDeNota(fila.clave))
+            .filter((slug): slug is string => slug !== null),
+        )
+      : new Map<string, string>()
 
   if (totales.vistas === 0) {
     return (
-      <Pantalla rango={rango}>
+      <Pantalla rango={rango} pestana={pestana}>
         <Aviso>
           Todavía no hay visitas registradas en este rango. Si Web Analytics se
           acaba de prender, los primeros datos tardan unos minutos en aparecer y
@@ -118,7 +147,7 @@ export default async function Estadisticas({ searchParams }: Params) {
   }
 
   return (
-    <Pantalla rango={rango}>
+    <Pantalla rango={rango} pestana={pestana}>
       <div className="grid gap-4 sm:grid-cols-2">
         <Total
           numero={totales.vistas}
@@ -132,44 +161,56 @@ export default async function Estadisticas({ searchParams }: Params) {
         />
       </div>
 
-      <GraficoVisitas serie={serie} />
+      <div className="border border-border bg-bg-elevated p-5">
+        <h2 className="titular mb-3 text-[1.05rem]">Visitas por día</h2>
+        <GraficoVisitas serie={serie} />
+      </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <PestanasEstadisticas actual={pestana} rango={rango} />
+
+      {pestana === 'notas' && (
         <TopDeVisitas
           titulo="Las notas más leídas"
-          filas={topNotas}
+          filas={filasDeLaPestana}
           etiqueta={(ruta) => {
             const slug = slugDeNota(ruta)
             return (slug && titulos.get(slug)) ?? nombreDeRuta(ruta)
           }}
           vacio="Todavía nadie abrió una nota en este rango."
         />
+      )}
 
+      {pestana === 'secciones' && (
         <TopDeVisitas
           titulo="Las secciones"
-          filas={filasTop(secciones.filas, 'requestPath')}
+          filas={filasDeLaPestana}
           etiqueta={nombreDeRuta}
           vacio="Sin visitas a las secciones."
         />
+      )}
 
+      {pestana === 'origen' && (
         <TopDeVisitas
           titulo="De dónde llegan"
-          filas={filasTop(referentes.filas, 'referrerHostname')}
+          filas={filasDeLaPestana}
           vacio="Nadie llegó desde otro sitio: todas las visitas fueron directas."
         />
+      )}
 
-        <TopDeVisitas
-          titulo="Con qué entran"
-          filas={filasTop(dispositivos.filas, 'deviceType')}
-          vacio="Sin datos de dispositivo."
-        />
-
-        <TopDeVisitas
-          titulo="Desde dónde"
-          filas={filasTop(paises.filas, 'country')}
-          vacio="Sin datos de país."
-        />
-      </div>
+      {pestana === 'publico' && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <TopDeVisitas
+            titulo="Con qué entran"
+            filas={filasDeLaPestana}
+            vacio="Sin datos de dispositivo."
+          />
+          <TopDeVisitas
+            titulo="Desde dónde"
+            filas={filasTop(segunda?.filas ?? [], 'country')}
+            vacio="Sin datos de país."
+          />
+        </div>
+      )}
     </Pantalla>
   )
 }
@@ -181,7 +222,15 @@ export default async function Estadisticas({ searchParams }: Params) {
  * tenerlo al lado hace evidente que los cuatro estados —sin credenciales, con
  * error, sin datos y con datos— comparten exactamente el mismo encabezado.
  */
-function Pantalla({ rango, children }: { rango: number; children: React.ReactNode }) {
+function Pantalla({
+  rango,
+  pestana,
+  children,
+}: {
+  rango: number
+  pestana: PestanaEstadisticas
+  children: React.ReactNode
+}) {
   return (
     <main className="mx-auto flex max-w-[900px] flex-col gap-6 px-4 py-8">
       <div className="flex flex-wrap items-center gap-4">
@@ -193,7 +242,12 @@ function Pantalla({ rango, children }: { rango: number; children: React.ReactNod
           {RANGOS.map((dias) => (
             <Link
               key={dias}
-              href={`/admin/estadisticas?rango=${dias}`}
+              // Arrastra la pestaña, igual que la pestaña arrastra el rango:
+              // cambiar a 30 días y volver a la primera lista obligaría a dos
+              // clicks cada vez.
+              href={`/admin/estadisticas?rango=${dias}${
+                pestana === PESTANA_ESTADISTICAS_POR_OMISION ? '' : `&ver=${pestana}`
+              }`}
               aria-current={rango === dias ? 'page' : undefined}
               className={`tactil flex items-center px-3 font-display text-[0.85rem] font-bold ${
                 rango === dias ? 'bg-text text-bg' : 'border border-border-control hover:bg-bg-muted'

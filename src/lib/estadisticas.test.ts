@@ -3,6 +3,7 @@ import {
   fechasDelRango,
   filasTop,
   nombreDeRuta,
+  pestanaDeEstadisticas,
   rangoPedido,
   serieDiaria,
   slugDeNota,
@@ -126,5 +127,21 @@ describe('nombreDeRuta', () => {
   it('la portada tiene nombre y no barra', () => {
     expect(nombreDeRuta('/')).toBe('Portada')
     expect(nombreDeRuta('/cronicas')).toBe('/cronicas')
+  })
+})
+
+describe('pestanaDeEstadisticas', () => {
+  it('reconoce las cuatro', () => {
+    expect(pestanaDeEstadisticas('notas')).toBe('notas')
+    expect(pestanaDeEstadisticas('secciones')).toBe('secciones')
+    expect(pestanaDeEstadisticas('origen')).toBe('origen')
+    expect(pestanaDeEstadisticas('publico')).toBe('publico')
+  })
+
+  /** `?ver=` es entrada de usuario: no puede romper la pagina. */
+  it('cae en notas con cualquier otra cosa', () => {
+    expect(pestanaDeEstadisticas('cualquiera')).toBe('notas')
+    expect(pestanaDeEstadisticas(undefined)).toBe('notas')
+    expect(pestanaDeEstadisticas([''])).toBe('notas')
   })
 })

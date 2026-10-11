@@ -28,7 +28,11 @@ export function TopDeVisitas({ titulo, filas, etiqueta, vacio }: Props) {
   const maximo = filas.reduce((mayor, fila) => Math.max(mayor, fila.vistas), 0)
 
   return (
-    <section className="flex flex-col gap-3">
+    // Una tarjeta y no una seccion suelta: con cuatro listas sobre el fondo, el
+    // ojo no sabe donde termina una y empieza la otra, y una lista de una sola
+    // fila —que es lo normal al principio— parece un error de carga en vez de
+    // un dato. El marco es el mismo de los totales de arriba.
+    <section className="flex flex-col gap-3 border border-border bg-bg-elevated p-5">
       <h2 className="titular text-[1.05rem]">{titulo}</h2>
 
       {filas.length === 0 ? (
