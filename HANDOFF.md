@@ -3676,3 +3676,53 @@ build` exit 0.
 sesión se corrió con el dev server levantado y hubo que bajarlo. Es la tercera
 vez que pasa. Lo que conviene hacer antes de buildear es mirar quién tiene el
 puerto: `Get-NetTCPConnection -LocalPort 3000`.
+
+## Tabla de posiciones en portada y fixture: la revisión ya está hecha
+
+Tomás pidió tres cosas —tabla en la portada, selector por fecha en el fixture,
+y precarga en el admin— con la instrucción de revisar antes de tocar nada. La
+revisión se hizo y **cortó ahí por costo de sesión**. Esto es lo que se
+averiguó, para no volver a pagarlo.
+
+**No hay migración que hacer.** La duda era si la tabla se guardaba una sola vez
+y se pisaba. No: `0004_tabla_posiciones.sql` ya guarda una fila por
+`(temporada_id, fecha_numero, equipo_id)` y nada se sobrescribe. Las dos
+restricciones que el brief pedía agregar ya están —el `unique` de temporada +
+fecha + equipo, y el índice único de temporada + fecha + posición, que impide
+dos equipos en el mismo puesto— junto con los tres CHECK de `jugados = G+E+P`,
+`puntos = G*3+E` y valores no negativos.
+
+**Sin zonas.** Tomás confirmó que el campeonato es una tabla única, así que la
+falta de columna `zona` no es un problema: era la única migración que podía
+llegar a hacer falta y no hace falta.
+
+**"Partidos" es el fixture.** El brief nombra una página "Partidos" que no
+existe en el sitio público —sólo en el admin—. Tomás aclaró que es un error del
+prompt y que se refiere a `/fixture`. El link "Ver tabla completa" de la portada
+va ahí, y ahí va el selector de fecha.
+
+**Lo que ya existe y no hay que escribir de nuevo:**
+
+- `getTablaPosiciones(temporadaId, fechaNumero?)` ya acepta una fecha puntual y
+  usa `createStaticClient()`, así que no rompe el ISR. `getFechasConTabla()` ya
+  devuelve las fechas cargadas, que es justo lo que el selector tiene que
+  ofrecer.
+- La portada ya muestra la tabla: `<TablaDeLaPortada />` + `<TablaCompacta />`.
+- `/partido/[slug]` ya muestra la tabla **tal como quedó al terminar esa
+  fecha**. Es lo que Charlie había pedido por separado y ya está resuelto.
+- El admin ya elige temporada y fecha, ya calcula puntos y jugados solo, ya
+  avisa de huecos y posiciones repetidas sin bloquear el guardado
+  (`huecosDeLaFecha`, `motivosQueNoCuadran`), y `guardarTabla()` ya revalida.
+
+**Lo que falta de verdad**, que es bastante menos de lo que parecía el brief:
+
+1. Portada: orden notas → tabla → secciones, rótulo "Tras la fecha N", fila de
+   Aldosivi resaltada, columnas compactas en mobile sin scroll horizontal.
+2. Fixture: el selector. El brief es explícito en el cómo y conviene respetarlo
+   —traer **todas** las tablas de la temporada en una consulta del servidor y
+   cambiar de fecha en el cliente, sin leer `searchParams` en el servidor, para
+   que la página no pase a dinámica—, más el `?fecha=3` escrito desde el
+   cliente y el indicador de subió/bajó contra la fecha anterior, con texto
+   alternativo y no sólo color.
+3. Admin: precargar una fecha nueva con la tabla de la fecha anterior. Hoy
+   precarga lo guardado de esa fecha o filas en blanco.
