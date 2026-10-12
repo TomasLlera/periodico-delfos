@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ExternalLink, LogOut, Menu, X } from 'lucide-react'
 import { salir } from '@/actions/sesion'
 import { ToggleTema } from '@/components/layout/ToggleTema'
-import { seccionActiva, type SeccionAdmin } from '@/components/admin/secciones'
+import { seccionActiva, type GrupoAdmin } from '@/components/admin/secciones'
 
 /**
  * La barra del panel en celular: marca, sección actual y el botón del menú.
@@ -26,19 +26,27 @@ import { seccionActiva, type SeccionAdmin } from '@/components/admin/secciones'
  * ruta —sin eso, tocar un link deja el cajón abierto encima de la pantalla
  * nueva—.
  *
+ * **Los grupos acá son títulos y no desplegables**, al revés que en la barra de
+ * escritorio. El cajón es una columna alta que ya scrollea: plegar categorías
+ * agregaría un toque para llegar a cualquier lado y ahorraría un espacio que
+ * sobra. Lo que en escritorio es un menú, en el cajón es un subtítulo.
+ *
  * De `lg` para arriba esto no existe: la barra de siempre está intacta.
  */
 interface Props {
-  secciones: readonly SeccionAdmin[]
+  grupos: readonly GrupoAdmin[]
   nombre: string
 }
 
-export function MenuAdmin({ secciones, nombre }: Props) {
+export function MenuAdmin({ grupos, nombre }: Props) {
   const ruta = usePathname()
   const cajon = useRef<HTMLDialogElement>(null)
   const [abierto, setAbierto] = useState(false)
 
-  const actual = seccionActiva(ruta, secciones)
+  const actual = seccionActiva(
+    ruta,
+    grupos.flatMap((grupo) => grupo.secciones),
+  )
 
   // Abrir y cerrar de verdad el `<dialog>`, que no se maneja con una prop.
   useEffect(() => {
@@ -69,8 +77,11 @@ export function MenuAdmin({ secciones, nombre }: Props) {
 
   return (
     <div className="lg:hidden">
-      <div className="mx-auto flex h-14 max-w-[1200px] items-center gap-3 px-4">
-        <Link href="/admin" className="marca text-[1.05rem]">
+      <div className="mx-auto flex h-14 max-w-sitio items-center gap-3 px-4">
+        <Link
+          href="/admin"
+          className="marca shrink-0 rounded-sm bg-block-text/10 px-2 py-0.5 text-[1.05rem] text-block-accent"
+        >
           Delfos
         </Link>
 
@@ -106,7 +117,9 @@ export function MenuAdmin({ secciones, nombre }: Props) {
       >
         <div className="flex h-full flex-col bg-block-bg text-block-text">
           <div className="flex items-center gap-3 border-b border-block-text/15 px-4 py-3">
-            <span className="marca text-[1.05rem]">Delfos</span>
+            <span className="marca rounded-sm bg-block-text/10 px-2 py-0.5 text-[1.05rem] text-block-accent">
+              Delfos
+            </span>
 
             <button
               type="button"
@@ -118,28 +131,39 @@ export function MenuAdmin({ secciones, nombre }: Props) {
             </button>
           </div>
 
-          <nav aria-label="Secciones del panel" className="flex-1 overflow-y-auto overscroll-contain">
-            <ul className="flex flex-col py-2">
-              {secciones.map((seccion) => {
-                const activa = actual?.href === seccion.href
+          <nav
+            aria-label="Secciones del panel"
+            className="flex-1 overflow-y-auto overscroll-contain py-2"
+          >
+            {grupos.map((grupo) => (
+              <div key={grupo.titulo ?? grupo.secciones[0].href}>
+                {grupo.titulo && (
+                  <h2 className="meta px-4 pb-1 pt-3 text-block-text/50">{grupo.titulo}</h2>
+                )}
 
-                return (
-                  <li key={seccion.href}>
-                    <Link
-                      href={seccion.href}
-                      aria-current={activa ? 'page' : undefined}
-                      className={`tactil flex items-center px-4 font-display text-[0.95rem] font-bold ${
-                        activa
-                          ? 'bg-block-text text-block-bg'
-                          : 'text-block-text hover:bg-block-text/10'
-                      }`}
-                    >
-                      {seccion.etiqueta}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
+                <ul className="flex flex-col">
+                  {grupo.secciones.map((seccion) => {
+                    const activa = actual?.href === seccion.href
+
+                    return (
+                      <li key={seccion.href}>
+                        <Link
+                          href={seccion.href}
+                          aria-current={activa ? 'page' : undefined}
+                          className={`tactil flex items-center px-4 font-display text-[0.95rem] font-bold ${
+                            activa
+                              ? 'bg-block-text text-block-bg'
+                              : 'text-block-text hover:bg-block-text/10'
+                          }`}
+                        >
+                          {seccion.etiqueta}
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ))}
           </nav>
 
           {/* El pie: quién está adentro y las tres salidas. Van juntas y abajo
