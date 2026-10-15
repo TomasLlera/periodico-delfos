@@ -53,7 +53,7 @@ export default async function EditarNota({ params }: Params) {
         (ver `src/actions/notas.ts`), así que la vista previa tiene que seguir
         mostrando a quien la escribió aunque la esté corrigiendo otro.
       */}
-      <FormularioNota nota={nota} temporadas={temporadas} partidos={partidos} enlazables={enlazables} autor={nota.autor} />
+      <FormularioNota nota={nota} id={nota.id} temporadas={temporadas} partidos={partidos} enlazables={enlazables} autor={nota.autor} />
     </main>
   )
 }

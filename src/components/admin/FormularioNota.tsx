@@ -1,18 +1,21 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useState, useTransition } from 'react'
-import { subirImagen } from '@/actions/imagenes'
-import { guardarNota, programarNota, publicarNota } from '@/actions/notas'
-import { chequearImagen } from '@/lib/imagen'
-import { entradaDesdeNota, esquemaNota, slugDesdeTitulo, type EntradaNota } from '@/lib/nota'
+import { useMemo, useState, useTransition } from 'react'
+import { guardarNota, programarNota, publicarNota, type ResultadoNota } from '@/actions/notas'
+import { avisoSinRed, type Pendiente } from '@/lib/borrador'
+import { entradaDesdeNota, erroresPorCampo, slugDesdeTitulo, type EntradaNota } from '@/lib/nota'
 import { esSobrePublicada, notaDePrevisualizacion } from '@/lib/vista-previa'
+import { AvisoBorrador } from '@/components/admin/AvisoBorrador'
+import { AvisoReconexion } from '@/components/admin/AvisoReconexion'
 import { BarraAcciones } from '@/components/admin/BarraAcciones'
 import { CampoImagen } from '@/components/admin/CampoImagen'
 import type { NotaEnlazable } from '@/components/admin/EnlazarNota'
 import { CamposClasificacion } from '@/components/admin/CamposClasificacion'
-import { CampoTexto } from '@/components/admin/CampoTexto'
+import { CamposEncabezado } from '@/components/admin/CamposEncabezado'
 import { EditorCuerpo } from '@/components/admin/EditorCuerpo'
+import { usarBorrador } from '@/components/admin/usarBorrador'
+import { usarImagenElegida } from '@/components/admin/usarImagenElegida'
 import { VistaPrevia } from '@/components/admin/VistaPrevia'
 import type { Autor, NotaConRelaciones, PartidoConEquipos, Temporada } from '@/types'
 
@@ -28,11 +31,23 @@ import type { Autor, NotaConRelaciones, PartidoConEquipos, Temporada } from '@/t
  * guardada, renombrarla no le toca la URL: cambiarla rompe el link que se
  * compartió y la redirección 301 que apunta ahí (regla no negociable 8). El
  * campo queda editable a mano, que es la única forma prevista de cambiarlo.
+ *
+ * **Lo escrito va primero al dispositivo y después al servidor** (ver
+ * `usarBorrador`). Un corte de señal al guardar no pierde nada: el formulario
+ * queda como estaba, avisa, y lo reanuda cuando vuelve la conexión.
  */
+
+type Publicacion = Exclude<Pendiente, { tipo: 'guardar' }>
 
 interface Props {
   /** La nota guardada, si se está editando. `null` al crear. */
   nota: NotaConRelaciones | null
+  /**
+   * El id de la nota. Al editar, el de la base; al crear, uno reservado por la
+   * página al abrir el editor. Que la nota nueva ya tenga id es lo que vuelve
+   * idempotente el primer guardado: ver `escribirNota()`.
+   */
+  id: string
   temporadas: readonly Temporada[]
   partidos: readonly PartidoConEquipos[]
   /** Las publicadas, para el botón de anclar del editor. */
@@ -41,35 +56,48 @@ interface Props {
   autor: Autor
 }
 
-export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }: Props) {
+export function FormularioNota({ nota, id, temporadas, partidos, enlazables, autor }: Props) {
   const router = useRouter()
-  const [entrada, setEntrada] = useState<EntradaNota>(() => entradaDesdeNota(nota))
+  const guardada = useMemo(() => entradaDesdeNota(nota), [nota])
+  const [entrada, setEntrada] = useState<EntradaNota>(guardada)
   const [errores, setErrores] = useState<Record<string, string>>({})
   const [aviso, setAviso] = useState<string | null>(null)
   const [guardando, empezar] = useTransition()
-
-  // La imagen elegida y todavía sin subir. Va separada de `entrada` a
-  // propósito: en `entrada.imagen_portada` sólo puede vivir una URL del bucket,
-  // porque es lo que se guarda en la base, y un `blob:` no lo ve nadie más que
-  // este navegador (regla no negociable 6).
-  const [archivo, setArchivo] = useState<File | null>(null)
-  const [urlLocal, setUrlLocal] = useState<string | null>(null)
   const [previa, setPrevia] = useState(false)
+  // TipTap lee `valor` sólo al crearse: para cargarle un borrador hay que
+  // volver a montarlo, y esto es la `key` que lo fuerza.
+  const [montaje, setMontaje] = useState(0)
 
   const esNueva = nota === null
 
-  // El `blob:` se libera al cambiar de archivo y al desmontar. Sin esto, cada
-  // foto probada queda retenida hasta que se recarga la página.
-  useEffect(() => {
-    if (!archivo) {
-      setUrlLocal(null)
-      return
-    }
+  function cambiar<C extends keyof EntradaNota>(campo: C, valor: EntradaNota[C]) {
+    setEntrada((previa) => ({ ...previa, [campo]: valor }))
+  }
 
-    const url = URL.createObjectURL(archivo)
-    setUrlLocal(url)
-    return () => URL.revokeObjectURL(url)
-  }, [archivo])
+  const imagen = usarImagenElegida({
+    onUrl: (url) => cambiar('imagen_portada', url),
+    onAviso: setAviso,
+  })
+
+  const borrador = usarBorrador({
+    idInicial: id,
+    nueva: esNueva,
+    entrada,
+    archivo: imagen.archivo,
+    guardada,
+    alRecuperar: (b) => {
+      setEntrada(b.entrada)
+      setMontaje((m) => m + 1)
+      imagen.setArchivo(b.archivo)
+      setAviso(null)
+    },
+    // Guardar un borrador no lo ve nadie: se reintenta solo. Publicar y
+    // programar esperan a que alguien apriete el botón de `AvisoReconexion`.
+    alVolverLaRed: (pendiente) => {
+      if (pendiente.tipo === 'guardar') alGuardar()
+      else setAviso(null)
+    },
+  })
 
   /**
    * La entrada como se va a ver, con la imagen elegida en el lugar de la
@@ -78,47 +106,7 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
    */
   const entradaEfectiva: EntradaNota = {
     ...entrada,
-    imagen_portada: urlLocal ?? entrada.imagen_portada,
-  }
-
-  function elegirArchivo(nuevo: File | null) {
-    if (!nuevo) {
-      setArchivo(null)
-      cambiar('imagen_portada', null)
-      return
-    }
-
-    const chequeo = chequearImagen(nuevo.type, nuevo.size)
-    if (!chequeo.ok) {
-      setAviso(chequeo.motivo ?? 'Esa imagen no se puede usar')
-      return
-    }
-
-    setAviso(null)
-    setArchivo(nuevo)
-  }
-
-  /**
-   * Sube la imagen pendiente, si hay, y devuelve la entrada lista para la base.
-   * `null` si la subida falló: el llamador corta ahí y no guarda a medias.
-   */
-  async function conImagenSubida(): Promise<EntradaNota | null> {
-    if (!archivo) return entrada
-
-    const formData = new FormData()
-    formData.set('archivo', archivo)
-    const r = await subirImagen(formData)
-
-    if (r.error || !r.url) {
-      setAviso(r.error ?? 'No se pudo subir la imagen')
-      return null
-    }
-
-    return { ...entrada, imagen_portada: r.url }
-  }
-
-  function cambiar<C extends keyof EntradaNota>(campo: C, valor: EntradaNota[C]) {
-    setEntrada((previa) => ({ ...previa, [campo]: valor }))
+    imagen_portada: imagen.urlLocal ?? entrada.imagen_portada,
   }
 
   function cambiarTitulo(titulo: string) {
@@ -132,38 +120,54 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
 
   /** Corre Zod y deja los errores al lado de cada campo. `true` si pasa. */
   function validar(): boolean {
-    const parseo = esquemaNota.safeParse(entradaEfectiva)
-    if (parseo.success) {
-      setErrores({})
-      return true
-    }
-
-    const encontrados: Record<string, string> = {}
-    for (const issue of parseo.error.issues) {
-      const campo = String(issue.path[0] ?? 'general')
-      encontrados[campo] ??= issue.message
-    }
+    const encontrados = erroresPorCampo(entradaEfectiva)
     setErrores(encontrados)
-    return false
+    return Object.keys(encontrados).length === 0
+  }
+
+  /**
+   * Manda al servidor, con el borrador a salvo antes de intentarlo.
+   *
+   * `null` si no hubo respuesta o si la foto no subió; el aviso ya quedó
+   * puesto. **Los actions tiran cuando no hay red** —`Failed to fetch`— y antes
+   * eso subía hasta la pantalla de error de Next y se llevaba la nota con él.
+   */
+  async function enviar(
+    pendiente: Pendiente,
+    accion: (lista: EntradaNota) => Promise<ResultadoNota>,
+  ): Promise<ResultadoNota | null> {
+    const respaldado = await borrador.respaldar()
+
+    try {
+      const lista = await imagen.subir(entrada)
+      if (!lista) return null
+
+      const r = await accion(lista)
+      borrador.setPendiente(null)
+      if (!r.error) await borrador.olvidar()
+      return r
+    } catch {
+      borrador.setPendiente(pendiente)
+      setPrevia(false)
+      setAviso(avisoSinRed(pendiente, respaldado))
+      return null
+    }
   }
 
   function alGuardar() {
     if (!validar()) return
 
     empezar(async () => {
-      const lista = await conImagenSubida()
-      if (!lista) return
-
-      const r = await guardarNota(lista, nota?.id ?? null)
+      const r = await enviar({ tipo: 'guardar' }, (lista) => guardarNota(lista, borrador.id))
+      if (!r) return
       if (r.error) {
         setAviso(r.error)
         return
       }
       setAviso('Guardado')
-      setArchivo(null)
       // Al crear, la URL pasa a ser la de la nota: recargar el editor no
       // vuelve a crear una segunda.
-      if (esNueva && r.id) router.replace(`/admin/notas/${r.id}`)
+      if (esNueva) router.replace(`/admin/notas/${borrador.id}`)
       else router.refresh()
     })
   }
@@ -186,21 +190,23 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
   }
 
   /**
-   * Igual que publicar, con la hora adentro. Comparte el mismo camino —subir la
-   * imagen primero, mandar al servidor después— porque una nota programada va a
-   * salir sin que nadie la mire de nuevo: lo que falla acá, falla de madrugada.
+   * Publicar o programar. Con `publicadaEn` es una nota de archivo: sale ya,
+   * pero fechada entonces y sin postearse a las redes. Ver `publicarNota()`.
+   *
+   * Programar comparte el camino —subir la imagen primero, mandar al servidor
+   * después— porque una nota programada va a salir sin que nadie la mire de
+   * nuevo: lo que falla acá, falla de madrugada.
    */
-  function alProgramar(publicarEn: string) {
+  function alPublicar(p: Publicacion) {
     empezar(async () => {
-      const lista = await conImagenSubida()
-      if (!lista) {
-        setPrevia(false)
-        return
-      }
-
-      const r = await programarNota(lista, nota?.id ?? null, publicarEn)
+      const r = await enviar(p, (lista) =>
+        p.tipo === 'publicar'
+          ? publicarNota(lista, borrador.id, p.publicadaEn)
+          : programarNota(lista, borrador.id, p.publicarEn),
+      )
+      if (!r || r.error) setPrevia(false)
+      if (!r) return
       if (r.error) {
-        setPrevia(false)
         setAviso([r.error, ...(r.motivos ?? [])].join(' · '))
         return
       }
@@ -208,65 +214,31 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
     })
   }
 
-  /**
-   * Publicar. Con `publicadaEn` es una nota de archivo: sale ya, pero fechada
-   * entonces y sin postearse a las redes. Ver `publicarNota()`.
-   */
-  function alPublicar(publicadaEn: string | null = null) {
-    empezar(async () => {
-      const lista = await conImagenSubida()
-      if (!lista) {
-        setPrevia(false)
-        return
-      }
-
-      const r = await publicarNota(lista, nota?.id ?? null, publicadaEn)
-      if (r.error) {
-        setPrevia(false)
-        setAviso([r.error, ...(r.motivos ?? [])].join(' · '))
-        return
-      }
-      router.push('/admin')
-    })
-  }
+  const pendiente = borrador.pendiente
 
   return (
     <div className="flex flex-col gap-5">
-      <CampoTexto
-        id="titulo"
-        etiqueta="Título"
-        valor={entrada.titulo}
-        onCambio={cambiarTitulo}
-        error={errores.titulo}
-        ayuda="Sin el sufijo «Fecha N – Aldosivi…»: eso sale solo de los datos del partido."
-      />
+      {borrador.oferta && (
+        <AvisoBorrador
+          borrador={borrador.oferta}
+          actualizadaEn={nota?.updated_at ?? null}
+          onRecuperar={borrador.recuperar}
+          onDescartar={() => void borrador.descartar()}
+        />
+      )}
 
-      <CampoTexto
-        id="slug"
-        etiqueta="Slug"
-        valor={entrada.slug}
-        onCambio={(v) => cambiar('slug', v)}
-        error={errores.slug}
-        ayuda={
-          esNueva
-            ? 'Se arma solo con el título. Podés corregirlo antes de guardar.'
-            : 'Es la URL pública y ya está en la calle: cambiarla rompe los links compartidos.'
-        }
-      />
-
-      <CampoTexto
-        id="bajada"
-        etiqueta="Bajada"
-        valor={entrada.bajada}
-        onCambio={(v) => cambiar('bajada', v)}
-        error={errores.bajada}
-        largo
-        ayuda="Obligatoria. Es lo que se lee abajo del título y lo que viaja a las redes."
+      <CamposEncabezado
+        entrada={entrada}
+        esNueva={esNueva}
+        errores={errores}
+        onTitulo={cambiarTitulo}
+        onCambio={cambiar}
       />
 
       <div className="flex flex-col gap-1">
         <span className="meta text-text-muted">Cuerpo</span>
         <EditorCuerpo
+          key={montaje}
           valor={entrada.cuerpo}
           onCambio={(d) => cambiar('cuerpo', d)}
           notas={enlazables}
@@ -284,14 +256,21 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
 
       <CampoImagen
         urlGuardada={entrada.imagen_portada}
-        urlLocal={urlLocal}
+        urlLocal={imagen.urlLocal}
         alt={entrada.imagen_alt}
         credito={entrada.imagen_credito}
         errorAlt={errores.imagen_alt}
-        onArchivo={elegirArchivo}
+        onArchivo={(archivo) => {
+          if (!imagen.elegir(archivo)) return
+          if (!archivo) cambiar('imagen_portada', null)
+        }}
         onAlt={(v) => cambiar('imagen_alt', v)}
         onCredito={(v) => cambiar('imagen_credito', v)}
       />
+
+      {pendiente && pendiente.tipo !== 'guardar' && borrador.hayConexion && (
+        <AvisoReconexion pendiente={pendiente} ocupado={guardando} onReanudar={() => alPublicar(pendiente)} />
+      )}
 
       <BarraAcciones
         aviso={aviso}
@@ -311,13 +290,12 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
           })}
           sobrePublicada={esSobrePublicada(nota)}
           onVolver={() => setPrevia(false)}
-          onPublicar={() => alPublicar()}
-          onArchivar={(publicadaEn) => alPublicar(publicadaEn)}
-          onProgramar={alProgramar}
+          onPublicar={() => alPublicar({ tipo: 'publicar', publicadaEn: null })}
+          onArchivar={(publicadaEn) => alPublicar({ tipo: 'publicar', publicadaEn })}
+          onProgramar={(publicarEn) => alPublicar({ tipo: 'programar', publicarEn })}
           publicando={guardando}
         />
       )}
     </div>
   )
 }
-

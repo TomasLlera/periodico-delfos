@@ -7,6 +7,7 @@ import {
   cuerpoVacio,
   documentoVacio,
   entradaDesdeNota,
+  erroresPorCampo,
   esDeArchivo,
   esquemaNota,
   firmaDe,
@@ -139,6 +140,19 @@ describe('esquemaNota', () => {
 
   it('rechaza una bajada en blanco', () => {
     expect(esquemaNota.safeParse({ ...NOTA, bajada: '   ' }).success).toBe(false)
+  })
+})
+
+describe('erroresPorCampo', () => {
+  it('vacío si la nota pasa', () => {
+    expect(erroresPorCampo(NOTA)).toEqual({})
+  })
+
+  it('un mensaje por campo, al lado del campo que falla', () => {
+    const errores = erroresPorCampo({ ...NOTA, titulo: '', imagen_portada: 'foto.jpg', imagen_alt: '' })
+
+    expect(Object.keys(errores).sort()).toEqual(['imagen_alt', 'titulo'])
+    expect(errores.imagen_alt).toBe('Si hay imagen, el texto alternativo es obligatorio')
   })
 })
 

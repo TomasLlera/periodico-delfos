@@ -98,7 +98,8 @@ export default defineConfig({
       ? [
           {
             name: 'panel',
-            testMatch: /admin.spec.ts/,
+            // `admin.spec.ts` y los `admin.<algo>.spec.ts`, como el del borrador.
+            testMatch: /admin\.(.+\.)?spec\.ts/,
             dependencies: ['entrar'],
             use: {
               ...devices['Desktop Edge'],

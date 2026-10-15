@@ -83,6 +83,23 @@ export const esquemaNota = z
 
 export type EntradaNota = z.infer<typeof esquemaNota>
 
+/**
+ * Los errores de `esquemaNota`, uno por campo, para mostrar al lado de cada
+ * uno. Vacío si la entrada pasa. Si un campo tiene varios, queda el primero:
+ * dos mensajes debajo de un mismo input se leen como uno solo y largo.
+ */
+export function erroresPorCampo(entrada: unknown): Record<string, string> {
+  const parseo = esquemaNota.safeParse(entrada)
+  if (parseo.success) return {}
+
+  const encontrados: Record<string, string> = {}
+  for (const issue of parseo.error.issues) {
+    const campo = String(issue.path[0] ?? 'general')
+    encontrados[campo] ??= issue.message
+  }
+  return encontrados
+}
+
 // ============================================
 // Publicar
 // ============================================

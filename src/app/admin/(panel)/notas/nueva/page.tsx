@@ -27,7 +27,12 @@ export default async function NotaNueva() {
   return (
     <main className="mx-auto max-w-[900px] px-4 py-8">
       <h1 className="titular mb-6 text-[1.6rem]">Nota nueva</h1>
-      <FormularioNota nota={null} temporadas={temporadas} partidos={partidos} enlazables={enlazables} autor={autor} />
+      {/*
+        El id se reserva acá y no al insertar: es lo que permite reintentar el
+        primer guardado después de un corte sin crear dos notas. La página es
+        `force-dynamic`, así que cada vez que se abre el editor sale uno nuevo.
+      */}
+      <FormularioNota nota={null} id={crypto.randomUUID()} temporadas={temporadas} partidos={partidos} enlazables={enlazables} autor={autor} />
     </main>
   )
 }

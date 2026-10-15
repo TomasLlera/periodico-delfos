@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { z } from 'zod'
 import { inngest, notaPublicada } from '@/lib/inngest/client'
 import {
   chequearFechaDeArchivo,
@@ -86,6 +87,52 @@ function filaDesde(entrada: ReturnType<typeof esquemaNota.parse>) {
   }
 }
 
+type Supabase = Awaited<ReturnType<typeof createClient>>
+type Fila = ReturnType<typeof filaDesde> & Record<string, unknown>
+
+/**
+ * Escribe la nota con el id que trae, exista o no.
+ *
+ * **El id lo pone el navegador al abrir el editor, no la base al insertar.**
+ * Es lo que vuelve idempotente el primer guardado, igual que los eventos de
+ * la planilla: si la nota se escribió pero la respuesta se perdió en un corte
+ * de señal, el reintento la encuentra y la actualiza. Con el id de la base, el
+ * reintento insertaba otra; y si en el medio se había tocado el título —que
+ * mueve el slug—, quedaban dos notas y dos posteos a las redes.
+ *
+ * Primero `update` y después `insert`, y no al revés: editar es lo frecuente
+ * y así cuesta una sola consulta. El segundo `update` cubre la carrera de dos
+ * primeros guardados a la vez —el reintento automático al volver la señal y un
+ * click—: el que pierde el `insert` choca contra la clave primaria.
+ *
+ * No es un `upsert` porque pisaría `autor_id` al editar, y la firma se pone al
+ * crear y no se vuelve a tocar (ver arriba).
+ */
+async function escribirNota(supabase: Supabase, id: string, fila: Fila, autorId: string) {
+  const actualizar = () =>
+    supabase.from('notas').update(fila).eq('id', id).select('id, slug').maybeSingle()
+
+  const actualizada = await actualizar()
+  if (actualizada.error || actualizada.data) return actualizada
+
+  const creada = await supabase
+    .from('notas')
+    .insert({ ...fila, id, autor_id: autorId })
+    .select('id, slug')
+    .single()
+
+  const chocoElId = creada.error?.code === '23505' && creada.error.message.includes('notas_pkey')
+  return chocoElId ? actualizar() : creada
+}
+
+/** El id viene del navegador: se valida como cualquier otro dato del request. */
+const esId = (id: unknown): id is string => z.uuid().safeParse(id).success
+
+/** El 23505 que queda es el del slug: el de la clave primaria ya se resolvió. */
+function errorDeEscritura(error: { code: string }, generico: string): ResultadoNota {
+  return { error: error.code === '23505' ? 'Ya existe una nota con ese slug' : generico }
+}
+
 /**
  * Guarda sin publicar.
  *
@@ -94,9 +141,10 @@ function filaDesde(entrada: ReturnType<typeof esquemaNota.parse>) {
  * es lo que la base no perdona —título, bajada y el alt si hay imagen—, porque
  * un guardado que revienta contra un CHECK pierde el trabajo.
  */
-export async function guardarNota(datos: unknown, id: string | null): Promise<ResultadoNota> {
+export async function guardarNota(datos: unknown, id: string): Promise<ResultadoNota> {
   const autor = await getAutorDeLaSesion()
   if (!autor) return { error: 'Se cerró la sesión. Entrá de nuevo.' }
+  if (!esId(id)) return { error: 'La nota no tiene un id válido' }
 
   const parseo = esquemaNota.safeParse(datos)
   if (!parseo.success) {
@@ -109,7 +157,7 @@ export async function guardarNota(datos: unknown, id: string | null): Promise<Re
   // vez de mandarla siempre. Mandarla igual funcionaria —seria el mismo valor—
   // pero deja la puerta abierta a que un formulario mal prellenado la pise, que
   // es exactamente el bug que esto arregla.
-  const fecha = id ? await fechaGuardada(supabase, id) : null
+  const fecha = await fechaGuardada(supabase, id)
   const cambioLaFecha = !mismaFecha(parseo.data.publicada_en, fecha)
 
   const fila = {
@@ -117,22 +165,12 @@ export async function guardarNota(datos: unknown, id: string | null): Promise<Re
     ...(cambioLaFecha ? { publicada_en: parseo.data.publicada_en } : {}),
   }
 
-  const { data, error } = id
-    ? await supabase.from('notas').update(fila).eq('id', id).select('id, slug').single()
-    : await supabase
-        .from('notas')
-        .insert({ ...fila, autor_id: firmaDe(autor) })
-        .select('id, slug')
-        .single()
+  const { data, error } = await escribirNota(supabase, id, fila, firmaDe(autor))
 
   // El caso frecuente es el slug repetido: dos notas del mismo partido con el
   // mismo título. Decirlo con el nombre del campo evita que parezca un error
   // del sistema.
-  if (error) {
-    return {
-      error: error.code === '23505' ? 'Ya existe una nota con ese slug' : 'No se pudo guardar',
-    }
-  }
+  if (error || !data) return errorDeEscritura(error ?? { code: '' }, 'No se pudo guardar')
 
   return { id: data.id, slug: data.slug }
 }
@@ -203,11 +241,12 @@ async function fechaGuardada(
  */
 export async function publicarNota(
   datos: unknown,
-  id: string | null,
+  id: string,
   publicadaEn: string | null = null,
 ): Promise<ResultadoNota> {
   const autor = await getAutorDeLaSesion()
   if (!autor) return { error: 'Se cerró la sesión. Entrá de nuevo.' }
+  if (!esId(id)) return { error: 'La nota no tiene un id válido' }
 
   const parseo = esquemaNota.safeParse(datos)
   if (!parseo.success) {
@@ -231,7 +270,7 @@ export async function publicarNota(
   // 2. Si no eligio nada, la fecha que la nota YA TENIA. Publicar de nuevo algo
   //    publicado no es volver a publicarlo.
   // 3. Y recien si no hay ninguna de las dos, ahora.
-  const guardada = id ? await fechaGuardada(supabase, id) : null
+  const guardada = await fechaGuardada(supabase, id)
   const elegida = parseo.data.publicada_en ?? publicadaEn
   const sello = elegida ?? guardada ?? new Date().toISOString()
 
@@ -248,19 +287,8 @@ export async function publicarNota(
     publicada_en: new Date(sello).toISOString(),
   }
 
-  const { data, error } = id
-    ? await supabase.from('notas').update(fila).eq('id', id).select('id, slug').single()
-    : await supabase
-        .from('notas')
-        .insert({ ...fila, autor_id: firmaDe(autor) })
-        .select('id, slug')
-        .single()
-
-  if (error) {
-    return {
-      error: error.code === '23505' ? 'Ya existe una nota con ese slug' : 'No se pudo publicar',
-    }
-  }
+  const { data, error } = await escribirNota(supabase, id, fila, firmaDe(autor))
+  if (error || !data) return errorDeEscritura(error ?? { code: '' }, 'No se pudo publicar')
 
   revalidarRutasPublicas(data.slug)
 
@@ -320,11 +348,12 @@ export async function despublicarNota(id: string): Promise<ResultadoNota> {
  */
 export async function programarNota(
   datos: unknown,
-  id: string | null,
+  id: string,
   publicarEn: string | null,
 ): Promise<ResultadoNota> {
   const autor = await getAutorDeLaSesion()
   if (!autor) return { error: 'Se cerró la sesión. Entrá de nuevo.' }
+  if (!esId(id)) return { error: 'La nota no tiene un id válido' }
 
   const parseo = esquemaNota.safeParse(datos)
   if (!parseo.success) {
@@ -348,19 +377,8 @@ export async function programarNota(
     publicar_en: publicarEn,
   }
 
-  const { data, error } = id
-    ? await supabase.from('notas').update(fila).eq('id', id).select('id, slug').single()
-    : await supabase
-        .from('notas')
-        .insert({ ...fila, autor_id: firmaDe(autor) })
-        .select('id, slug')
-        .single()
-
-  if (error) {
-    return {
-      error: error.code === '23505' ? 'Ya existe una nota con ese slug' : 'No se pudo programar',
-    }
-  }
+  const { data, error } = await escribirNota(supabase, id, fila, firmaDe(autor))
+  if (error || !data) return errorDeEscritura(error ?? { code: '' }, 'No se pudo programar')
 
   return { id: data.id, slug: data.slug }
 }
