@@ -3676,3 +3676,78 @@ build` exit 0.
 sesión se corrió con el dev server levantado y hubo que bajarlo. Es la tercera
 vez que pasa. Lo que conviene hacer antes de buildear es mirar quién tiene el
 puerto: `Get-NetTCPConnection -LocalPort 3000`.
+
+## El editor sin señal: borrador local e id desde el navegador — al 15/10/2026
+
+### El bug, probado y no supuesto
+
+Con Playwright, cortando la red sobre el `FormularioNota` real montado en una
+página aparte (build de producción, sin Supabase): **un corte al guardar o al
+publicar dejaba la pantalla genérica de Next** —"Application error: a
+client-side exception has occurred", en inglés y sin botones— **y se perdía la
+nota entera**. Pasaba igual si el pedido no llegó que si el servidor guardó y
+sólo se perdió la respuesta. Los actions tiran `Failed to fetch` sin red, el
+formulario no lo atajaba y `/admin` no tenía `error.tsx`.
+
+Peor el segundo caso: la pantalla no se enteraba del id, el reintento insertaba
+de nuevo y chocaba con el slug ("Ya existe una nota con ese slug") sobre una
+nota que **ya estaba publicada y posteada**; y si en el medio se tocaba el
+título, entraban dos notas y dos posteos a redes.
+
+### Cómo quedó
+
+| Pieza | Dónde |
+|---|---|
+| Crear idempotente: `update` y si no existe `insert` con el id que llega | `escribirNota()` en `src/actions/notas.ts` |
+| El id de la nota nueva se reserva al abrir el editor | `notas/nueva/page.tsx` (`crypto.randomUUID()`) |
+| Lógica pura del borrador (+ 25 tests) | `src/lib/borrador.ts` |
+| IndexedDB de borradores · lo común con la cola | `src/lib/borrador-idb.ts` · `src/lib/idb.ts` |
+| Autoguardado, oferta de recuperar, señal | `src/components/admin/usarBorrador.ts` |
+| Avisos | `AvisoBorrador.tsx` (recuperar/descartar) · `AvisoReconexion.tsx` |
+| Red de contención del panel | `src/app/admin/(panel)/error.tsx` |
+| Spec e2e (no escribe: corta los actions) | `e2e/admin.borrador.spec.ts` |
+
+Las reglas, que son las que no hay que volver a discutir:
+
+- **Primero al dispositivo, después al servidor**, como la cola de la planilla:
+  autoguardado al segundo de pausa y otra vez justo antes de enviar.
+- **Guardar se reintenta solo al volver la señal; publicar y programar
+  preguntan** ("Publicar ahora"). Publicar dispara el posteo y no se hace sin
+  que alguien lo confirme. Reanudar es seguro: mismo id y `social_posts`
+  idempotente.
+- **El aviso dice "no pudimos confirmar", nunca "no se guardó"**: sin respuesta
+  no se sabe de qué lado se cortó.
+- La foto subida deja de estar pendiente aunque después falle el guardado: el
+  reintento no la vuelve a subir.
+- TipTap lee `valor` sólo al crearse; recuperar un borrador lo remonta con una
+  `key` (`montaje` en `FormularioNota`).
+
+`cola-idb.ts` ahora usa `idb.ts`; misma base (`delfos-planilla`), mismo
+almacén y misma versión, así que lo que haya en cola en un teléfono sigue ahí.
+
+### Verificado
+
+`tsc` limpio, lint con los 5 warnings de siempre, **758 tests en 45 archivos**.
+La prueba de red contra el formulario montado aparte, **27/27**: sin red, respuesta
+perdida, recargar y recuperar, descartar, abrir sin escribir, publicar sin red
+(no publica solo al volver), y red lenta con cinco clics (un solo envío).
+
+**No verificado**: el camino feliz contra la base (el reintento que guarda de
+verdad y el `update` sobre la nota que ya se había creado) y el spec e2e, que
+necesita el usuario de prueba y `.env.local`, que en esta máquina no están.
+
+### Lo que se encontró en producción y queda sin arreglar
+
+De la revisión con Postman/Newman contra `periodico-delfos.vercel.app`:
+
+1. **Las 82 redirecciones de WordPress terminan en 404.** Todos los `source`
+   llevan barra final; Next contesta antes con un 308 a la URL sin barra, que
+   ya no matchea ninguna regla. Contradice lo de "Vercel matchea `source`
+   literal" de más arriba. Además 70 de los 74 destinos todavía no existen
+   (falta `migrate-wp.ts --escribir`).
+2. **`GET /api/inngest` da 500** (`internal_server_error`). Lo más probable es
+   `INNGEST_SIGNING_KEY` vacía en Vercel: el auto-posteo no estaría andando.
+3. **Las páginas inexistentes responden 200** con `noindex`, no 404 (soft 404).
+4. **Las queries públicas ignoran `error` de Supabase**: con la base caída, la
+   regeneración ISR guarda páginas vacías encima de las buenas, y las notas
+   salen como "no encontrada" con `noindex`.
