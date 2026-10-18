@@ -9,6 +9,7 @@ import {
   jugadosQueCorresponden,
   puntosQueCorresponden,
   type EntradaFilaTabla,
+  type OrigenDePrecarga,
 } from '@/lib/entidades/tabla'
 import { diferenciaGol, etiquetaDiferencia } from '@/lib/temporada'
 import { Aviso } from '@/components/admin/Aviso'
@@ -29,6 +30,18 @@ import type { Equipo } from '@/types'
  * salen solas. Es lo que hacen los CHECK `puntos_cuadran` y `partidos_cuadran`
  * de `0004`, y hacerlo acá evita el viaje de ida y vuelta al servidor para
  * enterarse de que una resta no cerraba.
+ *
+ * **Las filas vienen precargadas y de dónde salieron se dice en pantalla**
+ * (`precargaDeLaFecha()`). Una fecha nueva abre con la tabla de la fecha
+ * anterior para editar sólo lo que cambió, y eso se parece demasiado a estar
+ * editando una fecha ya guardada como para no avisar cuál de las dos es: lo
+ * primero que ve quien entra es un `<Aviso>` que lo dice.
+ *
+ * **Se carga desde el celular, parado al lado de la cancha.** Los números van
+ * con teclado numérico (`CampoNumero`, `inputMode="numeric"`), todo control
+ * mide 44px de alto (`.tactil`) y las filas son tarjetas separadas y no una
+ * grilla de once por nueve: en 375px una tabla de inputs es imposible de tocar
+ * sin errarle.
  */
 
 /** Una fila mientras se edita: la entrada de la base más el orden en pantalla. */
@@ -38,11 +51,21 @@ interface Props {
   temporadaId: string
   fechaNumero: number
   equipos: readonly Equipo[]
-  /** Lo que ya está cargado de esta fecha, si hay algo. */
+  /** Con qué filas abre: lo guardado de esta fecha, la copia de la anterior o los equipos en cero. */
   filasGuardadas: readonly EntradaFilaTabla[]
+  origen: OrigenDePrecarga
+  /** De qué fecha se copió, cuando `origen` es `fecha-anterior`. */
+  copiadaDe: number | null
 }
 
-export function EditorTabla({ temporadaId, fechaNumero, equipos, filasGuardadas }: Props) {
+export function EditorTabla({
+  temporadaId,
+  fechaNumero,
+  equipos,
+  filasGuardadas,
+  origen,
+  copiadaDe,
+}: Props) {
   const router = useRouter()
   const [filas, setFilas] = useState<FilaEditable[]>(() =>
     filasGuardadas.map((f) => ({
@@ -121,12 +144,7 @@ export function EditorTabla({ temporadaId, fechaNumero, equipos, filasGuardadas 
         </Aviso>
       ))}
 
-      {filas.length === 0 && (
-        <Aviso>
-          Esta fecha todavía no tiene tabla. Se carga un equipo por fila, en el orden en que
-          están publicados.
-        </Aviso>
-      )}
+      <DeDondeSalieron origen={origen} copiadaDe={copiadaDe} fechaNumero={fechaNumero} />
 
       <ul className="flex flex-col gap-4">
         {filas.map((fila, indice) => {
@@ -135,9 +153,9 @@ export function EditorTabla({ temporadaId, fechaNumero, equipos, filasGuardadas 
           const diferencia = diferenciaGol(fila)
 
           return (
-            <li key={indice} className="border border-border bg-bg-elevated p-3">
+            <li key={indice} className="border border-border bg-bg-elevated p-3 sm:p-4">
               <div className="mb-3 flex flex-wrap items-end gap-3">
-                <div className="w-16">
+                <div className="w-20">
                   <CampoNumero
                     id={`posicion-${indice}`}
                     etiqueta="Puesto"
@@ -168,7 +186,10 @@ export function EditorTabla({ temporadaId, fechaNumero, equipos, filasGuardadas 
                 </button>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
+              {/* Tres columnas en el celular y cinco de 640 para arriba: con
+                  cinco en 375px cada input queda en 50px y el teclado numérico
+                  tapa la mitad de la fila. */}
+              <div className="grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-5 sm:gap-y-3">
                 <CampoNumero
                   id={`ganados-${indice}`}
                   etiqueta="Ganados"
@@ -258,5 +279,57 @@ export function EditorTabla({ temporadaId, fechaNumero, equipos, filasGuardadas 
         </span>
       </div>
     </div>
+  )
+}
+
+/**
+ * De dónde salieron las filas que están en pantalla.
+ *
+ * Editar lo guardado y editar una copia de la fecha anterior se ven igual —once
+ * filas con números— y se guardan distinto: la copia, si no se toca, publica la
+ * tabla de la semana pasada como si fuera la de esta. Por eso el aviso es lo
+ * primero del formulario y no una nota al pie.
+ */
+function DeDondeSalieron({
+  origen,
+  copiadaDe,
+  fechaNumero,
+}: {
+  origen: OrigenDePrecarga
+  copiadaDe: number | null
+  fechaNumero: number
+}) {
+  if (origen === 'guardada') {
+    return (
+      <Aviso>
+        La fecha {fechaNumero} ya está cargada: esto es lo suyo. Lo que se guarde modifica
+        sólo esa fecha y no toca las otras.
+      </Aviso>
+    )
+  }
+
+  if (origen === 'fecha-anterior') {
+    return (
+      <Aviso tono="atencion">
+        Precargada con la tabla de la fecha {copiadaDe}. Editá lo que cambió en la fecha{' '}
+        {fechaNumero} —los puestos y los resultados de los equipos que jugaron— y guardá.
+      </Aviso>
+    )
+  }
+
+  if (origen === 'equipos') {
+    return (
+      <Aviso>
+        Primera fecha de la temporada: los equipos vienen en cero y en orden alfabético.
+        Acomodá los puestos y cargá los resultados.
+      </Aviso>
+    )
+  }
+
+  return (
+    <Aviso tono="atencion">
+      No hay ningún equipo cargado todavía. Se cargan en Equipos y después vuelve a esta
+      pantalla, o se agregan de a uno acá abajo.
+    </Aviso>
   )
 }

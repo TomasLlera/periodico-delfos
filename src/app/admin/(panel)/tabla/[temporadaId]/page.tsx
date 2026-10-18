@@ -2,7 +2,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { EditorTabla } from '@/components/admin/EditorTabla'
-import { fechaSugerida } from '@/lib/entidades/tabla'
+import {
+  fechaAnteriorCargada,
+  fechaSugerida,
+  precargaDeLaFecha,
+} from '@/lib/entidades/tabla'
 import { getEquipos } from '@/lib/supabase/queries/equipos'
 import {
   getFechasConTabla,
@@ -17,6 +21,12 @@ import {
  * así se puede volver a una fecha vieja desde el historial, compartir el link y
  * recargar sin perder dónde se estaba. Sin el parámetro, abre en la siguiente a
  * la última cargada, que es la que toca casi siempre.
+ *
+ * **Una fecha nueva abre con la tabla de la fecha anterior ya cargada**, para
+ * editar sólo lo que cambió: entre dos fechas se mueven tres o cuatro equipos y
+ * el resto repite los mismos nueve números. La decisión de con qué filas abre
+ * —lo guardado, la copia de la anterior o los equipos en cero— es
+ * `precargaDeLaFecha()`, que está testeada aparte.
  */
 export const dynamic = 'force-dynamic'
 
@@ -50,7 +60,21 @@ export default async function Tabla({ params, searchParams }: Params) {
       ? pedida
       : fechaSugerida(cargadas.map((f) => ({ fecha_numero: f })))
 
-  const { filas } = await getTablaPosiciones(temporadaId, fecha)
+  const { filas: guardadas } = await getTablaPosiciones(temporadaId, fecha)
+
+  // La fecha anterior se lee **sólo** si esta no tiene nada: editar una fecha
+  // ya cargada abre con lo suyo, así que la copia sería una consulta al vacío.
+  const anterior = guardadas.length === 0 ? fechaAnteriorCargada(cargadas, fecha) : null
+  const anteriores =
+    anterior === null ? [] : (await getTablaPosiciones(temporadaId, anterior)).filas
+
+  const precarga = precargaDeLaFecha({
+    temporadaId,
+    fechaNumero: fecha,
+    guardadas,
+    anteriores,
+    equipos,
+  })
 
   return (
     <main className="mx-auto max-w-[900px] px-4 py-8">
@@ -85,7 +109,9 @@ export default async function Tabla({ params, searchParams }: Params) {
         temporadaId={temporadaId}
         fechaNumero={fecha}
         equipos={equipos}
-        filasGuardadas={filas}
+        filasGuardadas={precarga.filas}
+        origen={precarga.origen}
+        copiadaDe={precarga.copiadaDe}
       />
     </main>
   )

@@ -137,6 +137,11 @@ export default async function Portada() {
 
   // La tabla va en la columna angosta, con el plantel y las goleadoras: es un
   // bloque de portada y no una pantalla de consulta. El detalle esta a un click.
+  //
+  // Se probo a lo ancho, entre las notas y las secciones, y se volvio: con
+  // cuatro columnas estiradas a 1200px los puntos quedan a media pantalla del
+  // nombre del equipo, y con las once columnas completas deja de ser un bloque
+  // de portada. El ancho de la columna angosta es lo que la mantiene legible.
   const tabla = deportivo.temporada && (
     <TablaDeLaPortada
       temporada={deportivo.temporada}
@@ -209,18 +214,22 @@ export default async function Portada() {
           }
         />
 
-
         {/* El segundo hueco: entre las crónicas y los análisis, que es donde
             Charlie los quiso "mechados entre las filas de notas". */}
         <HuecoSponsors sponsors={sponsors} ubicacion="portada_entre_notas" className="mt-bloque" />
 
-        {/* Con análisis, el plantel y las goleadoras son la columna angosta de
-            la derecha. Sin análisis no pueden quedarse en esa grilla: la
-            primera celda —la ancha, a la izquierda— queda libre y el bloque se
-            corre ahí con un hueco al costado. Pasó en producción con una sola
-            nota publicada, que va de tapa y deja vacíos los otros bloques. En
-            ese caso los dos se reparten el ancho, y `*:mt-0` saca el margen de
-            sección de las goleadoras: la separación ya la da `gap-bloque`. */}
+        {/* Con análisis, el riel es la columna angosta de la derecha. Sin
+            análisis no puede quedarse en esa grilla: la primera celda —la
+            ancha, a la izquierda— queda libre y el bloque se corre ahí con un
+            hueco al costado. Pasó en producción con una sola nota publicada,
+            que va de tapa y deja vacíos los otros bloques. En ese caso los
+            tres se reparten el ancho, y `*:mt-0` saca el margen de sección:
+            la separación ya la da `gap-bloque`.
+
+            Se probó subir el riel hasta el filete de Crónicas, con los
+            análisis a todo el ancho abajo. Se volvió: para que entrara al
+            lado, Crónicas tenía que achicarse a 2/3 y sus tarjetas pasaban de
+            tres por fila a dos, angostas. El riel cuesta menos acá. */}
         {hayAnalisis ? (
           <div className="mt-bloque grid gap-bloque lg:grid-cols-[2fr_1fr]">
             <ListaAnalisis
@@ -231,17 +240,28 @@ export default async function Portada() {
               vacio={portadaVacia ? 'Todavía no hay análisis publicados.' : undefined}
             />
 
-            <div>
-              {plantel}
-              {goleadoras}
+            {/* El orden del riel lo pidió Tomás: la tabla primero, después las
+                goleadoras y el plantel al final. Es de más perecedero a más
+                permanente —la tabla cambia cada fecha, el plantel una vez por
+                temporada—, que es el mismo criterio con el que está ordenada
+                la columna ancha.
+
+                El margen lo pone el riel y no cada bloque: los tres traen su
+                `mt-bloque` propio y el primero tiene que empezar a la altura
+                del análisis, no un bloque más abajo. Con `:first-child` sirve
+                para cualquiera de los tres, que es lo que hace falta porque la
+                tabla y las goleadoras desaparecen solas sin temporada. */}
+            <div className="*:mt-bloque [&>*:first-child]:mt-0">
               {tabla}
+              {goleadoras}
+              {plantel}
             </div>
           </div>
         ) : (
           <div className="mt-bloque grid items-start gap-bloque *:mt-0 lg:grid-cols-2">
-            {plantel}
-            {goleadoras}
             {tabla}
+            {goleadoras}
+            {plantel}
           </div>
         )}
 

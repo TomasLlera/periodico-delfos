@@ -202,3 +202,154 @@ export function etiquetaDiferencia(diferencia: number): string {
   if (diferencia < 0) return `\u2212${Math.abs(diferencia)}`
   return '0'
 }
+
+// ============================================
+// La tabla, fecha por fecha
+// ============================================
+
+/** Las once filas de una fecha, ya ordenadas por puesto. */
+export interface TablaDeFecha {
+  fecha: number
+  filas: FilaTablaConEquipo[]
+}
+
+/**
+ * Parte las filas de la temporada entera en una tabla por fecha.
+ *
+ * **Existe para que el selector de fecha no vuelva al servidor.** La página de
+ * temporada trae todas las filas en una consulta —son once por fecha, catorce
+ * fechas: menos de lo que pesa una foto— y el cliente cambia de fecha sin
+ * navegar. La alternativa era leer `?fecha=` en el servidor, y eso saca a la
+ * página del prerender.
+ *
+ * Las fechas salen de la más vieja a la más nueva, que es el orden en que el
+ * selector las ofrece y el que necesita la comparación con la fecha anterior.
+ * El orden no se da por supuesto aunque la query ya ordene: acá entra la demo.
+ */
+export function agruparTablaPorFecha(
+  filas: readonly FilaTablaConEquipo[],
+): TablaDeFecha[] {
+  const porFecha = new Map<number, FilaTablaConEquipo[]>()
+
+  for (const fila of filas) {
+    const deLaFecha = porFecha.get(fila.fecha_numero)
+    if (deLaFecha) deLaFecha.push(fila)
+    else porFecha.set(fila.fecha_numero, [fila])
+  }
+
+  return [...porFecha.entries()]
+    .sort(([una], [otra]) => una - otra)
+    .map(([fecha, deLaFecha]) => ({
+      fecha,
+      filas: [...deLaFecha].sort((a, b) => a.posicion - b.posicion),
+    }))
+}
+
+/** Las fechas que el selector puede ofrecer: las que tienen tabla cargada. */
+export function fechasDisponibles(tablas: readonly TablaDeFecha[]): number[] {
+  return tablas.map((tabla) => tabla.fecha)
+}
+
+/**
+ * Qué fecha pide la URL, de las que existen.
+ *
+ * `?fecha=` es entrada de usuario y además puede quedar vieja —un link
+ * compartido a la fecha 3 de una temporada que se recargó entera—, así que
+ * cualquier cosa que no sea una fecha cargada cae en la última en lugar de
+ * dejar la pantalla sin tabla.
+ */
+export function fechaPedidaDeTabla(
+  valor: string | null | undefined,
+  fechas: readonly number[],
+): number | null {
+  const ultima = fechas.length > 0 ? fechas[fechas.length - 1] : null
+
+  if (valor === null || valor === undefined || valor.trim() === '') return ultima
+
+  const pedida = Number(valor)
+  if (!Number.isInteger(pedida)) return ultima
+
+  return fechas.includes(pedida) ? pedida : ultima
+}
+
+export function tablaDeLaFecha(
+  tablas: readonly TablaDeFecha[],
+  fecha: number | null,
+): TablaDeFecha | null {
+  if (fecha === null) return null
+  return tablas.find((tabla) => tabla.fecha === fecha) ?? null
+}
+
+/**
+ * La fecha cargada inmediatamente anterior, que es contra la que se compara.
+ *
+ * **Es la anterior cargada, no `fecha - 1`.** Si la fecha 7 no se cargó nunca,
+ * la 8 se compara con la 6: comparar contra una fecha vacía daría "subió once
+ * puestos" para los once equipos.
+ */
+export function tablaPrevia(
+  tablas: readonly TablaDeFecha[],
+  fecha: number,
+): TablaDeFecha | null {
+  const previas = tablas.filter((tabla) => tabla.fecha < fecha)
+  return previas[previas.length - 1] ?? null
+}
+
+export type Movimiento = 'subio' | 'bajo' | 'mantuvo'
+
+export interface CambioDePuesto {
+  movimiento: Movimiento
+  /** Cuántos puestos, siempre positivo. El sentido lo dice `movimiento`. */
+  puestos: number
+}
+
+/**
+ * Qué hizo cada equipo respecto de la fecha anterior, por `equipo_id`.
+ *
+ * **Sin fecha anterior el mapa vuelve vacío**, y la tabla no dibuja ningún
+ * indicador: en la primera fecha cargada nadie subió ni bajó, y poner "mantuvo"
+ * once veces es afirmar algo que no se sabe.
+ *
+ * Un equipo que no estaba en la fecha anterior tampoco tiene indicador. Pasa de
+ * verdad: la tabla se carga a mano y una fecha puede haberse cargado con diez
+ * de los once equipos.
+ */
+export function cambiosDePuesto(
+  actual: readonly Pick<FilaTabla, 'equipo_id' | 'posicion'>[],
+  anterior: readonly Pick<FilaTabla, 'equipo_id' | 'posicion'>[] | null,
+): Map<string, CambioDePuesto> {
+  const cambios = new Map<string, CambioDePuesto>()
+  if (anterior === null) return cambios
+
+  const antes = new Map(anterior.map((fila) => [fila.equipo_id, fila.posicion]))
+
+  for (const fila of actual) {
+    const puestoAnterior = antes.get(fila.equipo_id)
+    if (puestoAnterior === undefined) continue
+
+    // Subir es bajar de número: del 8 al 5 son tres puestos para arriba.
+    const diferencia = puestoAnterior - fila.posicion
+
+    cambios.set(fila.equipo_id, {
+      movimiento: diferencia > 0 ? 'subio' : diferencia < 0 ? 'bajo' : 'mantuvo',
+      puestos: Math.abs(diferencia),
+    })
+  }
+
+  return cambios
+}
+
+/**
+ * El indicador en palabras: lo que lee quien no ve la flecha.
+ *
+ * El color y la flecha no alcanzan —el rojo y el verde son el mismo gris en
+ * escala de grises, y una flecha sin texto es un carácter que el lector de
+ * pantalla puede leer como "triángulo negro hacia arriba"—, así que cada
+ * indicador lleva esta frase en un `sr-only`.
+ */
+export function textoDeCambio(cambio: CambioDePuesto): string {
+  if (cambio.movimiento === 'mantuvo') return 'Mantiene el puesto'
+
+  const verbo = cambio.movimiento === 'subio' ? 'Subió' : 'Bajó'
+  return `${verbo} ${cambio.puestos} ${cambio.puestos === 1 ? 'puesto' : 'puestos'}`
+}

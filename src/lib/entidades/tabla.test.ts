@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   esquemaFilaTabla,
+  fechaAnteriorCargada,
   fechasSinTabla,
   fechaSugerida,
   filaEnBlanco,
+  precargaDeLaFecha,
   huecosDeLaFecha,
   jugadosQueCorresponden,
   motivosQueNoCuadran,
@@ -168,5 +170,95 @@ describe('fechasSinTabla', () => {
 
   it('las devuelve en orden, que es como se cargan', () => {
     expect(fechasSinTabla([jugado(7), jugado(3), jugado(5)], [3])).toEqual([5, 7])
+  })
+})
+
+describe('fechaAnteriorCargada', () => {
+  it('es la última cargada que sea anterior', () => {
+    expect(fechaAnteriorCargada([1, 2, 3], 4)).toBe(3)
+  })
+
+  /** Con la 7 sin cargar, la 8 se precarga con la 6 y no con una fecha vacía. */
+  it('salta los huecos', () => {
+    expect(fechaAnteriorCargada([4, 5, 6], 8)).toBe(6)
+  })
+
+  it('no mira las posteriores ni la propia', () => {
+    expect(fechaAnteriorCargada([3, 5, 9], 5)).toBe(3)
+    expect(fechaAnteriorCargada([5, 9], 5)).toBeNull()
+  })
+
+  it('sin nada cargado no hay anterior', () => {
+    expect(fechaAnteriorCargada([], 1)).toBeNull()
+  })
+})
+
+describe('precargaDeLaFecha', () => {
+  const EQUIPOS = [
+    { id: 'eq-m', nombre_corto: 'Moron' },
+    { id: 'eq-a', nombre_corto: 'Aldosivi' },
+    { id: 'eq-c', nombre_corto: 'Central' },
+  ]
+
+  const base = { temporadaId: TEMPORADA, fechaNumero: 8, equipos: EQUIPOS }
+
+  function fila(fechaNumero: number, posicion: number, equipoId: string) {
+    return { ...FILA, fecha_numero: fechaNumero, posicion, equipo_id: equipoId }
+  }
+
+  it('lo guardado manda: corregir una fecha pasada abre con lo suyo', () => {
+    const guardadas = [fila(8, 1, 'eq-a')]
+    const precarga = precargaDeLaFecha({
+      ...base,
+      guardadas,
+      anteriores: [fila(7, 5, 'eq-a')],
+    })
+
+    expect(precarga.origen).toBe('guardada')
+    expect(precarga.filas).toEqual(guardadas)
+    expect(precarga.copiadaDe).toBeNull()
+  })
+
+  it('una fecha nueva se precarga con la anterior, ya mudada a la fecha nueva', () => {
+    const precarga = precargaDeLaFecha({
+      ...base,
+      guardadas: [],
+      anteriores: [fila(7, 1, 'eq-c'), fila(7, 2, 'eq-a')],
+    })
+
+    expect(precarga.origen).toBe('fecha-anterior')
+    expect(precarga.copiadaDe).toBe(7)
+    expect(precarga.filas.map((f) => f.fecha_numero)).toEqual([8, 8])
+    // Los puestos y los números se copian tal cual: se edita lo que cambió.
+    expect(precarga.filas.map((f) => f.posicion)).toEqual([1, 2])
+    expect(precarga.filas[0].puntos).toBe(FILA.puntos)
+  })
+
+  it('la copia no toca las filas de la fecha anterior', () => {
+    const anteriores = [fila(7, 1, 'eq-c')]
+    precargaDeLaFecha({ ...base, guardadas: [], anteriores })
+    expect(anteriores[0].fecha_numero).toBe(7)
+  })
+
+  it('sin anterior, los equipos en cero y en orden alfabético', () => {
+    const precarga = precargaDeLaFecha({ ...base, guardadas: [], anteriores: [] })
+
+    expect(precarga.origen).toBe('equipos')
+    expect(precarga.filas.map((f) => f.equipo_id)).toEqual(['eq-a', 'eq-c', 'eq-m'])
+    expect(precarga.filas.map((f) => f.posicion)).toEqual([1, 2, 3])
+    expect(precarga.filas.every((f) => f.puntos === 0 && f.jugados === 0)).toBe(true)
+    expect(precarga.filas.every((f) => f.fecha_numero === 8)).toBe(true)
+  })
+
+  it('sin equipos cargados queda vacía, y la pantalla lo dice', () => {
+    const precarga = precargaDeLaFecha({
+      ...base,
+      equipos: [],
+      guardadas: [],
+      anteriores: [],
+    })
+
+    expect(precarga.origen).toBe('vacia')
+    expect(precarga.filas).toEqual([])
   })
 })

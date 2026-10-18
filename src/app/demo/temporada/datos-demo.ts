@@ -28,6 +28,7 @@
  * Mozquera/Mosquera— y eso lo tiene que unificar una persona, no un script.
  */
 
+import { agruparTablaPorFecha, type TablaDeFecha } from '@/lib/temporada'
 import type {
   Equipo,
   EstadisticasJugadora,
@@ -257,6 +258,7 @@ export const fixtureDemo: PartidoConEquipos[] = [
  * 13 puntos—.
  */
 function fila(
+  fechaNumero: number,
   posicion: number,
   eq: Equipo,
   ganados: number,
@@ -266,9 +268,9 @@ function fila(
   golesContra: number,
 ): FilaTablaConEquipo {
   return {
-    id: `tab-${eq.id}`,
+    id: `tab-${fechaNumero}-${eq.id}`,
     temporada_id: temporadaDemo.id,
-    fecha_numero: 12,
+    fecha_numero: fechaNumero,
     equipo_id: eq.id,
     posicion,
     puntos: ganados * 3 + empatados,
@@ -289,17 +291,50 @@ export const FECHA_TABLA_DEMO = 12
  * zona. Inventar dos clubes más para llenar la tabla sería inventar clubes.
  */
 export const tablaDemo: FilaTablaConEquipo[] = [
-  fila(1, CENTRAL, 10, 1, 1, 34, 6),
-  fila(2, ALL_BOYS, 9, 2, 1, 28, 9),
-  fila(3, UAI, 8, 2, 2, 24, 12),
-  fila(4, DEFENSA, 7, 3, 2, 21, 13),
-  fila(5, MORON, 6, 3, 3, 18, 14),
-  fila(6, COMUNICACIONES, 5, 4, 3, 16, 15),
-  fila(7, DEFENSORES, 5, 2, 5, 15, 17),
-  fila(8, ALDOSIVI, 4, 1, 7, 23, 35),
-  fila(9, ESTRELLA, 3, 3, 6, 13, 20),
-  fila(10, CLAYPOLE, 2, 2, 8, 10, 26),
+  fila(12, 1, CENTRAL, 10, 1, 1, 34, 6),
+  fila(12, 2, ALL_BOYS, 9, 2, 1, 28, 9),
+  fila(12, 3, UAI, 8, 2, 2, 24, 12),
+  fila(12, 4, DEFENSA, 7, 3, 2, 21, 13),
+  fila(12, 5, MORON, 6, 3, 3, 18, 14),
+  fila(12, 6, COMUNICACIONES, 5, 4, 3, 16, 15),
+  fila(12, 7, DEFENSORES, 5, 2, 5, 15, 17),
+  fila(12, 8, ALDOSIVI, 4, 1, 7, 23, 35),
+  fila(12, 9, ESTRELLA, 3, 3, 6, 13, 20),
+  fila(12, 10, CLAYPOLE, 2, 2, 8, 10, 26),
 ]
+
+/**
+ * La misma tabla una fecha antes, para poder mirar el selector de fecha y el
+ * indicador de subió y bajó.
+ *
+ * **Son las filas de la fecha 12 menos el resultado de la fecha 12**, así que
+ * las dos tablas no se pueden contradecir. La de Aldosivi sale del fixture de
+ * verdad —la fecha 12 la perdió 1 a 2 con Defensa, así que una fecha antes
+ * tenía 22 goles a favor, 33 en contra y los mismos 13 puntos—; las otras
+ * nueve son inventadas igual que arriba.
+ *
+ * Lo que se mueve entre las dos fechas es la punta: All Boys venía primero,
+ * perdió, y Central —que ganó 3 a 0— lo pasó. Los otros ocho mantienen el
+ * puesto, que es lo que pasa casi siempre y es el tercer estado del indicador.
+ */
+export const tablaDemoFechaAnterior: FilaTablaConEquipo[] = [
+  fila(11, 1, ALL_BOYS, 9, 2, 0, 27, 7),
+  fila(11, 2, CENTRAL, 9, 1, 1, 31, 6),
+  fila(11, 3, UAI, 8, 2, 1, 23, 10),
+  fila(11, 4, DEFENSA, 7, 2, 2, 19, 11),
+  fila(11, 5, MORON, 6, 3, 2, 17, 12),
+  fila(11, 6, COMUNICACIONES, 5, 3, 3, 15, 14),
+  fila(11, 7, DEFENSORES, 4, 2, 5, 13, 16),
+  fila(11, 8, ALDOSIVI, 4, 1, 6, 22, 33),
+  fila(11, 9, ESTRELLA, 3, 3, 5, 12, 18),
+  fila(11, 10, CLAYPOLE, 2, 2, 7, 9, 23),
+]
+
+/** Las dos fechas juntas, como las trae `getTablasDeLaTemporada()`. */
+export const tablasDemo: TablaDeFecha[] = agruparTablaPorFecha([
+  ...tablaDemoFechaAnterior,
+  ...tablaDemo,
+])
 
 // ============================================
 // Goleadoras — las 23 de Aldosivi, contadas de las incidencias

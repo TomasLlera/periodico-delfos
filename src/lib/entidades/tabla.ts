@@ -193,3 +193,98 @@ export function fechasSinTabla(
 
   return [...pendientes].sort((a, b) => a - b)
 }
+
+/**
+ * La fecha cargada inmediatamente anterior a la que se está editando.
+ *
+ * Es contra la que se precarga el formulario, y es **la anterior cargada, no
+ * `fecha - 1`**: si la fecha 7 nunca se cargó, la 8 se precarga con la 6. Con
+ * `fecha - 1` la pantalla abriría vacía justo cuando hay un hueco, que es
+ * cuando más conviene tener de dónde copiar.
+ */
+export function fechaAnteriorCargada(
+  cargadas: readonly number[],
+  fecha: number,
+): number | null {
+  const previas = cargadas.filter((cargada) => cargada < fecha)
+  return previas.length > 0 ? Math.max(...previas) : null
+}
+
+/**
+ * De dónde salieron las filas que muestra el formulario. Lo dice la pantalla:
+ * editar lo que ya estaba guardado y editar una copia de la fecha anterior se
+ * parecen demasiado como para no avisar cuál de las dos es.
+ */
+export type OrigenDePrecarga = 'guardada' | 'fecha-anterior' | 'equipos' | 'vacia'
+
+export interface Precarga {
+  filas: EntradaFilaTabla[]
+  origen: OrigenDePrecarga
+  /** De qué fecha se copió, cuando el origen es `fecha-anterior`. */
+  copiadaDe: number | null
+}
+
+/**
+ * Con qué filas abre el formulario de una fecha.
+ *
+ * **Una fecha nueva se precarga con la tabla de la fecha anterior**, porque es
+ * lo que pasa de verdad: entre dos fechas se mueven tres o cuatro equipos y el
+ * resto repite los mismos nueve números. Cargar once filas desde cero todas las
+ * semanas es escribir a mano cien números que ya estaban escritos, y cada uno
+ * es una oportunidad de tipear mal.
+ *
+ * **Lo guardado manda sobre la copia.** Si la fecha ya tiene tabla —se está
+ * corrigiendo una fecha pasada— se abre con lo suyo y no con la anterior:
+ * pisarlo con una copia sería perder la corrección que alguien vino a hacer.
+ * Y como `guardarTabla()` reemplaza sólo `(temporada_id, fecha_numero)`,
+ * editar una fecha vieja no toca las otras.
+ *
+ * **Sin fecha anterior se precarga con los equipos en cero**, en orden
+ * alfabético. El orden importa menos que el hecho de que estén: así la primera
+ * carga de la temporada es elegir puestos y tipear resultados, no agregar once
+ * filas de a una. Alfabético y no el de `getEquipos()` —que pone a Aldosivi
+ * primero— para no dejar al club en el puesto 1 de una tabla que nadie cargó
+ * todavía.
+ */
+export function precargaDeLaFecha({
+  temporadaId,
+  fechaNumero,
+  guardadas,
+  anteriores,
+  equipos,
+}: {
+  temporadaId: string
+  fechaNumero: number
+  guardadas: readonly EntradaFilaTabla[]
+  anteriores: readonly EntradaFilaTabla[]
+  equipos: readonly { id: string; nombre_corto: string }[]
+}): Precarga {
+  if (guardadas.length > 0) {
+    return { filas: [...guardadas], origen: 'guardada', copiadaDe: null }
+  }
+
+  if (anteriores.length > 0) {
+    return {
+      filas: anteriores.map((fila) => ({ ...fila, fecha_numero: fechaNumero })),
+      origen: 'fecha-anterior',
+      copiadaDe: anteriores[0].fecha_numero,
+    }
+  }
+
+  if (equipos.length > 0) {
+    const alfabetico = [...equipos].sort((a, b) =>
+      a.nombre_corto.localeCompare(b.nombre_corto, 'es'),
+    )
+
+    return {
+      filas: alfabetico.map((equipo, indice) => ({
+        ...filaEnBlanco(temporadaId, fechaNumero, indice + 1),
+        equipo_id: equipo.id,
+      })),
+      origen: 'equipos',
+      copiadaDe: null,
+    }
+  }
+
+  return { filas: [], origen: 'vacia', copiadaDe: null }
+}

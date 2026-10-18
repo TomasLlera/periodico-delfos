@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { HAY_CREDENCIALES, SIN_CREDENCIALES } from './credenciales'
 
 /**
@@ -128,5 +128,57 @@ test.describe('el editor de notas', () => {
 
     await page.getByRole('button', { name: 'Cerrar' }).click()
     await expect(page.getByText('Embeber una planilla')).toHaveCount(0)
+  })
+})
+
+/**
+ * La carga de la tabla de posiciones, que es la única pantalla del panel donde
+ * se escribe un dato deportivo a mano.
+ *
+ * **No guarda nada**, como el resto del archivo: lo que se prueba es con qué
+ * filas abre el formulario, que es lo que decide si cargar una fecha son cuatro
+ * correcciones o cien números tipeados de nuevo. La decisión en sí está testeada
+ * sin navegador en `src/lib/entidades/tabla.test.ts`; acá se prueba el cableado
+ * contra la base de verdad.
+ */
+test.describe('la tabla de posiciones', () => {
+  /** El id de la temporada sale del listado: no se puede hardcodear. */
+  async function irALaTabla(page: Page, fecha?: number) {
+    await page.goto('/admin/temporadas', { waitUntil: 'load' })
+
+    const link = page.locator('a[href^="/admin/tabla/"]').first()
+    await expect(link).toBeVisible()
+    const href = await link.getAttribute('href')
+
+    await page.goto(fecha === undefined ? href! : `${href}?fecha=${fecha}`, {
+      waitUntil: 'load',
+    })
+  }
+
+  test('una fecha nueva abre precargada con la fecha anterior', async ({ page }) => {
+    // Sin `?fecha=`, abre en la siguiente a la última cargada: la fecha nueva.
+    await irALaTabla(page)
+
+    const aviso = page.getByText(/Precargada con la tabla de la fecha|Primera fecha de la temporada/)
+    await expect(aviso).toBeVisible()
+
+    // Y con filas, que es el punto: precargada no es vacía.
+    await expect(page.getByLabel('Puesto', { exact: false }).first()).toBeVisible()
+  })
+
+  test('una fecha ya cargada abre con lo suyo y lo dice', async ({ page }) => {
+    await irALaTabla(page, 1)
+
+    await expect(page.getByText(/La fecha 1 ya está cargada/)).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Guardar la fecha 1' })).toBeVisible()
+  })
+
+  /** Se carga desde el celular: el teclado numérico sale del tipo del input. */
+  test('los números se cargan con teclado numérico', async ({ page }) => {
+    await irALaTabla(page, 1)
+
+    const ganados = page.locator('#ganados-0')
+    await expect(ganados).toHaveAttribute('type', 'number')
+    await expect(ganados).toHaveAttribute('inputmode', 'numeric')
   })
 })

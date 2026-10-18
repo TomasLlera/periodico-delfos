@@ -6,13 +6,13 @@ import { Header } from '@/components/layout/Header'
 import { FixtureTemporada } from '@/components/temporada/FixtureTemporada'
 import { ListaGoleadoras } from '@/components/temporada/ListaGoleadoras'
 import { PestanasTemporada } from '@/components/temporada/PestanasTemporada'
-import { TablaPosiciones } from '@/components/temporada/TablaPosiciones'
+import { TablaPorFecha } from '@/components/temporada/TablaPorFecha'
 import { openGraphBase } from '@/lib/seo'
 import { pestanaPedida } from '@/lib/temporada'
 import { getPartidosTemporada } from '@/lib/supabase/queries/partidos'
 import {
   getGoleadoras,
-  getTablaPosiciones,
+  getTablasDeLaTemporada,
   getTemporadaPorSlug,
 } from '@/lib/supabase/queries/temporadas'
 import { haySupabase } from '@/lib/supabase/server'
@@ -128,9 +128,14 @@ async function Fixture({ temporadaId, nombre }: { temporadaId: string; nombre: s
   return <FixtureTemporada partidos={partidos} temporada={nombre} />
 }
 
+/**
+ * **Las tablas de todas las fechas, en una consulta.** El selector de fecha
+ * cambia de tabla en el cliente, sin volver al servidor y sin leer `?fecha=`
+ * acá: leerlo serviría lo mismo pero obligaría a un render por fecha elegida.
+ */
 async function Tabla({ temporadaId, nombre }: { temporadaId: string; nombre: string }) {
-  const { filas, fecha } = await getTablaPosiciones(temporadaId)
-  return <TablaPosiciones filas={filas} fecha={fecha} temporada={nombre} />
+  const tablas = await getTablasDeLaTemporada(temporadaId)
+  return <TablaPorFecha tablas={tablas} temporada={nombre} />
 }
 
 /** 25 y no las 5 de la portada: acá la lista completa es el contenido. */

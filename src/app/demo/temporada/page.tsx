@@ -3,12 +3,12 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { FixtureTemporada } from '@/components/temporada/FixtureTemporada'
 import { ListaGoleadoras } from '@/components/temporada/ListaGoleadoras'
+import { TablaPorFecha } from '@/components/temporada/TablaPorFecha'
 import { TablaPosiciones } from '@/components/temporada/TablaPosiciones'
 import {
-  FECHA_TABLA_DEMO,
   fixtureDemo,
   goleadorasDemo,
-  tablaDemo,
+  tablasDemo,
   temporadaDemo,
 } from '@/app/demo/temporada/datos-demo'
 
@@ -60,12 +60,14 @@ export default function DemoTemporada() {
           <h2 id="demo-tabla" className="marca border-b-[3px] border-border-strong pb-2 text-[1.6rem] uppercase">
             Pestaña 2 · Tabla
           </h2>
+          <p className="prose-nota mt-4 text-text-muted">
+            Con el selector de fecha: la tabla como quedó al terminar la 11 o la
+            12, y al lado de cada equipo si subió, bajó o mantuvo el puesto
+            respecto de la fecha anterior. En la 11 —la primera cargada— no hay
+            indicadores, porque no hay con qué comparar.
+          </p>
           <div className="mt-6">
-            <TablaPosiciones
-              filas={tablaDemo}
-              fecha={FECHA_TABLA_DEMO}
-              temporada={temporadaDemo.nombre}
-            />
+            <TablaPorFecha tablas={tablasDemo} temporada={temporadaDemo.nombre} />
           </div>
         </section>
 

@@ -1,5 +1,5 @@
 import { createClient, createStaticClient } from '@/lib/supabase/server'
-import { filaDeAldosivi } from '@/lib/temporada'
+import { agruparTablaPorFecha, filaDeAldosivi, type TablaDeFecha } from '@/lib/temporada'
 import type { FilaTablaConEquipo, Goleadora, Temporada } from '@/types'
 
 /** La temporada en curso. Hay un índice único que garantiza que sea una sola. */
@@ -83,6 +83,31 @@ export async function getTablaPosiciones(
     .order('posicion', { ascending: true })
 
   return { filas: (data ?? []) as unknown as FilaTablaConEquipo[], fecha }
+}
+
+/**
+ * **Todas** las tablas de la temporada, una sola consulta, agrupadas por fecha.
+ *
+ * Es lo que necesita el selector de fecha del fixture: trayendo las catorce
+ * fechas juntas, cambiar de fecha pasa en el cliente y la página no tiene que
+ * leer `?fecha=` en el servidor —que es lo que la sacaría del prerender—. El
+ * costo es el tamaño: once filas por fecha, con el equipo embebido, son unos
+ * pocos kilobytes de JSON y se pagan una vez cada sesenta segundos de ISR.
+ *
+ * `createStaticClient()` y no `createClient()`: sin cookies, para no volver
+ * dinámica la página que la llama.
+ */
+export async function getTablasDeLaTemporada(temporadaId: string): Promise<TablaDeFecha[]> {
+  const supabase = createStaticClient()
+
+  const { data } = await supabase
+    .from('tabla_posiciones')
+    .select('*, equipo:equipos(*)')
+    .eq('temporada_id', temporadaId)
+    .order('fecha_numero', { ascending: true })
+    .order('posicion', { ascending: true })
+
+  return agruparTablaPorFecha((data ?? []) as unknown as FilaTablaConEquipo[])
 }
 
 /** Posición de Aldosivi en la última fecha. Para la barra de estado. */

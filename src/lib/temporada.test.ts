@@ -1,12 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import {
+  agruparTablaPorFecha,
   balanceAldosivi,
+  cambiosDePuesto,
   diferenciaGol,
   dividirFixture,
   estadoTemporada,
   etiquetaDiferencia,
+  fechaPedidaDeTabla,
+  fechasDisponibles,
   filaDeAldosivi,
   pestanaPedida,
+  tablaDeLaFecha,
+  tablaPrevia,
+  textoDeCambio,
   ventanaFechaAFecha,
   yaSeJugo,
 } from '@/lib/temporada'
@@ -368,5 +375,172 @@ describe('diferenciaGol y etiquetaDiferencia', () => {
     expect(etiquetaDiferencia(0)).toBe('0')
     // U+2212, no un guion: alinea con los dígitos de ancho fijo.
     expect(etiquetaDiferencia(-5)).toBe('\u22125')
+  })
+})
+
+// ============================================
+// La tabla, fecha por fecha
+// ============================================
+
+/**
+ * Las filas de la tabla llegan del servidor en una sola consulta, todas las
+ * fechas juntas, así que los helpers que las parten y las comparan son lo que
+ * decide qué muestra el selector. Se testean con el orden mezclado a propósito:
+ * la consulta ordena, pero la demo arma los arrays a mano.
+ */
+function filaDeTabla(fecha: number, posicion: number, equipo: Equipo): FilaTablaConEquipo {
+  return {
+    id: `t-${fecha}-${equipo.id}`,
+    temporada_id: TEMPORADA.id,
+    fecha_numero: fecha,
+    equipo_id: equipo.id,
+    posicion,
+    puntos: 0,
+    jugados: 0,
+    ganados: 0,
+    empatados: 0,
+    perdidos: 0,
+    goles_favor: 0,
+    goles_contra: 0,
+    equipo,
+  }
+}
+
+describe('agruparTablaPorFecha', () => {
+  it('parte las filas en una tabla por fecha, de la más vieja a la más nueva', () => {
+    const tablas = agruparTablaPorFecha([
+      filaDeTabla(3, 1, ALDOSIVI),
+      filaDeTabla(1, 2, ALDOSIVI),
+      filaDeTabla(3, 2, MORON),
+      filaDeTabla(1, 1, MORON),
+    ])
+
+    expect(tablas.map((t) => t.fecha)).toEqual([1, 3])
+    expect(tablas[0].filas.map((f) => f.equipo_id)).toEqual(['mor', 'ald'])
+  })
+
+  it('ordena cada fecha por puesto aunque las filas vengan al revés', () => {
+    const tablas = agruparTablaPorFecha([
+      filaDeTabla(1, 3, MORON),
+      filaDeTabla(1, 1, ALDOSIVI),
+      filaDeTabla(1, 2, ALL_BOYS),
+    ])
+
+    expect(tablas[0].filas.map((f) => f.posicion)).toEqual([1, 2, 3])
+  })
+
+  it('sin filas no hay ninguna fecha', () => {
+    expect(agruparTablaPorFecha([])).toEqual([])
+    expect(fechasDisponibles([])).toEqual([])
+  })
+})
+
+describe('fechaPedidaDeTabla', () => {
+  const fechas = [1, 2, 5]
+
+  it('sin parámetro abre en la última cargada', () => {
+    expect(fechaPedidaDeTabla(undefined, fechas)).toBe(5)
+    expect(fechaPedidaDeTabla(null, fechas)).toBe(5)
+    expect(fechaPedidaDeTabla('', fechas)).toBe(5)
+  })
+
+  it('respeta una fecha que existe', () => {
+    expect(fechaPedidaDeTabla('2', fechas)).toBe(2)
+  })
+
+  // Un link compartido a una fecha que después se borró no deja la pantalla
+  // sin tabla: cae en la última.
+  it('una fecha que no está cargada cae en la última', () => {
+    expect(fechaPedidaDeTabla('3', fechas)).toBe(5)
+    expect(fechaPedidaDeTabla('99', fechas)).toBe(5)
+  })
+
+  it('cualquier cosa que no sea un entero cae en la última', () => {
+    expect(fechaPedidaDeTabla('hola', fechas)).toBe(5)
+    expect(fechaPedidaDeTabla('2.5', fechas)).toBe(5)
+    expect(fechaPedidaDeTabla('-1', fechas)).toBe(5)
+  })
+
+  it('sin ninguna fecha cargada devuelve null', () => {
+    expect(fechaPedidaDeTabla('3', [])).toBeNull()
+    expect(fechaPedidaDeTabla(undefined, [])).toBeNull()
+  })
+})
+
+describe('tablaDeLaFecha y tablaPrevia', () => {
+  const tablas = agruparTablaPorFecha([
+    filaDeTabla(2, 1, ALDOSIVI),
+    filaDeTabla(4, 1, ALDOSIVI),
+    filaDeTabla(8, 1, ALDOSIVI),
+  ])
+
+  it('encuentra la tabla de una fecha', () => {
+    expect(tablaDeLaFecha(tablas, 4)?.fecha).toBe(4)
+    expect(tablaDeLaFecha(tablas, 3)).toBeNull()
+    expect(tablaDeLaFecha(tablas, null)).toBeNull()
+  })
+
+  // La fecha 7 no existe: la 8 se compara con la 4, no con una fecha vacía.
+  it('la previa es la cargada anterior y no la fecha menos uno', () => {
+    expect(tablaPrevia(tablas, 8)?.fecha).toBe(4)
+    expect(tablaPrevia(tablas, 4)?.fecha).toBe(2)
+  })
+
+  it('la primera fecha cargada no tiene previa', () => {
+    expect(tablaPrevia(tablas, 2)).toBeNull()
+  })
+})
+
+describe('cambiosDePuesto', () => {
+  it('subir es bajar de número', () => {
+    const cambios = cambiosDePuesto(
+      [{ equipo_id: 'ald', posicion: 5 }],
+      [{ equipo_id: 'ald', posicion: 8 }],
+    )
+
+    expect(cambios.get('ald')).toEqual({ movimiento: 'subio', puestos: 3 })
+  })
+
+  it('bajar es subir de número, y el puesto igual se mantiene', () => {
+    const cambios = cambiosDePuesto(
+      [
+        { equipo_id: 'ald', posicion: 9 },
+        { equipo_id: 'abo', posicion: 2 },
+      ],
+      [
+        { equipo_id: 'ald', posicion: 7 },
+        { equipo_id: 'abo', posicion: 2 },
+      ],
+    )
+
+    expect(cambios.get('ald')).toEqual({ movimiento: 'bajo', puestos: 2 })
+    expect(cambios.get('abo')).toEqual({ movimiento: 'mantuvo', puestos: 0 })
+  })
+
+  // En la primera fecha cargada nadie subió ni bajó: el mapa vuelve vacío y la
+  // tabla no dibuja ningún indicador.
+  it('sin fecha anterior no hay ningún cambio', () => {
+    expect(cambiosDePuesto([{ equipo_id: 'ald', posicion: 1 }], null).size).toBe(0)
+  })
+
+  it('un equipo que no estaba en la fecha anterior no tiene indicador', () => {
+    const cambios = cambiosDePuesto(
+      [
+        { equipo_id: 'ald', posicion: 1 },
+        { equipo_id: 'mor', posicion: 2 },
+      ],
+      [{ equipo_id: 'ald', posicion: 1 }],
+    )
+
+    expect(cambios.has('mor')).toBe(false)
+    expect(cambios.has('ald')).toBe(true)
+  })
+})
+
+describe('textoDeCambio', () => {
+  it('singular y plural, que es lo que lee el lector de pantalla', () => {
+    expect(textoDeCambio({ movimiento: 'subio', puestos: 1 })).toBe('Subió 1 puesto')
+    expect(textoDeCambio({ movimiento: 'bajo', puestos: 3 })).toBe('Bajó 3 puestos')
+    expect(textoDeCambio({ movimiento: 'mantuvo', puestos: 0 })).toBe('Mantiene el puesto')
   })
 })
