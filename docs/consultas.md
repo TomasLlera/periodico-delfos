@@ -206,3 +206,45 @@ abra la consola.
       DevTools → Sources, Ctrl+Shift+F con el principio de la clave, o
       `grep -r "<principio de la clave>" .next/static` después de `pnpm build`.
 - [ ] Supabase → Advisors → Security: **sin tablas sin RLS**.
+
+---
+
+## 5. ¿Hicimos análisis estáticos?
+
+**Respuesta.** Hay herramientas configuradas, pero nada las corre solo: no hay
+CI (`.github/` no existe), ni hooks de git, ni SAST. Se corrieron a mano el
+19/10/2026:
+
+| Herramienta | Qué mira | Resultado |
+|---|---|---|
+| `npx tsc --noEmit` (TS `strict`) | Tipos | **0 errores** |
+| `pnpm lint` (ESLint 9 + `next/core-web-vitals` + `next/typescript`) | Bugs, hooks, accesibilidad básica | **0 errores, 5 warnings** de `<img>`, los deliberados que anota `CLAUDE.md` |
+| `pnpm audit` | Vulnerabilidades conocidas en dependencias | **2 críticas, 12 altas, 6 moderadas, 1 baja** |
+
+Lo importante del audit:
+
+- **`next` 15.5.23**: dos críticas de ejecución remota de código sin
+  autenticación (una en la optimización de imágenes con AVIF, otra en
+  servidores Windows) y cache poisoning de ISR. Se arregla en **15.5.27**,
+  dentro de la 15, así que no choca con la regla de no subir a Next 16.
+- **`sharp`** (lo trae Next para imágenes): varias altas en libvips/libheif/librsvg.
+- **`@tiptap/core` / `prosemirror-view`**: ReDoS y un XSS al pegar en el
+  editor. Afecta al panel, no al sitio público.
+- El resto (`brace-expansion`, `braces`, `js-yaml`, `postcss`, `vitest`…) son
+  herramientas de build y test; no corren en producción.
+
+**Lo que no se hizo nunca**: SAST (CodeQL o Semgrep), búsqueda de secretos en
+el historial (gitleaks), código muerto (knip) y el linter de la base
+(`supabase db lint`).
+
+**Propuesto (no aplicado)**: subir `next` a 15.5.27 y las dependencias con
+parche, y un workflow de GitHub Actions que corra `tsc`, `lint`, `test` y
+`pnpm audit --prod` en cada push.
+
+**Verificar con la base**
+
+- [ ] `pnpm dlx supabase db lint --linked`: el análisis estático de las
+      funciones SQL y las políticas. **Debe salir sin errores.**
+- [ ] Supabase → Advisors → Security y Performance: anotar lo que marquen.
+- [ ] Después de subir `next`, repetir `pnpm build` y los `curl` de la
+      consulta 4 para confirmar que nada cambió.
