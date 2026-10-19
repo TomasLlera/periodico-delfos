@@ -237,9 +237,19 @@ Lo importante del audit:
 el historial (gitleaks), código muerto (knip) y el linter de la base
 (`supabase db lint`).
 
-**Propuesto (no aplicado)**: subir `next` a 15.5.27 y las dependencias con
-parche, y un workflow de GitHub Actions que corra `tsc`, `lint`, `test` y
-`pnpm audit --prod` en cada push.
+**Aplicado el 19/10/2026**:
+
+- `next` y `eslint-config-next` 15.5.23 → **15.5.28** (sigue en la 15).
+- Todo Tiptap 3.29.2 → **3.32.0**, las cinco piezas juntas.
+- `vitest` 4.1.10 → 4.1.12, y `pnpm update` dentro de los rangos.
+- Override en `pnpm-workspace.yaml` para que todo `postcss` sea ≥ 8.5.31: Next
+  traía su propia 8.4.31 vulnerable.
+- `.github/workflows/ci.yml`: `tsc`, `lint`, `test`, `build` y
+  `pnpm audit --prod --audit-level high` en cada push y PR.
+
+Después del cambio: `tsc` 0 errores, lint 0 errores, 756/756 tests, build OK,
+**`pnpm audit --prod` sin vulnerabilidades**. Queda una alta en `braces`, que
+trae ESLint y no llega a producción.
 
 **Verificar con la base**
 

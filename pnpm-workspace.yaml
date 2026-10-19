@@ -7,3 +7,13 @@ allowBuilds:
   protobufjs: true
   sharp: true
   unrs-resolver: true
+
+# Next 15 trae su propio postcss fijado en 8.4.31, con dos vulnerabilidades
+# altas (lectura de archivos vía sourceMappingURL). Sólo procesa el CSS del
+# proyecto en build, pero deja `pnpm audit --prod` en rojo para siempre. La
+# 8.5 es la que ya usa Tailwind y el build pasa con ella. El selector es por
+# versión y no `next>postcss` porque pnpm 11 no aplicó ese. Después de tocar
+# esto, `pnpm dedupe`: `pnpm install` dice "Already up to date" y no re-resuelve.
+# Sacar esto cuando Next la actualice por su cuenta.
+overrides:
+  postcss@<8.5.31: ^8.5.31
