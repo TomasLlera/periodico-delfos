@@ -16,7 +16,7 @@ import { HuecoSponsors } from '@/components/layout/HuecoSponsors'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { etiquetaCategoria } from '@/lib/formato'
-import { jsonLdNota, openGraphBase, urlDeNota } from '@/lib/seo'
+import { jsonLdNota, jsonLdParaScript, openGraphBase, urlDeNota } from '@/lib/seo'
 import { getNotaPorSlug, getNotasRelacionadas, getSlugsNotas } from '@/lib/supabase/queries/notas'
 import { getSponsors } from '@/lib/supabase/queries/sponsors'
 import { getPartidosPorIds } from '@/lib/supabase/queries/partidos'
@@ -154,7 +154,7 @@ export default async function PaginaNota({
           API para datos estructurados y este es el camino que documenta. */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdNota(nota, SITE_URL)) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdParaScript(jsonLdNota(nota, SITE_URL)) }}
       />
     </>
   )

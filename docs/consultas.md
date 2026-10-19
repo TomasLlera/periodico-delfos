@@ -420,11 +420,28 @@ base, no hay tests de RLS, y el e2e no corre en CI (necesita base).
    Supabase Auth.
 4. `lib/supabase/admin.ts` sin `import 'server-only'` (consulta 4).
 
+**Aplicado el 19/10/2026 (1, 2 parcial y 4)**
+
+- `jsonLdParaScript()` en `lib/seo.ts` escapa `<`, `>`, `&`, U+2028 y U+2029
+  como `\uXXXX`, y lo usan las dos páginas. Tres tests nuevos en `seo.test.ts`.
+- `next.config.ts`: `frame-ancestors 'none'`, `base-uri`, `object-src`,
+  `form-action`, `X-Frame-Options`, `nosniff`, `Referrer-Policy`,
+  `Permissions-Policy`, HSTS sin subdominios, y sin `X-Powered-By`.
+  Comprobado con `pnpm start` + `curl -I`: salen todas.
+- **La CSP no limita `script-src`**: necesitaría un nonce por request desde el
+  middleware, y un middleware en todo el sitio mata el ISR. Queda pendiente
+  decidirlo.
+- `import 'server-only'` en `admin.ts`.
+- Sigue faltando: rate limiting (punto 3).
+
 **Verificar con la base**
 
 - [ ] XSS del JSON-LD: con la cuenta redactora, crear una nota con título
       `Prueba </script><script>alert(1)</script>` y publicarla. Abrir
-      `/nota/<slug>`: **hoy salta el alert**; después del arreglo no debe.
+      `/nota/<slug>`: **no debe saltar el alert**, y en Ctrl+U el título debe
+      verse como `</script>` adentro del JSON-LD.
+- [ ] Validar el JSON-LD de esa nota en https://validator.schema.org: el
+      título tiene que leerse con los `<` normales.
 - [ ] Redactor contra editor: con la cuenta redactora, intentar editar la nota
       de la editora desde el panel. **Debe negarse** (RLS `escritura_propias`).
 - [ ] Cabeceras: `curl -I http://localhost:3000/` y anotar cuáles faltan.

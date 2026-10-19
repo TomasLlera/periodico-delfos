@@ -6,7 +6,7 @@ import { NotasRelacionadas } from '@/components/content/NotasRelacionadas'
 import { PlanillaPartido } from '@/components/partido/PlanillaPartido'
 import { TablaPosiciones } from '@/components/temporada/TablaPosiciones'
 import { etiquetaFecha, marcador } from '@/lib/formato'
-import { jsonLdPartido, openGraphBase, urlDePartido } from '@/lib/seo'
+import { jsonLdParaScript, jsonLdPartido, openGraphBase, urlDePartido } from '@/lib/seo'
 import { getNotasDePartido } from '@/lib/supabase/queries/notas'
 import { getPartidoPorSlug, getSlugsPartidos } from '@/lib/supabase/queries/partidos'
 import { getTablaPosiciones } from '@/lib/supabase/queries/temporadas'
@@ -145,9 +145,9 @@ export default async function PaginaPartido({
 
       <script
         type="application/ld+json"
-        // El JSON-LD va como texto: es un dato, no marcado, y Next no lo escapa.
+        // Next no escapa lo que va acá: `jsonLdParaScript` sí (ver seo.ts).
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLdPartido(partido, SITE_URL)),
+          __html: jsonLdParaScript(jsonLdPartido(partido, SITE_URL)),
         }}
       />
 

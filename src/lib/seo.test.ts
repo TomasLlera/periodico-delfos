@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { jsonLdNota, jsonLdPartido, openGraphBase, urlDeNota, urlOg } from '@/lib/seo'
+import { jsonLdNota, jsonLdParaScript, jsonLdPartido, openGraphBase, urlDeNota, urlOg } from '@/lib/seo'
 import type { Autor, NotaConRelaciones } from '@/types'
 
 const AUTOR: Autor = {
@@ -259,5 +259,29 @@ describe('openGraphBase', () => {
     expect(openGraphBase({ titulo: 'Buscar', descripcion: null }, SITIO).description).toBe(
       undefined,
     )
+  })
+})
+
+describe('jsonLdParaScript', () => {
+  const ataque = 'Golazo </script><script>alert(1)</script>'
+
+  it('no deja cerrar el <script> desde un dato', () => {
+    const salida = jsonLdParaScript({ headline: ataque })
+
+    expect(salida).not.toContain('</script>')
+    expect(salida).not.toContain('<')
+    expect(salida).not.toContain('>')
+  })
+
+  it('devuelve el mismo dato al parsearlo', () => {
+    const datos = { headline: ataque, about: 'A & B', raro: 'a\u2028b\u2029c' }
+
+    expect(JSON.parse(jsonLdParaScript(datos))).toEqual(datos)
+  })
+
+  it('escapa un título real de nota, no sólo un objeto suelto', () => {
+    const salida = jsonLdParaScript(jsonLdNota(nota({ titulo: ataque }), 'https://periodicodelfos.com'))
+
+    expect(salida).not.toContain('</script>')
   })
 })

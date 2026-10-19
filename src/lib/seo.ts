@@ -182,3 +182,24 @@ export function jsonLdPartido(
 
   return datos
 }
+
+/**
+ * El JSON-LD listo para ir adentro de un `<script>`.
+ *
+ * `JSON.stringify` solo **no alcanza**: no escapa `<`, y el HTML corta el
+ * `<script>` en el primer `</script>` que encuentra, esté adentro de un string
+ * JSON o no. Un título como `Golazo </script><script>…` ejecutaba código en la
+ * página pública, y lo puede escribir un redactor: si un editor logueado abría
+ * esa nota, el script corría con la sesión del editor.
+ *
+ * Se escapan como `\uXXXX`, que en JSON es el mismo carácter: el dato que lee
+ * Google no cambia. `>` y `&` van por si alguna vez esto termina fuera de un
+ * `<script>`, y U+2028/U+2029 porque JavaScript viejo los toma como fin de
+ * línea adentro de un string.
+ */
+export function jsonLdParaScript(datos: Record<string, unknown>): string {
+  return JSON.stringify(datos).replace(
+    /[<>&\u2028\u2029]/g,
+    (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'),
+  )
+}
