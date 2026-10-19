@@ -329,3 +329,23 @@ armado.
 - [ ] Con la base cargada y `pnpm build`, repetir
       `grep -rl "supabase.co" .next/static`: **no debe haber resultados**
       (además de las URLs de imágenes en el HTML).
+
+---
+
+## 7. ¿Podemos probar contra una base ficticia?
+
+**Respuesta.** Sí. Se descartó Supabase local porque esta máquina no tiene
+Docker, y un Postgres embebido en los tests porque no prueba la API ni Auth.
+Se eligió un **proyecto de Supabase aparte**, gratis, idéntico a producción.
+
+Quedó listo `scripts/base-de-prueba.ts`, con los pasos en "Antes de
+verificar", punto 3. No se corrió todavía: **falta crear el proyecto**.
+
+**Pendiente**
+
+- [ ] Crear el proyecto de prueba en supabase.com y completar `.env.local`
+      (incluidos `SUPABASE_DB_URL` y `BASE_DE_PRUEBA=true`).
+- [ ] `pnpm dlx supabase db push --db-url "$SUPABASE_DB_URL"`.
+- [ ] `pnpm tsx scripts/base-de-prueba.ts --cargar`. Es la primera corrida
+      contra una base real: si un insert falla, el error dice qué tabla.
+- [ ] Recorrer las listas "Verificar con la base" de las consultas 1 a 6.
