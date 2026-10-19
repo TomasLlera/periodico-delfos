@@ -442,6 +442,32 @@ base, no hay tests de RLS, y el e2e no corre en CI (necesita base).
       verse como `</script>` adentro del JSON-LD.
 - [ ] Validar el JSON-LD de esa nota en https://validator.schema.org: el
       título tiene que leerse con los `<` normales.
+
+---
+
+## 9. ¿Qué es CSP?
+
+**Respuesta.** *Content Security Policy*: una cabecera HTTP que le dice al
+navegador de dónde puede cargar o ejecutar cosas la página (scripts, imágenes,
+estilos, iframes, destinos de formularios). Lo que no está en la lista se
+bloquea aunque esté en el HTML. Es la segunda línea contra XSS: si alguien
+logra meter un `<script>`, el navegador no lo ejecuta.
+
+En este proyecto (ver consulta 8) la CSP tiene `frame-ancestors 'none'`
+(clickjacking), `base-uri`, `object-src` y `form-action`. **Falta
+`script-src`**: Next y `next-themes` usan scripts inline, y permitirlos de
+forma segura pide un *nonce* por request generado en el middleware, lo que
+vuelve dinámicas todas las páginas y se lleva el ISR. Con `'unsafe-inline'` la
+directiva no protegería nada. Queda como mejora futura.
+
+**Verificar con la base**
+
+- [ ] Abrir `/` y `/admin` con DevTools → Console: **no debe haber errores
+      de CSP** (`Refused to …`). Si aparece alguno, la cabecera está
+      bloqueando algo legítimo.
+- [ ] Desde otro origen (por ejemplo, un `.html` local con
+      `<iframe src="http://localhost:3000/admin">`): **el iframe debe salir
+      bloqueado**.
 - [ ] Redactor contra editor: con la cuenta redactora, intentar editar la nota
       de la editora desde el panel. **Debe negarse** (RLS `escritura_propias`).
 - [ ] Cabeceras: `curl -I http://localhost:3000/` y anotar cuáles faltan.
