@@ -490,20 +490,12 @@ directiva no protegería nada. Queda como mejora futura.
 | Pico de 10.000 visitas | Lo absorbe la CDN | Llega entero a la base |
 | Costo en Vercel | Mínimo | Una invocación por visita |
 
-**Recomendación (no aplicada)**: CSP estricta con nonce **sólo en `/admin`**,
+**Descartado el 19/10/2026**: no se avanza con la CSP. Queda la parcial de la
+consulta 8 y se borra la lista de verificación de abajo.
+
+**Recomendación que se había hecho**: CSP estricta con nonce **sólo en `/admin`**,
 que ya pasa por el middleware y ya es dinámico, así que no cuesta nada.
 Protege las sesiones de editor y el editor de notas. No cubre un XSS en una
 página pública visitada por un editor logueado: para eso la defensa sigue
 siendo escapar bien en el código. El sitio público queda con ISR y la CSP
 parcial.
-
-**Verificar con la base** (si se aplica)
-
-- [ ] En `/admin`, `curl -I` debe mostrar `script-src 'nonce-…' 'strict-dynamic'`,
-      con un nonce distinto en cada request.
-- [ ] Recorrer el panel (login, editor de notas, planilla, subir imagen) con
-      la consola abierta: **sin errores `Refused to…`**.
-- [ ] `pnpm build`: `/` y `/nota/[slug]` deben seguir saliendo `○`/`●`, no `ƒ`.
-- [ ] Redactor contra editor: con la cuenta redactora, intentar editar la nota
-      de la editora desde el panel. **Debe negarse** (RLS `escritura_propias`).
-- [ ] Cabeceras: `curl -I http://localhost:3000/` y anotar cuáles faltan.
