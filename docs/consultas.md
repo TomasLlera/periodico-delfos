@@ -15,7 +15,18 @@ dice la respuesta.
    `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y
    `SUPABASE_SERVICE_ROLE_KEY`.
 2. `pnpm install` y `pnpm dev`. El sitio queda en `http://localhost:3000`.
-3. Para los `curl` de abajo, dejar las dos variables en la terminal (Git Bash):
+3. **Con una base de prueba** (un proyecto de Supabase aparte, nunca el del
+   medio):
+   - Agregar a `.env.local` `BASE_DE_PRUEBA=true` y
+     `SUPABASE_DB_URL=<connection string>` (Project Settings → Database →
+     *Session pooler*, con la contraseña de la base).
+   - Migraciones: `pnpm dlx supabase db push --db-url "$SUPABASE_DB_URL"`.
+     **No** correr `supabase/seed.sql`: trae el UUID de la cuenta real.
+   - Datos inventados: `pnpm tsx scripts/base-de-prueba.ts --cargar`. Crea una
+     cuenta editora y una redactora (claves en `.env.local`, `PRUEBA_*`), una
+     nota publicada, un análisis, un borrador, una programada, una jugadora
+     menor de edad, sponsors vigente y vencido, y un `social_posts`.
+4. Para los `curl` de abajo, dejar las dos variables en la terminal (Git Bash):
 
    ```sh
    export SB_URL="https://<proyecto>.supabase.co"
