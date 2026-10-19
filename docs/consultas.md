@@ -468,6 +468,42 @@ directiva no protegería nada. Queda como mejora futura.
 - [ ] Desde otro origen (por ejemplo, un `.html` local con
       `<iframe src="http://localhost:3000/admin">`): **el iframe debe salir
       bloqueado**.
+
+---
+
+## 10. ¿En qué mejoraría hacer la CSP completa (`script-src` con nonce)?
+
+**Respuesta.** Mejora la seguridad y empeora la dinámica del sitio.
+
+- **Gana**: defensa contra los XSS que todavía no se conocen (una dependencia
+  comprometida, un `dangerouslySetInnerHTML` futuro, un script de terceros).
+  Aunque el código inyectado llegue al HTML, el navegador no lo ejecuta. Con
+  `report-to` además avisa cuando alguien lo intenta.
+- **Pierde**: el nonce cambia en cada request, así que Next no puede servir
+  la página desde caché (render dinámico obligatorio, según su documentación).
+
+| | Hoy (ISR) | Con nonce |
+|---|---|---|
+| Quién responde | CDN, página ya hecha | Función serverless que la arma |
+| Consultas a Supabase | Una por página cada 60 s | Una o más por visita |
+| Respuesta | Decenas de ms | Cientos de ms |
+| Pico de 10.000 visitas | Lo absorbe la CDN | Llega entero a la base |
+| Costo en Vercel | Mínimo | Una invocación por visita |
+
+**Recomendación (no aplicada)**: CSP estricta con nonce **sólo en `/admin`**,
+que ya pasa por el middleware y ya es dinámico, así que no cuesta nada.
+Protege las sesiones de editor y el editor de notas. No cubre un XSS en una
+página pública visitada por un editor logueado: para eso la defensa sigue
+siendo escapar bien en el código. El sitio público queda con ISR y la CSP
+parcial.
+
+**Verificar con la base** (si se aplica)
+
+- [ ] En `/admin`, `curl -I` debe mostrar `script-src 'nonce-…' 'strict-dynamic'`,
+      con un nonce distinto en cada request.
+- [ ] Recorrer el panel (login, editor de notas, planilla, subir imagen) con
+      la consola abierta: **sin errores `Refused to…`**.
+- [ ] `pnpm build`: `/` y `/nota/[slug]` deben seguir saliendo `○`/`●`, no `ƒ`.
 - [ ] Redactor contra editor: con la cuenta redactora, intentar editar la nota
       de la editora desde el panel. **Debe negarse** (RLS `escritura_propias`).
 - [ ] Cabeceras: `curl -I http://localhost:3000/` y anotar cuáles faltan.
