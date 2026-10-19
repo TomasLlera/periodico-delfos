@@ -349,3 +349,82 @@ verificar", punto 3. No se corrió todavía: **falta crear el proyecto**.
 - [ ] `pnpm tsx scripts/base-de-prueba.ts --cargar`. Es la primera corrida
       contra una base real: si un insert falla, el error dice qué tabla.
 - [ ] Recorrer las listas "Verificar con la base" de las consultas 1 a 6.
+
+---
+
+## 8. SOLID, guardrails/hardening, ¿funcional u OOP?, tests, ¿repositorios o Active Record?
+
+**Funcional, no POO.** No hay ninguna clase en `src/` ni en `scripts/`, y sí
+unas 470 funciones exportadas. Es un *functional core, imperative shell*:
+funciones puras sobre datos planos tipados, y los efectos (base, redes, colas)
+en los bordes. No es FP estricta: no usa `fp-ts` ni mónadas y muta en algunos
+lugares locales.
+
+**SOLID.** Nació para POO; acá aplica adaptado a funciones.
+
+| Principio | Estado | Evidencia |
+|---|---|---|
+| S — responsabilidad única | Bien | Lógica pura separada de React y de Supabase; un componente por archivo, máximo 300 líneas. Excepción: `actions/notas.ts` (366 líneas) hace sesión + validación + escritura + revalidación + evento. |
+| O — abierto/cerrado | Bien | `publicadorDe()` (Strategy): una red nueva es una línea. Mapas `Record<Red, …>` en vez de `switch`. |
+| L — sustitución | No aplica mucho | No hay herencia. Los publicadores cumplen el mismo tipo `Publicador`. |
+| I — interfaces chicas | Bien | Las funciones piden `Pick<SocialPost, 'platform' \| 'status'>` y no la fila entera. |
+| D — inversión de dependencias | Débil | Actions y queries importan Supabase concreto. Sí se inyecta en la lógica pura: `entorno`, `hoy: Date`, callbacks como `conCredenciales`. |
+
+**Repositorios o Active Record.** Ninguno de los dos en forma estricta, y
+**no es Active Record**: no hay modelos con `save()`, las filas son tipos planos
+generados de la base.
+
+- Lecturas: funciones en `lib/supabase/queries/*`, un **repositorio funcional**
+  (más precisamente *Table Data Gateway* / *Query Object*), sin interfaz.
+- Escrituras: **Transaction Script**. Cada Server Action valida y escribe con
+  `supabase.from(...)` directo.
+
+**Tests**
+
+| Tipo | Herramienta | Cantidad | Qué cubre |
+|---|---|---|---|
+| Unitarios | Vitest | 44 archivos, 756 tests | La lógica pura: entidades, planilla, tabla, SEO, copy de redes, idempotencia del fan-out, cola offline |
+| E2E | Playwright | 8 specs, ~37 tests | Accesibilidad (axe), SEO, medidas (scroll horizontal), rendimiento, `<dialog>`, panel |
+
+Huecos: no hay tests de integración de Server Actions ni de queries contra una
+base, no hay tests de RLS, y el e2e no corre en CI (necesita base).
+
+**Guardrails y hardening que sí hay**
+
+- Validación doble: Zod en todas las actions (~70 `safeParse`) **y** CHECK
+  en la base, porque el formulario se puede saltear.
+- RLS en todas las tablas, roles editor/redactor, trigger que impide cambiarse
+  el rol, funciones `security definer` con `search_path` fijo.
+- Middleware con `getUser()`, no `getSession()`: valida el token contra Auth.
+- Secretos sólo en servidor; `server-only` en `vercel-analytics.ts`.
+- El cuerpo de la nota se dibuja sin `innerHTML`, con validación por nodo y
+  profundidad máxima.
+- Idempotencia de posteos (UNIQUE + `processing` antes de llamar a la red),
+  concurrencia 1 por nota en Inngest, dry-run por defecto.
+- Magic link sin crear usuarios; borrado de partido bloqueado si tiene
+  planilla.
+- TypeScript strict sin `any`. Desde la consulta 5: CI y audit de dependencias.
+
+**Hardening que falta**
+
+1. **XSS en el JSON-LD.** `nota/[slug]/page.tsx:157` y
+   `partido/[slug]/page.tsx:149` meten `JSON.stringify(...)` en un `<script>`
+   sin escapar `<`. Un título con `</script><script>…` ejecuta código en la
+   página pública. Lo puede escribir un **redactor**, y si un editor logueado
+   abre esa nota, el script corre con su sesión: es un camino de redactor a
+   editor. Arreglo: `.replace(/</g, '\\u003c')`.
+2. **Sin cabeceras de seguridad**: no hay `headers()` en `next.config.ts` ni en
+   `vercel.json`. Faltan CSP, `frame-ancestors` (clickjacking del panel),
+   `Referrer-Policy`, `Permissions-Policy`.
+3. **Sin rate limiting** propio en login y Server Actions; sólo el que trae
+   Supabase Auth.
+4. `lib/supabase/admin.ts` sin `import 'server-only'` (consulta 4).
+
+**Verificar con la base**
+
+- [ ] XSS del JSON-LD: con la cuenta redactora, crear una nota con título
+      `Prueba </script><script>alert(1)</script>` y publicarla. Abrir
+      `/nota/<slug>`: **hoy salta el alert**; después del arreglo no debe.
+- [ ] Redactor contra editor: con la cuenta redactora, intentar editar la nota
+      de la editora desde el panel. **Debe negarse** (RLS `escritura_propias`).
+- [ ] Cabeceras: `curl -I http://localhost:3000/` y anotar cuáles faltan.
