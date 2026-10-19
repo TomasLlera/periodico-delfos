@@ -258,3 +258,63 @@ trae ESLint y no llega a producción.
 - [ ] Supabase → Advisors → Security y Performance: anotar lo que marquen.
 - [ ] Después de subir `next`, repetir `pnpm build` y los `curl` de la
       consulta 4 para confirmar que nada cambió.
+
+---
+
+## 6. ¿Qué problema hay hoy mandando la información de la base directo al frontend?
+
+**Respuesta.** Hoy el navegador **no** habla con la base. Todo se lee en el
+servidor (Server Components y Server Actions) y al navegador llega HTML ya
+armado.
+
+- `src/lib/supabase/client.ts` (el cliente de navegador) existe pero **nadie
+  lo importa**. Después de `pnpm build`, `.next/static` no contiene ni
+  `createBrowserClient`, ni `supabase-js`, ni los nombres
+  `NEXT_PUBLIC_SUPABASE_*`.
+- **Corrección a la consulta 4**: ahí se dijo que la anon key "viaja en el
+  bundle". Hoy no viaja, porque ningún código cliente la usa. Sí se ve la URL
+  del proyecto, en las URLs de las imágenes del bucket. Igual hay que tratar la
+  anon key como pública: alcanza con que un componente cliente use
+  `client.ts` para que entre al bundle, y RLS es la defensa real.
+- Los componentes cliente públicos (`BotonesCompartir`, `NavPrincipal`,
+  `TablaPorFecha`…) no reciben filas de la base. Las pantallas del panel sí
+  reciben filas enteras, pero están detrás de sesión.
+
+**Problemas reales**
+
+1. **RLS es por fila, no por columna.** `lectura_publica` en `jugadoras`
+   (`using (true)`) deja que cualquiera con la anon key lea **todas** las
+   columnas, incluidas `fecha_nacimiento` y `lugar_origen`. El sitio sólo
+   muestra la edad (`CabeceraJugadora` es Server Component y calcula `edad()`),
+   pero por la API sale la fecha completa. Si hay jugadoras menores de edad, es
+   un dato personal de una menor expuesto sin necesidad (Ley 25.326).
+   Lo mismo, de menor gravedad: `autores.rol` y, en las notas publicadas,
+   `redes` y `auto_post`.
+2. **`select('*')` en las queries** (unas 20). Hoy no sale del servidor, pero
+   el día que una de esas filas se pase como prop a un componente
+   `'use client'`, Next la serializa **entera** en el payload de la página,
+   con columnas que la pantalla no usa. El riesgo crece a medida que el panel
+   se vuelve más interactivo.
+
+**Arreglo propuesto (no aplicado)**
+
+- Una vista `jugadoras_publicas` sin `fecha_nacimiento` (con la edad
+  calculada, si hace falta) y sacarle a `anon` el `select` sobre la tabla:
+  `revoke select on jugadoras from anon` y `grant select (id, nombre, …)`.
+- En las queries públicas, pedir columnas explícitas en vez de `*`.
+
+**Verificar con la base**
+
+- [ ] Fecha de nacimiento por la API — **hoy devuelve las fechas completas**;
+      después del arreglo debe fallar o no traer esa columna:
+
+      ```sh
+      curl "$SB_URL/rest/v1/jugadoras?select=nombre,apellido,fecha_nacimiento,lugar_origen" \
+        -H "apikey: $SB_ANON" -H "Authorization: Bearer $SB_ANON"
+      ```
+
+- [ ] Abrir `/jugadora/<slug>` con datos reales, Ctrl+U y buscar el año de
+      nacimiento: **no debe aparecer** (sólo la edad).
+- [ ] Con la base cargada y `pnpm build`, repetir
+      `grep -rl "supabase.co" .next/static`: **no debe haber resultados**
+      (además de las URLs de imágenes en el HTML).
