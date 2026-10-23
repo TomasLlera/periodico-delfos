@@ -55,11 +55,20 @@ export function FilaNota({ nota }: { nota: NotaResumen }) {
       <span className="text-[0.85rem] text-text-muted">{nota.autor.nombre}</span>
 
       <span className="ml-auto flex items-center gap-3 text-[0.85rem] text-text-muted">
-        {/* La fecha que importa en el panel es la del último cambio: un
-            borrador nunca tiene fecha de publicación. Salvo en una programada,
-            donde lo que se quiere saber es cuándo sale, no cuándo se tocó. */}
+        {/* La fecha de la nota es la de publicación, que es la que el panel
+            tiene que mostrar: es la que ve el lector y es la misma por la que
+            el listado viene ordenado. Mostraba `updated_at` y eso hacía dos
+            cosas raras a la vez: una crónica del 19 de abril traída de
+            WordPress aparecía con la fecha en que se migró la fila, y la lista
+            parecía desordenada porque ordenaba por una fecha y mostraba otra.
+
+            El último cambio queda sólo para el borrador, que es el único que
+            no tiene fecha de publicación todavía. Y la programada muestra
+            cuándo sale, que es lo único que importa de ella. */}
         {nota.estado === 'programada' && nota.publicar_en ? (
           <span>sale el {fechaHoraPartido(nota.publicar_en)}</span>
+        ) : nota.publicada_en ? (
+          <span>{fechaCorta(nota.publicada_en)}</span>
         ) : (
           <span>{fechaCorta(nota.updated_at)}</span>
         )}
