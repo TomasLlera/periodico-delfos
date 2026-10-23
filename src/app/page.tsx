@@ -202,36 +202,64 @@ export default async function Portada() {
           />
         )}
 
-        <GrillaNotas
-          id="cronicas"
-          titulo="Crónicas"
-          notas={cronicas}
-          enlace={{ href: '/cronicas', texto: 'Todas las crónicas' }}
-          vacio={
-            portadaVacia
-              ? 'Todavía no hay crónicas publicadas. Las de cada fecha aparecen acá apenas salen.'
-              : undefined
-          }
-        />
+        {/* Las crónicas y el riel arrancan en el mismo filete. Lo eligió
+            Charlie entre tres variantes, y es la que pone la tabla arriba de
+            todo sin sacarle el ancho entero a las crónicas.
+
+            Para que las dos reglas queden alineadas de verdad no alcanza con
+            ponerlos en la misma grilla: los dos bloques traen su `mt-bloque`
+            propio y cualquiera que lo conserve baja su filete. Por eso el
+            margen lo pone la grilla —`*:mt-0`— y los dos `<CabeceraBloque>`
+            empiezan en cero. Alinean porque son el mismo componente con el
+            mismo tamaño de título; si alguno cambiara de tamaño, se
+            desalinean.
+
+            Las crónicas siguen con la grilla de tres y la primera a dos
+            columnas, aunque ahora vivan en 2/3 del ancho. Se probó pasarlas a
+            dos iguales y Charlie eligió esto. */}
+        <div className="mt-bloque grid items-start gap-bloque *:mt-0 lg:grid-cols-[2fr_1fr]">
+          <GrillaNotas
+            id="cronicas"
+            titulo="Crónicas"
+            notas={cronicas}
+            enlace={{ href: '/cronicas', texto: 'Todas las crónicas' }}
+            vacio={
+              portadaVacia
+                ? 'Todavía no hay crónicas publicadas. Las de cada fecha aparecen acá apenas salen.'
+                : undefined
+            }
+          />
+
+          {/* El orden del riel lo pidió Tomás: la tabla primero, después las
+              goleadoras y el plantel al final. Es de más perecedero a más
+              permanente —la tabla cambia cada fecha, el plantel una vez por
+              temporada—, que es el mismo criterio con el que está ordenada la
+              columna ancha.
+
+              La separación entre los tres la pone el riel y no cada bloque,
+              porque el primero tiene que arrancar en el filete de Crónicas y
+              no un bloque más abajo. Con `:first-child` sirve para cualquiera
+              de los tres, que es lo que hace falta: la tabla y las goleadoras
+              desaparecen solas sin temporada activa, y entonces el primero
+              pasa a ser el plantel. */}
+          <div className="*:mt-bloque [&>*:first-child]:mt-0">
+            {tabla}
+            {goleadoras}
+            {plantel}
+          </div>
+        </div>
 
         {/* El segundo hueco: entre las crónicas y los análisis, que es donde
             Charlie los quiso "mechados entre las filas de notas". */}
         <HuecoSponsors sponsors={sponsors} ubicacion="portada_entre_notas" className="mt-bloque" />
 
-        {/* Con análisis, el riel es la columna angosta de la derecha. Sin
-            análisis no puede quedarse en esa grilla: la primera celda —la
-            ancha, a la izquierda— queda libre y el bloque se corre ahí con un
-            hueco al costado. Pasó en producción con una sola nota publicada,
-            que va de tapa y deja vacíos los otros bloques. En ese caso los
-            tres se reparten el ancho, y `*:mt-0` saca el margen de sección:
-            la separación ya la da `gap-bloque`.
-
-            Se probó subir el riel hasta el filete de Crónicas, con los
-            análisis a todo el ancho abajo. Se volvió: para que entrara al
-            lado, Crónicas tenía que achicarse a 2/3 y sus tarjetas pasaban de
-            tres por fila a dos, angostas. El riel cuesta menos acá. */}
-        {hayAnalisis ? (
-          <div className="mt-bloque grid gap-bloque lg:grid-cols-[2fr_1fr]">
+        {/* Los análisis pasaron a ocupar el ancho entero: la columna angosta
+            que tenían al lado se fue arriba, con las crónicas. Sin análisis el
+            bloque no se dibuja, y ya no hay riel que pueda quedar huérfano en
+            una grilla a medio llenar —que era el bug que obligaba a tener dos
+            layouts acá—. */}
+        {hayAnalisis && (
+          <div className="mt-bloque">
             <ListaAnalisis
               id="analisis"
               titulo="Análisis"
@@ -239,29 +267,6 @@ export default async function Portada() {
               enlace={{ href: '/analisis', texto: 'Ver más' }}
               vacio={portadaVacia ? 'Todavía no hay análisis publicados.' : undefined}
             />
-
-            {/* El orden del riel lo pidió Tomás: la tabla primero, después las
-                goleadoras y el plantel al final. Es de más perecedero a más
-                permanente —la tabla cambia cada fecha, el plantel una vez por
-                temporada—, que es el mismo criterio con el que está ordenada
-                la columna ancha.
-
-                El margen lo pone el riel y no cada bloque: los tres traen su
-                `mt-bloque` propio y el primero tiene que empezar a la altura
-                del análisis, no un bloque más abajo. Con `:first-child` sirve
-                para cualquiera de los tres, que es lo que hace falta porque la
-                tabla y las goleadoras desaparecen solas sin temporada. */}
-            <div className="*:mt-bloque [&>*:first-child]:mt-0">
-              {tabla}
-              {goleadoras}
-              {plantel}
-            </div>
-          </div>
-        ) : (
-          <div className="mt-bloque grid items-start gap-bloque *:mt-0 lg:grid-cols-2">
-            {tabla}
-            {goleadoras}
-            {plantel}
           </div>
         )}
 
