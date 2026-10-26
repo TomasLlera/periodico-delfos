@@ -14,30 +14,43 @@ export interface RedireccionVercel {
 
 /**
  * `origen` siempre trae la barra final que usaba WordPress (`/mi-nota/`) y
- * `destino` nunca la tiene (`/nota/mi-nota`) — son rutas de sitios distintos,
- * no una elección a armonizar. Vercel matchea `source` en forma literal contra
- * la URL entrante, así que una sola regla con el `origen` tal cual alcanza:
- * es exactamente la URL vieja que Google tiene indexada y que hay que
- * interceptar. No hace falta emitir las dos formas ni depender de
- * `trailingSlash` de Next, que sólo gobierna las rutas nuevas.
+ * `destino` nunca la tiene (`/nota/mi-nota`).
+ *
+ * **`source` va SIN la barra final, y no es estética.** Antes iba el `origen`
+ * tal cual, con la idea de que Vercel lo matchea literal contra la URL vieja.
+ * No pasa eso: en producción Next contesta primero, con su 308 de
+ * `trailingSlash: false` (`/mi-nota/` → `/mi-nota`), y recién después se miran
+ * las reglas. La URL sin barra no matcheaba ninguna y las 82 terminaban en 404
+ * (medido el 26/10/2026 contra periodico-delfos.vercel.app).
+ *
+ * Sin la barra, `/mi-nota/` hace 308 → `/mi-nota` y la regla 301 →
+ * `/nota/mi-nota`. Son dos saltos y Google los sigue; y `/mi-nota` sin barra,
+ * que también circula, entra directo.
  */
 export function formatoVercel(redirecciones: readonly Redireccion[]): RedireccionVercel[] {
   const vistos = new Set<string>()
 
   for (const { origen, destino } of redirecciones) {
-    if (vistos.has(origen)) {
+    const source = sinBarraFinal(origen)
+    // Se compara ya sin la barra: `/a/` y `/a` serían la misma regla.
+    if (vistos.has(source)) {
       throw new Error(`Dos redirecciones con el mismo origen: ${origen}`)
     }
-    vistos.add(origen)
+    vistos.add(source)
 
-    if (origen === destino) {
+    if (source === sinBarraFinal(destino)) {
       throw new Error(`Redirección a sí misma (loop de 301): ${origen}`)
     }
   }
 
   return redirecciones.map(({ origen, destino, permanente }) => ({
-    source: origen,
+    source: sinBarraFinal(origen),
     destination: destino,
     permanent: permanente,
   }))
+}
+
+/** `/mi-nota/` → `/mi-nota`. La raíz se queda como está: sin barra no hay ruta. */
+export function sinBarraFinal(ruta: string): string {
+  return ruta.length > 1 && ruta.endsWith('/') ? ruta.slice(0, -1) : ruta
 }
