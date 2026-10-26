@@ -1,3 +1,4 @@
+import { exigir } from '@/lib/supabase/exigir'
 import { createClient } from '@/lib/supabase/server'
 import type { Autor } from '@/types'
 
@@ -22,7 +23,7 @@ export async function getAutorDeLaSesion(): Promise<Autor | null> {
 
   if (!user) return null
 
-  const { data } = await supabase.from('autores').select('*').eq('id', user.id).maybeSingle()
+  const { data } = exigir(await supabase.from('autores').select('*').eq('id', user.id).maybeSingle(), 'getAutorDeLaSesion')
 
   return (data as Autor | null) ?? null
 }
@@ -45,11 +46,11 @@ export async function getAutorQueFirma(): Promise<Autor | null> {
   if (!autor?.firma_como) return autor
 
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('autores')
     .select('*')
     .eq('id', autor.firma_como)
-    .maybeSingle()
+    .maybeSingle(), 'getAutorQueFirma')
 
   return (data as Autor | null) ?? autor
 }
@@ -69,11 +70,11 @@ export async function getAutorQueFirma(): Promise<Autor | null> {
 export async function getAutores(): Promise<Autor[]> {
   const supabase = await createClient()
 
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('autores')
     .select('*')
     .order('rol')
-    .order('nombre')
+    .order('nombre'), 'getAutores')
 
   return (data as Autor[] | null) ?? []
 }

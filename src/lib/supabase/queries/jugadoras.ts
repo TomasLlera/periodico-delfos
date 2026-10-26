@@ -1,3 +1,4 @@
+import { exigir } from '@/lib/supabase/exigir'
 import { createClient, createStaticClient } from '@/lib/supabase/server'
 import type {
   EstadisticasJugadora,
@@ -15,11 +16,11 @@ import type {
 
 export async function getPlantel(temporadaId: string): Promise<JugadoraEnPlantel[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('plantel')
     .select('dorsal, posicion, capitana, jugadora:jugadoras(*)')
     .eq('temporada_id', temporadaId)
-    .order('dorsal', { ascending: true, nullsFirst: false })
+    .order('dorsal', { ascending: true, nullsFirst: false }), 'getPlantel')
 
   type Fila = {
     dorsal: number | null
@@ -39,11 +40,11 @@ export async function getPlantel(temporadaId: string): Promise<JugadoraEnPlantel
 
 export async function getJugadoraPorSlug(slug: string): Promise<Jugadora | null> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('jugadoras')
     .select('*')
     .eq('slug', slug)
-    .maybeSingle()
+    .maybeSingle(), 'getJugadoraPorSlug')
 
   return data
 }
@@ -61,7 +62,7 @@ export async function getEstadisticasJugadora(
 
   if (temporadaId) query = query.eq('temporada_id', temporadaId)
 
-  const { data } = await query
+  const { data } = exigir(await query, 'getEstadisticasJugadora')
   return data ?? []
 }
 
@@ -89,14 +90,14 @@ export async function getGolesDeJugadora(
 
   if (temporadaId) query = query.eq('partido.temporada_id', temporadaId)
 
-  const { data } = await query
+  const { data } = exigir(await query, 'getGolesDeJugadora')
   return (data ?? []) as unknown as GolDeJugadora[]
 }
 
 /** Para `generateStaticParams` y el sitemap: corre en build, sin cookies. */
 export async function getSlugsJugadoras(): Promise<{ slug: string }[]> {
   const supabase = createStaticClient()
-  const { data } = await supabase.from('jugadoras').select('slug')
+  const { data } = exigir(await supabase.from('jugadoras').select('slug'), 'getSlugsJugadoras')
   return data ?? []
 }
 
@@ -111,18 +112,18 @@ export async function getSlugsJugadoras(): Promise<{ slug: string }[]> {
  */
 export async function getJugadoras(): Promise<Jugadora[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('jugadoras')
     .select('*')
     .order('apellido', { ascending: true })
-    .order('nombre', { ascending: true })
+    .order('nombre', { ascending: true }), 'getJugadoras')
 
   return data ?? []
 }
 
 export async function getJugadoraPorId(id: string): Promise<Jugadora | null> {
   const supabase = await createClient()
-  const { data } = await supabase.from('jugadoras').select('*').eq('id', id).maybeSingle()
+  const { data } = exigir(await supabase.from('jugadoras').select('*').eq('id', id).maybeSingle(), 'getJugadoraPorId')
 
   return data
 }

@@ -1,3 +1,4 @@
+import { exigir } from '@/lib/supabase/exigir'
 import { createClient, createStaticClient } from '@/lib/supabase/server'
 import type { EventoConJugadora, PartidoCompleto, PartidoConEquipos } from '@/types'
 
@@ -28,11 +29,11 @@ const CAMPOS_COMPLETO = `
 /** Todo lo que <PlanillaPartido /> necesita, en una sola query. */
 export async function getPartidoPorSlug(slug: string): Promise<PartidoCompleto | null> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('partidos')
     .select(CAMPOS_COMPLETO)
     .eq('slug', slug)
-    .maybeSingle()
+    .maybeSingle(), 'getPartidoPorSlug')
 
   if (!data) return null
 
@@ -55,7 +56,7 @@ export async function getPartidosPorIds(
   if (ids.length === 0) return []
 
   const supabase = await createClient()
-  const { data } = await supabase.from('partidos').select(CAMPOS_COMPLETO).in('id', ids)
+  const { data } = exigir(await supabase.from('partidos').select(CAMPOS_COMPLETO).in('id', ids), 'getPartidosPorIds')
 
   const partidos = (data ?? []) as unknown as PartidoCompleto[]
   for (const partido of partidos) {
@@ -70,11 +71,11 @@ export async function getPartidosTemporada(
   temporadaId: string,
 ): Promise<PartidoConEquipos[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('partidos')
     .select(CAMPOS_PARTIDO)
     .eq('temporada_id', temporadaId)
-    .order('fecha_hora', { ascending: true })
+    .order('fecha_hora', { ascending: true }), 'getPartidosTemporada')
 
   return (data ?? []) as unknown as PartidoConEquipos[]
 }
@@ -82,13 +83,13 @@ export async function getPartidosTemporada(
 /** Último partido jugado. Alimenta la barra de estado de la portada. */
 export async function getUltimoPartido(): Promise<PartidoConEquipos | null> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('partidos')
     .select(CAMPOS_PARTIDO)
     .eq('estado', 'finalizado')
     .order('fecha_hora', { ascending: false })
     .limit(1)
-    .maybeSingle()
+    .maybeSingle(), 'getUltimoPartido')
 
   return data as unknown as PartidoConEquipos | null
 }
@@ -96,14 +97,14 @@ export async function getUltimoPartido(): Promise<PartidoConEquipos | null> {
 /** Próximo partido programado. Reemplaza las placas de imagen con texto adentro. */
 export async function getProximoPartido(): Promise<PartidoConEquipos | null> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('partidos')
     .select(CAMPOS_PARTIDO)
     .eq('estado', 'programado')
     .gte('fecha_hora', new Date().toISOString())
     .order('fecha_hora', { ascending: true })
     .limit(1)
-    .maybeSingle()
+    .maybeSingle(), 'getProximoPartido')
 
   return data as unknown as PartidoConEquipos | null
 }
@@ -124,14 +125,14 @@ export async function getHistorialContra(
 
   if (excluirPartidoId) query = query.neq('id', excluirPartidoId)
 
-  const { data } = await query
+  const { data } = exigir(await query, 'getHistorialContra')
   return (data ?? []) as unknown as PartidoConEquipos[]
 }
 
 /** Para `generateStaticParams` y el sitemap: corre en build, sin cookies. */
 export async function getSlugsPartidos(): Promise<{ slug: string }[]> {
   const supabase = createStaticClient()
-  const { data } = await supabase.from('partidos').select('slug')
+  const { data } = exigir(await supabase.from('partidos').select('slug'), 'getSlugsPartidos')
   return data ?? []
 }
 
@@ -147,11 +148,11 @@ export async function getSlugsPartidos(): Promise<{ slug: string }[]> {
  */
 export async function getPartidosParaEditor(limite = 50): Promise<PartidoConEquipos[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('partidos')
     .select(CAMPOS_PARTIDO)
     .order('fecha_hora', { ascending: false })
-    .limit(limite)
+    .limit(limite), 'getPartidosParaEditor')
 
   return (data ?? []) as unknown as PartidoConEquipos[]
 }
@@ -159,7 +160,7 @@ export async function getPartidosParaEditor(limite = 50): Promise<PartidoConEqui
 /** Un partido con todo —eventos y formaciones— por id, para la planilla de carga. */
 export async function getPartidoPorId(id: string): Promise<PartidoCompleto | null> {
   const supabase = await createClient()
-  const { data } = await supabase.from('partidos').select(CAMPOS_COMPLETO).eq('id', id).maybeSingle()
+  const { data } = exigir(await supabase.from('partidos').select(CAMPOS_COMPLETO).eq('id', id).maybeSingle(), 'getPartidoPorId')
 
   return data as unknown as PartidoCompleto | null
 }
@@ -178,11 +179,11 @@ export interface PartidoDelPanel extends PartidoConEquipos {
 
 export async function getPartidosParaPanel(limite = 100): Promise<PartidoDelPanel[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('partidos')
     .select(`${CAMPOS_PARTIDO}, eventos(count), formaciones(count)`)
     .order('fecha_hora', { ascending: false })
-    .limit(limite)
+    .limit(limite), 'getPartidosParaPanel')
 
   // PostgREST devuelve el agregado como un array de un elemento: `[{count: 3}]`,
   // y como array vacío cuando no hay ninguno.
@@ -221,12 +222,12 @@ export async function getEventosDePartido(
   partidoId: string,
 ): Promise<EventoConJugadora[]> {
   const supabase = createStaticClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('eventos')
     .select(CAMPOS_EVENTO)
     .eq('partido_id', partidoId)
     .order('minuto', { ascending: true })
-    .order('adicionado', { ascending: true })
+    .order('adicionado', { ascending: true }), 'getEventosDePartido')
 
   return (data ?? []) as unknown as EventoConJugadora[]
 }

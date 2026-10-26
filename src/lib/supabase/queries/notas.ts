@@ -1,6 +1,7 @@
 import { firmaDe } from '@/lib/nota'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAutorDeLaSesion } from '@/lib/supabase/queries/autores'
+import { exigir } from '@/lib/supabase/exigir'
 import { createClient, createStaticClient } from '@/lib/supabase/server'
 import type { Categoria, NotaConRelaciones, NotaResumen, ResultadoBusqueda } from '@/types'
 
@@ -33,12 +34,12 @@ const CAMPOS_COMPLETOS = `
 
 export async function getNotaPorSlug(slug: string): Promise<NotaConRelaciones | null> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('notas')
     .select(CAMPOS_COMPLETOS)
     .eq('slug', slug)
     .eq('estado', 'publicada')
-    .maybeSingle()
+    .maybeSingle(), 'getNotaPorSlug')
 
   return data as unknown as NotaConRelaciones | null
 }
@@ -46,14 +47,14 @@ export async function getNotaPorSlug(slug: string): Promise<NotaConRelaciones | 
 /** La nota principal de la portada: la destacada más reciente. */
 export async function getNotaPrincipal(): Promise<NotaResumen | null> {
   const supabase = createStaticClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('notas')
     .select(CAMPOS_RESUMEN)
     .eq('estado', 'publicada')
     .order('destacada', { ascending: false })
     .order('publicada_en', { ascending: false })
     .limit(1)
-    .maybeSingle()
+    .maybeSingle(), 'getNotaPrincipal')
 
   return data as unknown as NotaResumen | null
 }
@@ -86,7 +87,7 @@ export async function getUltimasNotas(opciones: {
   if (temporadaId) query = query.eq('temporada_id', temporadaId)
   if (excluirIds.length > 0) query = query.not('id', 'in', `(${excluirIds.join(',')})`)
 
-  const { data } = await query
+  const { data } = exigir(await query, 'getUltimasNotas')
   return (data ?? []) as unknown as NotaResumen[]
 }
 
@@ -99,13 +100,13 @@ export async function getNotasPorCategoria(
   const supabase = await createClient()
   const desde = (pagina - 1) * porPagina
 
-  const { data, count } = await supabase
+  const { data, count } = exigir(await supabase
     .from('notas')
     .select(CAMPOS_RESUMEN, { count: 'exact' })
     .eq('estado', 'publicada')
     .eq('categoria', categoria)
     .order('publicada_en', { ascending: false })
-    .range(desde, desde + porPagina - 1)
+    .range(desde, desde + porPagina - 1), 'getNotasPorCategoria')
 
   return { notas: (data ?? []) as unknown as NotaResumen[], total: count ?? 0 }
 }
@@ -135,14 +136,14 @@ export async function getNotasRelacionadas(
   const delPartido: NotaResumen[] = []
 
   if (nota.partido_id) {
-    const { data } = await supabase
+    const { data } = exigir(await supabase
       .from('notas')
       .select(CAMPOS_RESUMEN)
       .eq('estado', 'publicada')
       .eq('partido_id', nota.partido_id)
       .neq('id', nota.id)
       .order('publicada_en', { ascending: false })
-      .limit(limite)
+      .limit(limite), 'getNotasRelacionadas')
 
     delPartido.push(...((data ?? []) as unknown as NotaResumen[]))
   }
@@ -152,14 +153,14 @@ export async function getNotasRelacionadas(
 
   // Las de la temporada, salteando las que ya entraron por partido.
   const yaEstan = [nota.id, ...delPartido.map((n) => n.id)]
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('notas')
     .select(CAMPOS_RESUMEN)
     .eq('estado', 'publicada')
     .eq('temporada_id', nota.temporada_id)
     .not('id', 'in', `(${yaEstan.join(',')})`)
     .order('publicada_en', { ascending: false })
-    .limit(faltan)
+    .limit(faltan), 'getNotasRelacionadas')
 
   return [...delPartido, ...((data ?? []) as unknown as NotaResumen[])]
 }
@@ -171,21 +172,21 @@ export async function getNotasDeJugadora(
 ): Promise<NotaResumen[]> {
   const supabase = await createClient()
 
-  const { data: formaciones } = await supabase
+  const { data: formaciones } = exigir(await supabase
     .from('formaciones')
     .select('partido_id')
-    .eq('jugadora_id', jugadoraId)
+    .eq('jugadora_id', jugadoraId), 'getNotasDeJugadora')
 
   const partidoIds = (formaciones ?? []).map((f) => f.partido_id)
   if (partidoIds.length === 0) return []
 
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('notas')
     .select(CAMPOS_RESUMEN)
     .eq('estado', 'publicada')
     .in('partido_id', partidoIds)
     .order('publicada_en', { ascending: false })
-    .limit(limite)
+    .limit(limite), 'getNotasDeJugadora')
 
   return (data ?? []) as unknown as NotaResumen[]
 }
@@ -198,10 +199,10 @@ export async function getNotasDeJugadora(
  */
 export async function getSlugsNotas(): Promise<{ slug: string; updated_at: string }[]> {
   const supabase = createStaticClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('notas')
     .select('slug, updated_at')
-    .eq('estado', 'publicada')
+    .eq('estado', 'publicada'), 'getSlugsNotas')
 
   return data ?? []
 }
@@ -219,7 +220,7 @@ export async function buscarNotas(
   limite = 20,
 ): Promise<ResultadoBusqueda[]> {
   const supabase = await createClient()
-  const { data } = await supabase.rpc('buscar_notas', { termino, limite })
+  const { data } = exigir(await supabase.rpc('buscar_notas', { termino, limite }), 'buscarNotas')
   return (data ?? []) as unknown as ResultadoBusqueda[]
 }
 
@@ -235,13 +236,13 @@ export async function getNotasDePartido(
   limite = 5,
 ): Promise<NotaResumen[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('notas')
     .select(CAMPOS_RESUMEN)
     .eq('estado', 'publicada')
     .eq('partido_id', partidoId)
     .order('publicada_en', { ascending: false })
-    .limit(limite)
+    .limit(limite), 'getNotasDePartido')
 
   return (data ?? []) as unknown as NotaResumen[]
 }
@@ -289,7 +290,7 @@ export async function getNotasDelAdmin(): Promise<NotaResumen[]> {
   // técnica tiene que ver las notas que cargó con la firma del titular.
   if (yo && yo.rol !== 'editor') consulta = consulta.eq('autor_id', firmaDe(yo))
 
-  const { data } = await consulta
+  const { data } = exigir(await consulta, 'getNotasDelAdmin')
 
   return (data ?? []) as unknown as NotaResumen[]
 }
@@ -303,11 +304,11 @@ export async function getNotasDelAdmin(): Promise<NotaResumen[]> {
  */
 export async function getNotaPorId(id: string): Promise<NotaConRelaciones | null> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('notas')
     .select(CAMPOS_COMPLETOS)
     .eq('id', id)
-    .maybeSingle()
+    .maybeSingle(), 'getNotaPorId')
 
   return data as unknown as NotaConRelaciones | null
 }
@@ -328,11 +329,11 @@ export async function getNotasParaEnlazar(): Promise<
   { id: string; titulo: string; slug: string; categoria: Categoria }[]
 > {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('notas')
     .select('id, titulo, slug, categoria')
     .eq('estado', 'publicada')
-    .order('publicada_en', { ascending: false })
+    .order('publicada_en', { ascending: false }), 'getNotasParaEnlazar')
 
   return data ?? []
 }
@@ -355,11 +356,11 @@ export async function getNotasParaEnlazar(): Promise<
  */
 export async function getNotaParaPostear(id: string): Promise<NotaConRelaciones | null> {
   const supabase = createAdminClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('notas')
     .select(CAMPOS_COMPLETOS)
     .eq('id', id)
-    .maybeSingle()
+    .maybeSingle(), 'getNotaParaPostear')
 
   return data as unknown as NotaConRelaciones | null
 }
@@ -383,7 +384,7 @@ export async function getTitulosPorSlugs(slugs: readonly string[]): Promise<Map<
   if (slugs.length === 0) return new Map()
 
   const supabase = await createClient()
-  const { data } = await supabase.from('notas').select('slug, titulo').in('slug', [...slugs])
+  const { data } = exigir(await supabase.from('notas').select('slug, titulo').in('slug', [...slugs]), 'getTitulosPorSlugs')
 
   const filas = (data ?? []) as { slug: string; titulo: string }[]
   return new Map(filas.map((fila) => [fila.slug, fila.titulo]))
