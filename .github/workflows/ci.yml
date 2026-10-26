@@ -44,6 +44,11 @@ jobs:
       - name: Tests
         run: pnpm test
 
+      # Falla si una función pasa el tope (scripts/complejidad.ts) y deja el
+      # panorama en el resumen de la corrida.
+      - name: Complejidad
+        run: pnpm complejidad
+
       - uses: actions/cache@v4
         with:
           path: .next/cache
