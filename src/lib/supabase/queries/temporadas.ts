@@ -1,3 +1,4 @@
+import { exigir } from '@/lib/supabase/exigir'
 import { createClient, createStaticClient } from '@/lib/supabase/server'
 import { agruparTablaPorFecha, filaDeAldosivi, type TablaDeFecha } from '@/lib/temporada'
 import type { FilaTablaConEquipo, Goleadora, Temporada } from '@/types'
@@ -5,32 +6,32 @@ import type { FilaTablaConEquipo, Goleadora, Temporada } from '@/types'
 /** La temporada en curso. Hay un índice único que garantiza que sea una sola. */
 export async function getTemporadaActiva(): Promise<Temporada | null> {
   const supabase = createStaticClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('temporadas')
     .select('*')
     .eq('activa', true)
-    .maybeSingle()
+    .maybeSingle(), 'getTemporadaActiva')
 
   return data
 }
 
 export async function getTemporadaPorSlug(slug: string): Promise<Temporada | null> {
   const supabase = createStaticClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('temporadas')
     .select('*')
     .eq('slug', slug)
-    .maybeSingle()
+    .maybeSingle(), 'getTemporadaPorSlug')
 
   return data
 }
 
 export async function getTemporadas(): Promise<Temporada[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('temporadas')
     .select('*')
-    .order('anio', { ascending: false })
+    .order('anio', { ascending: false }), 'getTemporadas')
 
   return data ?? []
 }
@@ -44,7 +45,7 @@ export async function getTemporadas(): Promise<Temporada[]> {
  */
 export async function getSlugsTemporadas(): Promise<{ slug: string }[]> {
   const supabase = createStaticClient()
-  const { data } = await supabase.from('temporadas').select('slug')
+  const { data } = exigir(await supabase.from('temporadas').select('slug'), 'getSlugsTemporadas')
   return data ?? []
 }
 
@@ -62,25 +63,25 @@ export async function getTablaPosiciones(
 
   let fecha = fechaNumero ?? null
   if (fecha === null) {
-    const { data: ultima } = await supabase
+    const { data: ultima } = exigir(await supabase
       .from('tabla_posiciones')
       .select('fecha_numero')
       .eq('temporada_id', temporadaId)
       .order('fecha_numero', { ascending: false })
       .limit(1)
-      .maybeSingle()
+      .maybeSingle(), 'getTablaPosiciones')
 
     fecha = ultima?.fecha_numero ?? null
   }
 
   if (fecha === null) return { filas: [], fecha: null }
 
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('tabla_posiciones')
     .select('*, equipo:equipos(*)')
     .eq('temporada_id', temporadaId)
     .eq('fecha_numero', fecha)
-    .order('posicion', { ascending: true })
+    .order('posicion', { ascending: true }), 'getTablaPosiciones')
 
   return { filas: (data ?? []) as unknown as FilaTablaConEquipo[], fecha }
 }
@@ -100,12 +101,12 @@ export async function getTablaPosiciones(
 export async function getTablasDeLaTemporada(temporadaId: string): Promise<TablaDeFecha[]> {
   const supabase = createStaticClient()
 
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('tabla_posiciones')
     .select('*, equipo:equipos(*)')
     .eq('temporada_id', temporadaId)
     .order('fecha_numero', { ascending: true })
-    .order('posicion', { ascending: true })
+    .order('posicion', { ascending: true }), 'getTablasDeLaTemporada')
 
   return agruparTablaPorFecha((data ?? []) as unknown as FilaTablaConEquipo[])
 }
@@ -124,12 +125,12 @@ export async function getGoleadoras(
   limite = 5,
 ): Promise<Goleadora[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('goleadoras')
     .select('*')
     .eq('temporada_id', temporadaId)
     .order('goles', { ascending: false })
-    .limit(limite)
+    .limit(limite), 'getGoleadoras')
 
   return data ?? []
 }
@@ -137,7 +138,7 @@ export async function getGoleadoras(
 /** Una temporada por id. Para el formulario de edición del panel. */
 export async function getTemporadaPorId(id: string): Promise<Temporada | null> {
   const supabase = await createClient()
-  const { data } = await supabase.from('temporadas').select('*').eq('id', id).maybeSingle()
+  const { data } = exigir(await supabase.from('temporadas').select('*').eq('id', id).maybeSingle(), 'getTemporadaPorId')
 
   return data
 }
@@ -151,11 +152,11 @@ export async function getTemporadaPorId(id: string): Promise<Temporada | null> {
  */
 export async function getFechasConTabla(temporadaId: string): Promise<number[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('tabla_posiciones')
     .select('fecha_numero')
     .eq('temporada_id', temporadaId)
-    .order('fecha_numero', { ascending: false })
+    .order('fecha_numero', { ascending: false }), 'getFechasConTabla')
 
   return [...new Set((data ?? []).map((f) => f.fecha_numero as number))]
 }

@@ -1,3 +1,4 @@
+import { exigir } from '@/lib/supabase/exigir'
 import { createClient } from '@/lib/supabase/server'
 import type { SocialPost } from '@/types'
 
@@ -30,11 +31,11 @@ export interface PosteoConNota extends SocialPost {
  */
 export async function getPosteos(limite = 60): Promise<PosteoConNota[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('social_posts')
     .select('*, nota:notas(titulo, slug, estado)')
     .order('updated_at', { ascending: false })
-    .limit(limite)
+    .limit(limite), 'getPosteos')
 
   return (data ?? []) as unknown as PosteoConNota[]
 }
@@ -42,10 +43,10 @@ export async function getPosteos(limite = 60): Promise<PosteoConNota[]> {
 /** Los de una nota, para mostrarlos en su editor. */
 export async function getPosteosDeNota(notaId: string): Promise<SocialPost[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('social_posts')
     .select('*')
-    .eq('nota_id', notaId)
+    .eq('nota_id', notaId), 'getPosteosDeNota')
 
   return (data ?? []) as SocialPost[]
 }

@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import { exigir } from '@/lib/supabase/exigir'
 import { createClient, createStaticClient, haySupabase } from '@/lib/supabase/server'
 import type { Pagina } from '@/types'
 
@@ -38,6 +39,6 @@ export const getPagina = cache(leerPagina)
  */
 export async function getPaginasDelAdmin(): Promise<Pagina[]> {
   const supabase = await createClient()
-  const { data } = await supabase.from('paginas').select('*').order('titulo')
+  const { data } = exigir(await supabase.from('paginas').select('*').order('titulo'), 'getPaginasDelAdmin')
   return (data as Pagina[] | null) ?? []
 }

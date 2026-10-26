@@ -1,3 +1,4 @@
+import { exigir } from '@/lib/supabase/exigir'
 import { createClient } from '@/lib/supabase/server'
 import type { Equipo } from '@/types'
 
@@ -14,18 +15,18 @@ import type { Equipo } from '@/types'
  */
 export async function getEquipos(): Promise<Equipo[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('equipos')
     .select('*')
     .order('es_aldosivi', { ascending: false })
-    .order('nombre_corto', { ascending: true })
+    .order('nombre_corto', { ascending: true }), 'getEquipos')
 
   return data ?? []
 }
 
 export async function getEquipoPorId(id: string): Promise<Equipo | null> {
   const supabase = await createClient()
-  const { data } = await supabase.from('equipos').select('*').eq('id', id).maybeSingle()
+  const { data } = exigir(await supabase.from('equipos').select('*').eq('id', id).maybeSingle(), 'getEquipoPorId')
 
   return data
 }
@@ -39,11 +40,11 @@ export async function getEquipoPorId(id: string): Promise<Equipo | null> {
  */
 export async function getEquipoAldosivi(): Promise<Equipo | null> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('equipos')
     .select('*')
     .eq('es_aldosivi', true)
-    .maybeSingle()
+    .maybeSingle(), 'getEquipoAldosivi')
 
   return data
 }

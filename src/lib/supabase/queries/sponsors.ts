@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import { exigir } from '@/lib/supabase/exigir'
 import { createClient, createStaticClient, haySupabase } from '@/lib/supabase/server'
 import type { Sponsor } from '@/types'
 
@@ -52,12 +53,12 @@ export const getSponsors = cache(leerSponsors)
 export async function getSponsorsDelAdmin(): Promise<Sponsor[]> {
   const supabase = await createClient()
 
-  const { data } = await supabase
+  const { data } = exigir(await supabase
     .from('sponsors')
     .select('*')
     .order('ubicacion')
     .order('orden')
-    .order('nombre')
+    .order('nombre'), 'getSponsorsDelAdmin')
 
   return (data as Sponsor[] | null) ?? []
 }
