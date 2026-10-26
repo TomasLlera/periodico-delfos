@@ -27,6 +27,8 @@ const eslintConfig = defineConfig([
   // Los ignores que eslint-config-next trae por su cuenta y que no viajan al
   // pasar por FlatCompat.
   globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts']),
+  // Lo que generan la cobertura y Playwright: no es código del proyecto.
+  globalIgnores(['coverage/**', 'playwright-report/**', 'test-results/**']),
 
   {
     /**

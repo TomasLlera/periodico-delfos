@@ -1,9 +1,14 @@
-# Lo mínimo que tiene que pasar antes de que algo entre a main: lint, tipos,
-# tests y build. Son los cuatro chequeos que CONTRIBUTING pide correr a mano.
+# Lo que tiene que pasar antes de que algo entre a main. Dos jobs en paralelo:
+#
+# - verificar: lint, tipos, tests con cobertura (y sus pisos), complejidad y
+#   build. Son los chequeos que CONTRIBUTING pide correr a mano, más los dos
+#   que no dejan que la cobertura baje ni que la complejidad suba.
+# - e2e: la suite pública de Playwright contra `next start`.
 #
 # El build anda sin Supabase (las rutas con datos prerenderizan cero paths), así
-# que no hace falta ningún secret. E2E queda para un segundo paso: necesita
-# servidor, navegador y credenciales del panel.
+# que no hace falta ningún secret. Quedan afuera del e2e, a propósito, el panel
+# (necesita el usuario de prueba y la base) y `rendimiento` (mide LCP con la red
+# estrangulada, y en una máquina compartida de GitHub el número es ruido).
 name: CI
 
 on:
@@ -15,12 +20,13 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+
 jobs:
   verificar:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      NEXT_TELEMETRY_DISABLED: 1
     steps:
       - uses: actions/checkout@v4
 
@@ -41,8 +47,32 @@ jobs:
       - name: Tipos
         run: pnpm exec tsc --noEmit
 
-      - name: Tests
-        run: pnpm test
+      # Falla si la cobertura queda abajo de los pisos de vitest.config.mts.
+      - name: Tests y cobertura
+        run: pnpm test:cobertura
+
+      - name: Resumen de cobertura
+        if: always()
+        run: |
+          node -e '
+            const fs = require("fs")
+            if (!fs.existsSync("coverage/coverage-summary.json")) process.exit(0)
+            const t = require("./coverage/coverage-summary.json").total
+            const fila = (n, k) => `| ${n} | ${t[k].pct} % | ${t[k].covered}/${t[k].total} |`
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
+              "## Cobertura de tests", "", "| Métrica | % | Cubierto |", "|---|---|---|",
+              fila("Líneas", "lines"), fila("Ramas", "branches"),
+              fila("Funciones", "functions"), fila("Statements", "statements"), "",
+              "El detalle archivo por archivo está en el artefacto `cobertura`.", "",
+            ].join("\n"))
+          '
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cobertura
+          path: coverage/
+          retention-days: 14
 
       # Falla si una función pasa el tope (scripts/complejidad.ts) y deja el
       # panorama en el resumen de la corrida.
@@ -57,3 +87,44 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # En el CI no hay Edge: playwright.config.ts usa este Chromium.
+      - name: Navegador
+        run: pnpm exec playwright install --with-deps chromium
+
+      - uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+
+      # La suite corre contra `next start`, que necesita el build hecho.
+      - name: Build
+        run: pnpm build
+
+      - name: E2E
+        run: >-
+          pnpm test:e2e
+          --project=seo
+          --project=escritorio-claro --project=escritorio-oscuro
+          --project=celular-claro --project=celular-oscuro
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright
+          path: playwright-report/
+          retention-days: 14
