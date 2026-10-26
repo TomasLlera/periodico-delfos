@@ -1,0 +1,54 @@
+# Lo mínimo que tiene que pasar antes de que algo entre a main: lint, tipos,
+# tests y build. Son los cuatro chequeos que CONTRIBUTING pide correr a mano.
+#
+# El build anda sin Supabase (las rutas con datos prerenderizan cero paths), así
+# que no hace falta ningún secret. E2E queda para un segundo paso: necesita
+# servidor, navegador y credenciales del panel.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      # Toma la versión de "packageManager" en package.json (pnpm 11.1.2).
+      - uses: pnpm/action-setup@v4
+
+      # Node 22: Vitest 4 no corre en Node 18.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Tipos
+        run: pnpm exec tsc --noEmit
+
+      - name: Tests
+        run: pnpm test
+
+      - uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+
+      - name: Build
+        run: pnpm build
