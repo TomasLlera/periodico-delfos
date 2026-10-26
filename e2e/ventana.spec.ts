@@ -108,7 +108,27 @@ test.describe('sin JavaScript', () => {
   test.use({ javaScriptEnabled: false })
 
   test('el chip navega a la página entera', async ({ page }) => {
+    /**
+     * BUG CONOCIDO desde `4e95f28` (11/10/2026): sin JS no se ve NINGUNA
+     * página pública, no sólo ésta.
+     *
+     * `src/app/loading.tsx` hace que Next mande primero el esqueleto y el
+     * contenido real adentro de un `<div hidden id="S:0">`, que un script inline
+     * intercambia después. Sin JS el script no corre: queda el esqueleto para
+     * siempre y el chip existe pero mide 0×0, así que el click espera hasta el
+     * timeout. Medido el 26/10 en `/`, `/cronicas`, `/buscar`,
+     * `/quienes-somos` y `/demo/fixture`.
+     *
+     * `fail` y no `skip`, como los bugs conocidos de `medidas.spec.ts`: el día
+     * que se arregle, este test pasa, la suite se pone roja y avisa que hay
+     * que sacar esta línea.
+     */
+    test.fail()
+
     await page.goto(FRANJA)
+    // Explícito y corto: sin esto el click espera hasta el timeout, y para
+    // `test.fail()` un timeout no es la falla esperada sino otra.
+    await expect(page.locator(CHIPS).first()).toBeVisible({ timeout: 3_000 })
     await page.locator(CHIPS).first().click()
     await page.waitForLoadState('load')
 

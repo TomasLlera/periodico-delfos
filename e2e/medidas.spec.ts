@@ -41,12 +41,17 @@ const RUTAS = [
 ]
 
 /**
- * Los 404 de prefetch de Next a rutas que sin base no existen.
+ * Los 404 de prefetch de Next a rutas que sin base no existen, y el script de
+ * Vercel Analytics.
  *
  * **Se filtran por URL y no por el texto del mensaje**, que no la trae: filtrar
  * por texto tapaba errores de verdad que decían lo mismo.
+ *
+ * `/_vercel/` lo sirve Vercel en el deploy y no existe en `next start`: fuera
+ * de Vercel `<Analytics />` siempre da 404. Según si el 404 llega antes o
+ * después del `load`, el test fallaba o no, en una ruta distinta cada corrida.
  */
-const RUIDO = /_rsc=|\/jugadora\/|\/partido\/|favicon/
+const RUIDO = /_rsc=|\/jugadora\/|\/partido\/|favicon|\/_vercel\//
 
 /**
  * El texto del mensaje **más la URL del recurso** que falló.

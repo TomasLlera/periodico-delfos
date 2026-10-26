@@ -57,6 +57,16 @@ const SESION = 'e2e/.sesion-admin.json'
 const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:3100'
 const SERVIDOR_PROPIO = !process.env.E2E_BASE_URL
 
+/**
+ * En la máquina donde se escribió esto no hay Chrome, sólo Edge, y
+ * `channel: 'msedge'` usa el Edge instalado. En el CI (Ubuntu) no hay Edge: ahí
+ * va el Chromium que baja `playwright install chromium`. Es el mismo motor, y
+ * lo que se prueba —medidas, a11y, SEO— no cambia entre los dos.
+ */
+const NAVEGADOR = process.env.CI
+  ? devices['Desktop Chrome']
+  : { ...devices['Desktop Edge'], channel: 'msedge' as const }
+
 export default defineConfig({
   testDir: './e2e',
   // Los borradores de node que dieron origen a esto no son specs.
@@ -64,19 +74,15 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? 'github' : 'list',
+  // En el CI, además de las anotaciones en el PR, el reporte HTML: se sube
+  // como artefacto y es lo único que muestra qué vio el navegador al fallar.
+  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
 
   use: {
     baseURL: BASE,
     trace: 'on-first-retry',
   },
 
-  /**
-   * En la máquina donde se escribió esto no hay Chrome, sólo Edge.
-   * `channel: 'msedge'` usa el Edge instalado; si en otra máquina no está,
-   * `npx playwright install chromium` baja el navegador propio y hay que sacar
-   * el `channel`.
-   */
   projects: [
     /**
      * El login del panel, una vez, antes que todo lo demás.
@@ -101,8 +107,7 @@ export default defineConfig({
             testMatch: /admin.spec.ts/,
             dependencies: ['entrar'],
             use: {
-              ...devices['Desktop Edge'],
-              channel: 'msedge' as const,
+              ...NAVEGADOR,
               viewport: { width: 1280, height: 900 },
               storageState: SESION,
             },
@@ -133,34 +138,34 @@ export default defineConfig({
       // el número que sale es el de la contención y no el de la página. Medido:
       // en paralelo la portada da 3264 ms y de a una, 1800.
       fullyParallel: false,
-      use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 375, height: 900 } },
+      use: { ...NAVEGADOR, viewport: { width: 375, height: 900 } },
     },
 
     {
       name: 'seo',
       testMatch: /seo.spec.ts/,
-      use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 1280, height: 900 } },
+      use: { ...NAVEGADOR, viewport: { width: 1280, height: 900 } },
     },
 
     {
       name: 'escritorio-claro',
       testIgnore: /(admin|seo|rendimiento)\./,
-      use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 1280, height: 900 }, colorScheme: 'light' },
+      use: { ...NAVEGADOR, viewport: { width: 1280, height: 900 }, colorScheme: 'light' },
     },
     {
       name: 'escritorio-oscuro',
       testIgnore: /(admin|seo|rendimiento)\./,
-      use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 1280, height: 900 }, colorScheme: 'dark' },
+      use: { ...NAVEGADOR, viewport: { width: 1280, height: 900 }, colorScheme: 'dark' },
     },
     {
       name: 'celular-claro',
       testIgnore: /(admin|seo|rendimiento)\./,
-      use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 375, height: 900 }, colorScheme: 'light' },
+      use: { ...NAVEGADOR, viewport: { width: 375, height: 900 }, colorScheme: 'light' },
     },
     {
       name: 'celular-oscuro',
       testIgnore: /(admin|seo|rendimiento)\./,
-      use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 375, height: 900 }, colorScheme: 'dark' },
+      use: { ...NAVEGADOR, viewport: { width: 375, height: 900 }, colorScheme: 'dark' },
     },
   ],
 
