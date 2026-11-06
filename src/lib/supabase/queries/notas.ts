@@ -1,7 +1,7 @@
 import { firmaDe } from '@/lib/nota'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAutorDeLaSesion } from '@/lib/supabase/queries/autores'
-import { exigir } from '@/lib/supabase/exigir'
+import { esRangoFueraDeAlcance, exigir } from '@/lib/supabase/exigir'
 import { createClient, createStaticClient } from '@/lib/supabase/server'
 import type { Categoria, NotaConRelaciones, NotaResumen, ResultadoBusqueda } from '@/types'
 
@@ -87,7 +87,13 @@ export async function getUltimasNotas(opciones: {
   if (temporadaId) query = query.eq('temporada_id', temporadaId)
   if (excluirIds.length > 0) query = query.not('id', 'in', `(${excluirIds.join(',')})`)
 
-  const { data } = exigir(await query, 'getUltimasNotas')
+  // Un `offset` que pasa la última fila es una ventana vacía, no una falla.
+  // Pasa cuando el listado se achica —al borrar una nota— con un offset que
+  // ayer era válido. Ver `esRangoFueraDeAlcance()`.
+  const respuesta = await query
+  if (esRangoFueraDeAlcance(respuesta)) return []
+
+  const { data } = exigir(respuesta, 'getUltimasNotas')
   return (data ?? []) as unknown as NotaResumen[]
 }
 
@@ -100,13 +106,22 @@ export async function getNotasPorCategoria(
   const supabase = await createClient()
   const desde = (pagina - 1) * porPagina
 
-  const { data, count } = exigir(await supabase
+  const respuesta = await supabase
     .from('notas')
     .select(CAMPOS_RESUMEN, { count: 'exact' })
     .eq('estado', 'publicada')
     .eq('categoria', categoria)
     .order('publicada_en', { ascending: false })
-    .range(desde, desde + porPagina - 1), 'getNotasPorCategoria')
+    .range(desde, desde + porPagina - 1)
+
+  // **`?pagina=9999` devuelve la lista vacía y no una excepción**, que es lo que
+  // deja a `/cronicas` contestar 404 en vez de 500: el `notFound()` de la
+  // página se alcanza sólo si la query no explota antes. PostgREST manda el
+  // total en `Content-Range` incluso al rechazar el rango, así que `count`
+  // suele venir igual y la paginación sigue sabiendo cuántas páginas hay.
+  if (esRangoFueraDeAlcance(respuesta)) return { notas: [], total: respuesta.count ?? 0 }
+
+  const { data, count } = exigir(respuesta, 'getNotasPorCategoria')
 
   return { notas: (data ?? []) as unknown as NotaResumen[], total: count ?? 0 }
 }

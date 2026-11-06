@@ -35,3 +35,26 @@ export function exigir<R extends Respuesta>(respuesta: R, consulta: string): R {
   }
   return respuesta
 }
+
+/**
+ * El código con el que PostgREST contesta un `.range()` que arranca después de
+ * la última fila: `PGRST103`, "Requested range not satisfiable".
+ *
+ * **Es la única falla de Supabase que no es una falla.** Pedir la página 9999
+ * de un listado de seis no está roto: está vacío, y eso lo tiene que decidir la
+ * página —`/cronicas` contesta 404— y no una excepción. Sin esto, `exigir()`
+ * tiraba y `?pagina=9999` devolvía **500 en vez de 404**: el `notFound()` de la
+ * página nunca se alcanzaba porque la query explotaba antes.
+ *
+ * No se puede distinguir de "la página existe pero está vacía" mirando `data`,
+ * porque con este error `data` viene en `null` igual que con una base caída. Por
+ * eso hay que mirar el `code`.
+ *
+ * **Y se volvió más fácil de provocar desde que se puede borrar una nota**: un
+ * offset que era válido ayer queda fuera de rango cuando el listado se achica.
+ */
+export const RANGO_FUERA_DE_ALCANCE = 'PGRST103'
+
+export function esRangoFueraDeAlcance(respuesta: Respuesta): boolean {
+  return respuesta.error?.code === RANGO_FUERA_DE_ALCANCE
+}

@@ -4,11 +4,10 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { Plus, Save } from 'lucide-react'
 import { guardarFilaPlantel, sacarDelPlantel } from '@/actions/plantel'
-import { capitanas, duenaDelDorsal, jugadorasDisponibles } from '@/lib/entidades/plantel'
+import { capitanas, jugadorasDisponibles } from '@/lib/entidades/plantel'
 import { NOMBRE_PUESTO, nombreCompleto, ordenarPlantel } from '@/lib/plantel'
 import { Aviso } from '@/components/admin/Aviso'
 import { BotonBorrar } from '@/components/admin/BotonBorrar'
-import { CampoNumero } from '@/components/admin/CampoNumero'
 import { CampoSelect } from '@/components/admin/CampoSelect'
 import type { Jugadora, JugadoraEnPlantel, Posicion } from '@/types'
 
@@ -16,12 +15,15 @@ import type { Jugadora, JugadoraEnPlantel, Posicion } from '@/types'
  * El plantel de una temporada: quién está y con qué número.
  *
  * Es de lo que cuelga la formación de cada partido, y por lo tanto la grilla
- * de la planilla de carga. El dorsal vive acá y no en la ficha de la jugadora
- * porque cambia de un año a otro (blueprint § 4.2).
+ * de la planilla de carga.
+ *
+ * **El dorsal acá es de sólo lectura**: desde la migración `0020` el número es
+ * de cada partido y se carga en la planilla. Lo que esta pantalla muestra es el
+ * último que usó, para reconocer a la jugadora en la lista.
  *
  * **Se agrega de a una y se guarda todo junto.** Agregar es el momento en que
- * hace falta elegir a alguien de una lista de treinta; corregir un dorsal es
- * tocar un número en una fila que ya está. Son dos gestos distintos y la
+ * hace falta elegir a alguien de una lista de treinta; corregir un puesto es
+ * tocar un `<select>` en una fila que ya está. Son dos gestos distintos y la
  * pantalla los trata distinto.
  */
 
@@ -64,7 +66,6 @@ export function EditorPlantel({ temporadaId, plantel, jugadoras }: Props) {
     return guardarFilaPlantel({
       temporada_id: temporadaId,
       jugadora_id: fila.id,
-      dorsal: fila.dorsal,
       posicion: fila.posicion_temporada,
       capitana: fila.capitana,
     })
@@ -78,8 +79,6 @@ export function EditorPlantel({ temporadaId, plantel, jugadoras }: Props) {
       const r = await guardarFilaPlantel({
         temporada_id: temporadaId,
         jugadora_id: jugadora.id,
-        // Sin dorsal: se pone después, mirando la lista para no repetir.
-        dorsal: null,
         posicion: null,
         capitana: false,
       })
@@ -164,8 +163,6 @@ export function EditorPlantel({ temporadaId, plantel, jugadoras }: Props) {
       ) : (
         <ul className="flex flex-col gap-3">
           {filas.map((fila) => {
-            const duena = duenaDelDorsal(fila.dorsal, filas, fila.id)
-
             return (
               <li
                 key={fila.id}
@@ -175,18 +172,21 @@ export function EditorPlantel({ temporadaId, plantel, jugadoras }: Props) {
                   {nombreCompleto(fila)}
                 </span>
 
-                <div className="w-20">
-                  <CampoNumero
-                    id={`dorsal-${fila.id}`}
-                    etiqueta={`Dorsal de ${fila.apellido}`}
-                    etiquetaOculta
-                    valor={fila.dorsal}
-                    onCambio={(v) => tocar(fila.id, { dorsal: v })}
-                    min={1}
-                    max={99}
-                    error={duena ? `Lo tiene ${duena.apellido}` : undefined}
-                  />
-                </div>
+                {/* **El dorsal se muestra, no se edita, y la migración `0020` es
+                    la razón.** Desde entonces el número es de cada partido y
+                    vive en `formaciones`: se carga en la planilla, que es donde
+                    se sabe con qué número salió a la cancha. Acá era un campo
+                    editable que escribía `plantel.dorsal`, una columna que ya
+                    no existe, así que guardar el plantel fallaba contra
+                    Postgres. Lo que se ve es el último que usó. */}
+                <span className="w-12 font-mono text-[1.1rem] font-bold leading-none">
+                  {fila.dorsal ?? <span className="text-text-muted">–</span>}
+                  <span className="sr-only">
+                    {fila.dorsal === null
+                      ? `${fila.apellido} todavía no usó ningún dorsal esta temporada`
+                      : `Último dorsal de ${fila.apellido}: ${fila.dorsal}`}
+                  </span>
+                </span>
 
                 <div className="w-44">
                   <CampoSelect

@@ -157,7 +157,6 @@ export interface Jugadora {
 export interface FilaPlantel {
   temporada_id: string
   jugadora_id: string
-  dorsal: number | null
   posicion: Posicion | null
   capitana: boolean
 }

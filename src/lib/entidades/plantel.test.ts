@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   capitanas,
-  duenaDelDorsal,
   esquemaFilaPlantel,
+  filaDePlantel,
   jugadorasDisponibles,
 } from './plantel'
 import type { Jugadora, JugadoraEnPlantel } from '@/types'
@@ -40,23 +40,30 @@ describe('esquemaFilaPlantel', () => {
   const valida = {
     temporada_id: TEMPORADA,
     jugadora_id: CORTADI.id,
-    dorsal: 10,
     posicion: null,
     capitana: false,
   }
 
-  it('acepta una fila con dorsal', () => {
+  it('acepta una fila', () => {
     expect(esquemaFilaPlantel.safeParse(valida).success).toBe(true)
   })
 
-  it('el dorsal puede faltar: todavía no se sabe', () => {
-    expect(esquemaFilaPlantel.safeParse({ ...valida, dorsal: null }).success).toBe(true)
-  })
-
-  /** El mismo rango que el CHECK `dorsal_valido`, pero dicho antes. */
-  it('rechaza un dorsal fuera de 1–99', () => {
-    expect(esquemaFilaPlantel.safeParse({ ...valida, dorsal: 0 }).success).toBe(false)
-    expect(esquemaFilaPlantel.safeParse({ ...valida, dorsal: 100 }).success).toBe(false)
+  /**
+   * **El dorsal ya no es parte de la fila del plantel**, y este test es el que
+   * lo fija. Acá había tres que lo daban por supuesto —uno aceptaba la fila
+   * "con dorsal", otro lo dejaba en `null` y el tercero exigía el rango 1–99—;
+   * la `0020` movió el número a `formaciones` y el esquema dejó de tenerlo.
+   *
+   * Zod ignora las claves de más en vez de rechazarlas, así que un formulario
+   * viejo que siguiera mandando `dorsal` pasaría la validación y el dato se
+   * perdería en silencio. Por eso se verifica que no llegue a la fila que va a
+   * la base: es lo que importa, y es lo que rompía el guardado cuando sí
+   * llegaba.
+   */
+  it('un dorsal que venga de más no entra a la fila de la base', () => {
+    const parseada = esquemaFilaPlantel.parse({ ...valida, dorsal: 10 })
+    expect('dorsal' in parseada).toBe(false)
+    expect('dorsal' in filaDePlantel(parseada)).toBe(false)
   })
 
   it('la posición puede quedar en null: manda la de la ficha', () => {
@@ -64,23 +71,10 @@ describe('esquemaFilaPlantel', () => {
   })
 })
 
-describe('duenaDelDorsal', () => {
-  it('encuentra a la que ya lo tiene', () => {
-    expect(duenaDelDorsal(10, [CORTADI, GARRO], null)?.apellido).toBe('Cortadi')
-  })
-
-  it('no se acusa a sí misma al editar su propia fila', () => {
-    expect(duenaDelDorsal(10, [CORTADI, GARRO], CORTADI.id)).toBe(null)
-  })
-
-  it('un dorsal libre no tiene dueña', () => {
-    expect(duenaDelDorsal(7, [CORTADI, GARRO], null)).toBe(null)
-  })
-
-  it('sin dorsal no hay conflicto posible', () => {
-    expect(duenaDelDorsal(null, [CORTADI, GARRO], null)).toBe(null)
-  })
-})
+// Acá vivían los tests de `duenaDelDorsal`, que avisaba si dos jugadoras del
+// plantel compartían número. Se fueron con la función: desde la `0020` el
+// dorsal es de cada partido y la unicidad la cuida
+// `formaciones_dorsal_unico_idx` por partido y equipo, no el plantel.
 
 describe('jugadorasDisponibles', () => {
   const todas = [

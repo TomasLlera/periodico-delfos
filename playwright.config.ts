@@ -86,7 +86,42 @@ export default defineConfig({
      * intentos. Sin `E2E_ADMIN_EMAIL` el setup se saltea solo y los tests del
      * panel también.
      */
-    ...(HAY_CREDENCIALES ? [{ name: 'entrar', testMatch: /admin.setup.ts/ }] : []),
+    /**
+     * **Lleva `channel: 'msedge'` como todos los demás**, y le faltaba. Era el
+     * único proyecto sin `use`, así que Playwright le daba el Chromium que trae
+     * de fábrica —en esta máquina no está instalado— y el setup moría con
+     * "Test timeout exceeded while setting up page", que suena a login lento y
+     * es un navegador que no arranca. Nadie lo había visto porque sin
+     * `E2E_ADMIN_EMAIL` el proyecto no se armaba: los quince tests del panel
+     * **nunca habían corrido**.
+     */
+    ...(HAY_CREDENCIALES
+      ? [
+          {
+            name: 'entrar',
+            testMatch: /admin.setup.ts/,
+            /**
+             * **Después de `login`, y esto no es una preferencia de orden.**
+             * El test de "Salir" llama `signOut()`, y Supabase revoca por
+             * omisión **todas** las sesiones del usuario, no la del navegador
+             * que la pidió. Corriendo en paralelo, ese logout le borraba la
+             * sesión recién guardada a este setup y los quince tests del panel
+             * se caían todos juntos contra la pantalla de login. Medido: con
+             * los dos proyectos a la vez, 13 rojos; en orden, ninguno.
+             *
+             * La cadena queda `login` → `entrar` → `panel`, que además es el
+             * orden que tiene sentido: si entrar está roto, no hay nada que
+             * probar adentro del panel.
+             */
+            dependencies: ['login'],
+            use: {
+              ...devices['Desktop Edge'],
+              channel: 'msedge' as const,
+              viewport: { width: 1280, height: 900 },
+            },
+          },
+        ]
+      : []),
 
     /**
      * El panel. Un solo tamaño y un solo tema: lo que se prueba acá es que las
@@ -109,6 +144,47 @@ export default defineConfig({
           },
         ]
       : []),
+
+    /**
+     * El ingreso al panel, **sin la sesión guardada**.
+     *
+     * Es el único proyecto del panel que no depende de `entrar` ni usa
+     * `storageState`, y no puede: con la sesión puesta, `/admin/login` ya
+     * estaría logueado y no habría nada que probar. Un solo tamaño, porque
+     * entrar no cambia con el ancho y cada corrida son logins contra Supabase
+     * Auth, que tiene límite de intentos.
+     *
+     * El `testMatch` del proyecto `panel` —`/admin.spec.ts/`— no lo agarra:
+     * pide "admin" + un carácter + "spec.ts" seguidos, y acá en el medio está
+     * "login.". El nombre del archivo empieza con `admin.` a propósito, para
+     * que los cuatro proyectos del sitio público lo ignoren.
+     */
+    ...(HAY_CREDENCIALES
+      ? [
+          {
+            name: 'login',
+            testMatch: /admin.login.spec.ts/,
+            use: {
+              ...devices['Desktop Edge'],
+              channel: 'msedge' as const,
+              viewport: { width: 1280, height: 900 },
+            },
+          },
+        ]
+      : []),
+
+    /**
+     * Los códigos HTTP, en un proyecto propio y sin navegador.
+     *
+     * Un status no cambia con el ancho ni con el tema, así que correrlo en los
+     * cuatro proyectos públicos sería el mismo número cuatro veces. Mismo
+     * criterio que la auditoría de SEO.
+     */
+    {
+      name: 'estados',
+      testMatch: /estados.spec.ts/,
+      use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 1280, height: 900 } },
+    },
 
     /**
      * La auditoría de SEO, en un solo proyecto.
@@ -144,22 +220,22 @@ export default defineConfig({
 
     {
       name: 'escritorio-claro',
-      testIgnore: /(admin|seo|rendimiento)\./,
+      testIgnore: /(admin|seo|rendimiento|estados)\./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 1280, height: 900 }, colorScheme: 'light' },
     },
     {
       name: 'escritorio-oscuro',
-      testIgnore: /(admin|seo|rendimiento)\./,
+      testIgnore: /(admin|seo|rendimiento|estados)\./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 1280, height: 900 }, colorScheme: 'dark' },
     },
     {
       name: 'celular-claro',
-      testIgnore: /(admin|seo|rendimiento)\./,
+      testIgnore: /(admin|seo|rendimiento|estados)\./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 375, height: 900 }, colorScheme: 'light' },
     },
     {
       name: 'celular-oscuro',
-      testIgnore: /(admin|seo|rendimiento)\./,
+      testIgnore: /(admin|seo|rendimiento|estados)\./,
       use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 375, height: 900 }, colorScheme: 'dark' },
     },
   ],

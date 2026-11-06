@@ -6,13 +6,14 @@
  * se arman con el plantel. Un plantel vacío es una planilla con la grilla
  * vacía, y ahí se corta la cadena entera del dato deportivo.
  *
- * El dorsal y la posición viven acá y no en `jugadoras` porque cambian entre
- * temporadas (blueprint § 4.2). La lógica de **lectura** del plantel —agrupar
- * por puesto, ordenar, iniciales— está en `src/lib/plantel.ts`.
+ * La posición vive acá y no en `jugadoras` porque cambia entre temporadas
+ * (blueprint § 4.2). **El dorsal ya no**: la migración `0020` lo movió a
+ * `formaciones`, donde es el de cada partido. La lógica de **lectura** del
+ * plantel —agrupar por puesto, ordenar, iniciales— está en
+ * `src/lib/plantel.ts`.
  */
 
 import { z } from 'zod'
-import { enteroOpcional } from '@/lib/entidades/campos'
 import type { FilaPlantel, Jugadora, JugadoraEnPlantel, Posicion } from '@/types'
 
 const POSICIONES = [
@@ -24,33 +25,25 @@ const POSICIONES = [
   'ayudante',
 ] as const satisfies readonly Posicion[]
 
+/**
+ * **Sin `dorsal`, y no es un olvido.** La migración `0020` borró
+ * `plantel.dorsal`: el número pasó a ser el de cada partido, en `formaciones`.
+ * Mientras siguió acá, guardar una fila del plantel mandaba una columna que no
+ * existe y Postgres contestaba `42703`, así que la pantalla del plantel no
+ * podía guardar nada.
+ *
+ * El dorsal ahora se carga en la planilla de cada partido, que es además donde
+ * se sabe de verdad con qué número salió a la cancha.
+ */
 export const esquemaFilaPlantel = z.object({
   temporada_id: z.uuid('Elegí la temporada'),
   jugadora_id: z.uuid('Elegí la jugadora'),
-  // El mismo rango que el CHECK `dorsal_valido` de `0002`.
-  dorsal: enteroOpcional('El dorsal', 1, 99),
   /** `null` = la posición de la ficha. Es lo que ya resuelve `puestoEnTemporada()`. */
   posicion: z.enum(POSICIONES).nullable(),
   capitana: z.boolean(),
 })
 
 export type EntradaFilaPlantel = z.infer<typeof esquemaFilaPlantel>
-
-/**
- * La jugadora que ya tiene ese dorsal, si hay alguna.
- *
- * `plantel_dorsal_unico_idx` no deja dos, así que sin este chequeo el segundo
- * 10 se rechaza recién en el `insert`, con un error de Postgres y después de
- * haber tipeado. Decirlo mientras se escribe cuesta una comparación.
- */
-export function duenaDelDorsal(
-  dorsal: number | null,
-  plantel: readonly JugadoraEnPlantel[],
-  jugadoraId: string | null,
-): JugadoraEnPlantel | null {
-  if (dorsal === null) return null
-  return plantel.find((j) => j.dorsal === dorsal && j.id !== jugadoraId) ?? null
-}
 
 /**
  * Las que todavía no están en este plantel.
@@ -89,7 +82,6 @@ export function filaDePlantel(entrada: EntradaFilaPlantel): FilaPlantel {
   return {
     temporada_id: entrada.temporada_id,
     jugadora_id: entrada.jugadora_id,
-    dorsal: entrada.dorsal,
     posicion: entrada.posicion,
     capitana: entrada.capitana,
   }
