@@ -7,6 +7,53 @@ Actualizar este archivo al terminar cada step.
 
 ---
 
+## Al 06/11/2026 — códigos de estado, borrado de notas y la 0020 terminada
+
+> **LEER ESTO ANTES DE TOCAR `loading.tsx` O LOS DORSALES.** Son dos cosas que
+> ya se rompieron una vez y no se ven cuando se rompen.
+
+**No puede haber un `loading.tsx` en la raíz de `src/app/`.** Un `loading.tsx`
+crea un límite de Suspense, y con uno en la raíz Next empieza a mandar la
+respuesta con el status ya puesto en 200: cuando después la página llama
+`notFound()`, el 404 ya no se puede escribir. Con él, **todas** las páginas
+inexistentes devolvían 200 sirviendo la pantalla de 404 —para Google eso es
+contenido válido y lo indexa—. Hoy el esqueleto vive sólo en
+`src/app/buscar/loading.tsx`, que es la única ruta pública que se renderiza en
+cada visita y no puede dar 404 nunca. Lo cubre `e2e/estados.spec.ts`: si alguien
+vuelve a poner uno arriba, se pone rojo.
+
+**`plantel.dorsal` no existe desde la 0020, y el dorsal es de cada partido.** La
+migración se aplicó a la base pero su commit tocó sólo el SQL, así que
+`getPlantel()` siguió pidiendo la columna y `/plantel/[temporadaSlug]` y
+`/jugadora/[slug]` **tiraban 500 en producción**. Estuvo oculto porque el bug del
+`loading.tsx` convertía la excepción en un 200. Ya está terminada en el código:
+el plantel muestra el último dorsal que usó cada jugadora —derivado de
+`formaciones` en una sola consulta— y **no se edita desde ahí**; se carga en la
+planilla del partido. Se fueron con la columna `duenaDelDorsal()` y sus tests.
+
+**La paginación fuera de rango es 404, no 500.** PostgREST contesta `PGRST103`
+cuando el `.range()` arranca después de la última fila. Es la única falla de
+Supabase que no es una falla: la filtra `esRangoFueraDeAlcance()` antes de
+`exigir()`. Sin eso, `?pagina=9999` reventaba antes de llegar al `notFound()`.
+
+**Una nota se puede borrar.** `borrarNota()` en `src/actions/notas.ts`, con el
+botón en la pantalla de edición. El `delete` lleva `.select()` encima a
+propósito: una política de RLS que rechaza no tira error, devuelve cero filas, y
+sin eso el botón decía "borrada" y la nota seguía ahí. El listado del panel se
+filtra por título, estado, categoría y año, con el filtro en la URL
+(`src/lib/filtro-notas.ts`, puro y testeado).
+
+**La suite del panel nunca había corrido.** Al proyecto `entrar` de Playwright le
+faltaba `channel: 'msedge'` —era el único sin `use`— y sin `E2E_ADMIN_EMAIL` el
+proyecto no se armaba, así que los quince tests de `admin.spec.ts` no se habían
+ejecutado una sola vez. Ahora corren. Y **`entrar` depende de `login`**: el test
+de "Salir" llama `signOut()`, que revoca *todas* las sesiones del usuario, y en
+paralelo le borraba la sesión al setup.
+
+Lo medido y lo que queda abierto está en `REPORTE_PRUEBAS.md`.
+
+---
+
 ## Estado al cierre del Step 14 (páginas deportivas)
 
 > **LEER PRIMERO.** El tema se invirtió **dos veces** en un mismo día: primero a
