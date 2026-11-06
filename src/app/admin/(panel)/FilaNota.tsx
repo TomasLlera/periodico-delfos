@@ -24,7 +24,13 @@ const ESTILO_ESTADO = {
   archivada: 'bg-bg-muted text-text-muted',
 } as const
 
-const NOMBRE_ESTADO = {
+/**
+ * Se exporta porque el filtro del listado —`FiltroNotas`— llena su `<select>`
+ * con estos mismos nombres. Dos listas de estados escritas aparte se
+ * contradicen solas: el día que entre un estado nuevo, una lo dice y la otra
+ * no.
+ */
+export const NOMBRE_ESTADO = {
   borrador: 'Borrador',
   programada: 'Programada',
   publicada: 'Publicada',

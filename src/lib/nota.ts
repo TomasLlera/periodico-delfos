@@ -37,7 +37,14 @@ export function slugDesdeTitulo(titulo: string): string {
 // Validación del formulario
 // ============================================
 
-const CATEGORIAS = ['cronica', 'analisis', 'temporada', 'plantel', 'institucional'] as const
+/**
+ * Las categorías, en el orden en que se eligen.
+ *
+ * Se exporta porque es la lista canónica: la usa el `z.enum` de abajo y la usa
+ * el filtro del listado del panel. Dos listas que tienen que decir lo mismo
+ * terminan diciendo cosas distintas el día que entre una categoría nueva.
+ */
+export const CATEGORIAS = ['cronica', 'analisis', 'temporada', 'plantel', 'institucional'] as const
 const REDES = ['facebook', 'instagram', 'x'] as const
 
 const esquemaDocumento: z.ZodType<DocumentoTipTap> = z.object({

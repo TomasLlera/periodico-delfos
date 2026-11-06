@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
+import { aniosDeNotas, filtrarNotas, leerFiltro, type ParametrosFiltro } from '@/lib/filtro-notas'
 import { getNotasDelAdmin } from '@/lib/supabase/queries/notas'
 import { FilaNota } from './FilaNota'
+import { FiltroNotas } from './FiltroNotas'
 
 /**
  * El listado del panel: todo lo que escribió Charlie, borradores incluidos.
@@ -12,11 +14,21 @@ import { FilaNota } from './FilaNota'
  *
  * Los borradores van arriba, siempre. Son en lo que se está trabajando, y lo
  * publicado ya está resuelto.
+ *
+ * **El filtro llega por la URL** y lo aplica `filtrarNotas()`, que es puro y
+ * está testeado. Los años del `<select>` salen de las notas sin filtrar: si
+ * salieran de las filtradas, elegir 2024 dejaría 2024 como única opción y no
+ * habría forma de volver a otro año sin limpiar todo.
  */
 export const dynamic = 'force-dynamic'
 
-export default async function Panel() {
-  const notas = await getNotasDelAdmin()
+type Params = { searchParams: Promise<ParametrosFiltro> }
+
+export default async function Panel({ searchParams }: Params) {
+  const [todas, parametros] = await Promise.all([getNotasDelAdmin(), searchParams])
+
+  const filtro = leerFiltro(parametros)
+  const notas = filtrarNotas(todas, filtro)
 
   const borradores = notas.filter((n) => n.estado === 'borrador')
   // Las programadas van en su propio grupo y ordenadas por cuándo salen: bajo
@@ -41,7 +53,13 @@ export default async function Panel() {
         </Link>
       </div>
 
-      {notas.length === 0 && (
+      {/* El filtro se dibuja sólo si hay algo que filtrar. Con la base vacía
+          —o con tres notas— es un control que estorba más de lo que ayuda. */}
+      {todas.length > 0 && (
+        <FiltroNotas filtro={filtro} anios={aniosDeNotas(todas)} cuantas={notas.length} />
+      )}
+
+      {todas.length === 0 && (
         <p className="border-l-2 border-border-control bg-bg-muted px-4 py-3 text-[0.95rem]">
           Todavía no hay ninguna nota. La primera se escribe desde{' '}
           <Link href="/admin/notas/nueva" className="underline underline-offset-4">
@@ -50,6 +68,11 @@ export default async function Panel() {
           .
         </p>
       )}
+
+      {/* Que el filtro no haya encontrado nada lo dice el propio filtro, al
+          lado del botón de limpiar, y no se repite acá: sin filtro puesto
+          `notas` es `todas`, así que la lista vacía sólo puede venir de la base
+          vacía —el aviso de arriba— o de un filtro que no encontró nada. */}
 
       {borradores.length > 0 && (
         <section className="mb-8">

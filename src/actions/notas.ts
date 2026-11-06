@@ -303,6 +303,55 @@ export async function despublicarNota(id: string): Promise<ResultadoNota> {
 }
 
 /**
+ * Borra una nota, de verdad y para siempre.
+ *
+ * **Faltaba, y la falta se notó enseguida**: una nota de prueba cargada para
+ * ver cómo quedaba el editor no tenía forma de salir del panel. Quedaba ahí
+ * arriba de todo, en el grupo de borradores, para siempre.
+ *
+ * **El `delete` devuelve el slug de lo que borró**, y eso es lo que tiene de
+ * delicado: hace falta para revalidar `/nota/<slug>`, y después del borrado ya
+ * no hay fila donde ir a buscarlo. Sin esa revalidación, una nota publicada y
+ * borrada sigue sirviéndose desde el cache de ISR hasta sesenta segundos más
+ * tarde, y el que la borró la ve viva en el sitio.
+ *
+ * **Quién puede.** No hay ningún `if` de rol acá y es a propósito: lo decide
+ * `escritura_propias` de la 0014, que es la misma política que gobierna el
+ * editar. Quien puede guardar una nota puede borrarla; un redactor no toca las
+ * de los demás. La pantalla ya lo filtra antes —`/admin/notas/[id]` hace
+ * `notFound()` con la nota de otro— pero esto es una ruta HTTP y la política es
+ * la que lo sostiene.
+ *
+ * **Lo que se va con ella y lo que no.** `social_posts` cae por `on delete
+ * cascade` (0007), así que el registro de lo que salió a las redes se pierde
+ * junto con la nota; el posteo en Facebook o en Instagram, en cambio, **sigue
+ * publicado allá** y con el link roto. Las imágenes quedan en el bucket: son
+ * compartidas —la misma foto puede ilustrar dos notas— y borrarlas acá dejaría
+ * un hueco en la otra. Se limpian a mano desde Storage.
+ */
+export async function borrarNota(id: string): Promise<ResultadoNota> {
+  const autor = await getAutorDeLaSesion()
+  if (!autor) return { error: 'Se cerró la sesión. Entrá de nuevo.' }
+
+  const supabase = await createClient()
+
+  // **El `select()` sobre el `delete()` no es decoración.** Devuelve las filas
+  // que de verdad se borraron, y es la única forma de notar que RLS no dejó:
+  // una política que rechaza no tira error, devuelve cero filas. Sin esto, el
+  // botón decía "borrada", el listado se refrescaba y la nota seguía ahí.
+  const { data, error } = await supabase.from('notas').delete().eq('id', id).select('slug')
+
+  if (error) return { error: 'No se pudo borrar la nota.' }
+
+  const borrada = (data ?? [])[0]
+  if (!borrada) return { error: 'No se borró: la nota ya no existe, o no es tuya.' }
+
+  revalidarRutasPublicas(borrada.slug)
+
+  return {}
+}
+
+/**
  * Deja la nota lista para que salga sola a la hora que se le diga.
  *
  * **Exige lo mismo que publicar, no menos.** Pasa por `chequearPublicacion()`
