@@ -256,8 +256,16 @@ export default defineConfig({
          * **puede dar verde** sobre lo que no se probó. Levantar el servidor
          * tarda unos segundos; perseguir un fantasma, una tarde.
          *
-         * Para correr contra un servidor propio —el `pnpm dev` de la sesión—
-         * está `E2E_BASE_URL`, que además saltea este bloque entero.
+         * **El costo de esto, para que no sorprenda:** si algo está ocupando el
+         * 3100, la suite ya no corre y dice `3100 is already used`. Es el
+         * intercambio buscado —ruidoso antes que silencioso— y la salida es
+         * liberar el puerto o apuntar a uno propio:
+         *
+         *     npx next start -p 3130
+         *     E2E_BASE_URL=http://localhost:3130 pnpm test:e2e
+         *
+         * `E2E_BASE_URL` además saltea este bloque entero, que es lo que hace
+         * falta para correr contra el `pnpm dev` de la sesión.
          */
         reuseExistingServer: false,
         // `next start` necesita un build hecho. Se corre aparte a propósito:
