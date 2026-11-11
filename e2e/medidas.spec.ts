@@ -45,8 +45,19 @@ const RUTAS = [
  *
  * **Se filtran por URL y no por el texto del mensaje**, que no la trae: filtrar
  * por texto tapaba errores de verdad que decían lo mismo.
+ *
+ * **`_vercel/insights` entró después de costar una tarde.** Es el script de
+ * Vercel Web Analytics, que lo inyecta `<Analitica />` y **sólo existe cuando
+ * el sitio está desplegado**: contra `next start` local da 404 siempre.
+ * Verificado que en producción responde 200.
+ *
+ * Mientras no estuvo filtrado, el barrido daba rojos que parecían regresiones y
+ * cambiaban de ruta en cada corrida —`/buscar`, `/analisis`, `/plantel`,
+ * `/demo/partido`— porque con diez proyectos en paralelo el script falla en las
+ * rutas que justo estaban en vuelo. Dos veces en una misma sesión se buscó la
+ * causa en el código de la página. No está ahí.
  */
-const RUIDO = /_rsc=|\/jugadora\/|\/partido\/|favicon/
+const RUIDO = /_rsc=|\/jugadora\/|\/partido\/|favicon|_vercel\/insights/
 
 /**
  * El texto del mensaje **más la URL del recurso** que falló.

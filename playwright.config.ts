@@ -244,7 +244,22 @@ export default defineConfig({
     ? {
         command: 'npx next start -p 3100',
         url: 'http://localhost:3100',
-        reuseExistingServer: !process.env.CI,
+        /**
+         * **Nunca reusa un servidor que no levantó ella, ni en local.** Era
+         * `!process.env.CI`, o sea "reusá lo que haya", y eso costó un
+         * diagnóstico entero: había quedado un `next start` olvidado en el 3100
+         * desde horas antes, con un build anterior a dos arreglos, y la suite
+         * corrió contra él. Doce rojos que parecían regresiones de `/plantel`,
+         * `/fixture` y la accesibilidad de `/demo/nota` eran de código viejo.
+         *
+         * Es la peor clase de fallo de un arnés de pruebas: no dice nada y
+         * **puede dar verde** sobre lo que no se probó. Levantar el servidor
+         * tarda unos segundos; perseguir un fantasma, una tarde.
+         *
+         * Para correr contra un servidor propio —el `pnpm dev` de la sesión—
+         * está `E2E_BASE_URL`, que además saltea este bloque entero.
+         */
+        reuseExistingServer: false,
         // `next start` necesita un build hecho. Se corre aparte a propósito:
         // que la suite compile el proyecto entero escondería cuánto tarda cada
         // cosa.
