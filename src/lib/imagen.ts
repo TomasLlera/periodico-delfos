@@ -32,13 +32,52 @@ export function esUrlLocal(url: string): boolean {
 }
 
 /**
+ * Si el transformador de Supabase está disponible en este proyecto.
+ *
+ * **`/storage/v1/render/image/` es una función de plan pago.** Sin ella,
+ * Supabase no devuelve la imagen sin transformar: devuelve un JSON con
+ * `403 FeatureNotEnabled`, "feature not enabled for this tenant". Y como la URL
+ * va en el `src` de un `<img>`, el navegador no dibuja nada: **todas las
+ * imágenes del sitio desaparecen a la vez**, sin un error en la consola que
+ * explique por qué.
+ *
+ * Es exactamente lo que pasó en producción. El archivo del bucket estaba
+ * intacto todo el tiempo —`/storage/v1/object/public/…` devolvía la foto en
+ * 200— así que no había nada roto del lado del sitio ni de la base.
+ *
+ * Por omisión queda **apagado**, y es deliberado: que el sitio se vea es más
+ * importante que que las imágenes pesen poco. Con el plan que lo habilita, se
+ * prende poniendo `NEXT_PUBLIC_SUPABASE_IMAGE_TRANSFORM=true` y vuelven el
+ * `srcSet` y el `?width=` sin tocar una línea.
+ *
+ * **Tiene que ser `NEXT_PUBLIC_`**: esto corre también en el navegador, en la
+ * vista previa del editor.
+ *
+ * Recibe el entorno como parámetro, igual que `esDryRun()` en
+ * `src/lib/social/redes.ts`: es lo que lo hace testeable sin tocar
+ * `process.env` global.
+ */
+export function hayTransformador(
+  entorno: Record<string, string | undefined> = process.env,
+): boolean {
+  return entorno.NEXT_PUBLIC_SUPABASE_IMAGE_TRANSFORM === 'true'
+}
+
+/**
  * Reescribe una URL pública del bucket a su equivalente transformada.
  *
  * Si la URL no es del bucket —un `blob:`, o una absoluta de otro dominio— la
- * devuelve intacta en vez de pegarle parámetros que no entiende.
+ * devuelve intacta en vez de pegarle parámetros que no entiende. Y si el
+ * transformador no está habilitado, la devuelve intacta también: así el `<img>`
+ * apunta al archivo original, que es público y siempre responde.
  */
-export function urlTransformada(url: string, ancho: number): string {
+export function urlTransformada(
+  url: string,
+  ancho: number,
+  entorno: Record<string, string | undefined> = process.env,
+): string {
   if (esUrlLocal(url)) return url
+  if (!hayTransformador(entorno)) return url
 
   const base = url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/')
 
@@ -56,10 +95,13 @@ export function urlTransformada(url: string, ancho: number): string {
  * Devolver `undefined` y no una cadena vacía es a propósito: `srcSet=""` es un
  * atributo presente y vacío, y el navegador lo trata distinto de no tenerlo.
  */
-export function srcSetTransformado(url: string): string | undefined {
-  if (urlTransformada(url, 800) === url) return undefined
+export function srcSetTransformado(
+  url: string,
+  entorno: Record<string, string | undefined> = process.env,
+): string | undefined {
+  if (urlTransformada(url, 800, entorno) === url) return undefined
 
-  return ANCHOS_IMAGEN.map((a) => `${urlTransformada(url, a)} ${a}w`).join(', ')
+  return ANCHOS_IMAGEN.map((a) => `${urlTransformada(url, a, entorno)} ${a}w`).join(', ')
 }
 
 // ============================================
