@@ -25,9 +25,9 @@ estado estaba ocultando una caída real del sitio.**
 
 | | |
 |---|---|
-| Defectos nuevos encontrados | 6 |
+| Defectos nuevos encontrados | 8 |
 | Defectos cerrados en esta iteración | 8 |
-| Defectos abiertos de prioridad alta | **1** (DEF-09, configuración de Vercel) |
+| Defectos abiertos de prioridad alta | **2** (DEF-09 configuración de Vercel, DEF-11 la suite puede correr contra un build viejo) |
 | Hallazgos previos invalidados | 1 |
 | Hallazgos previos recategorizados | 1 |
 | Casos automatizados nuevos | 21 (13 de estados HTTP + 8 de login) |
@@ -139,6 +139,33 @@ No son lo mismo, y los dos primeros lo muestran bien.
 | DEF-09 | `/api/inngest` responde 500 en producción por falta de `INNGEST_SIGNING_KEY` en Vercel. Sin auto-posteo ni notas programadas | Alta | **Alta** | **Abierto** |
 | DEF-01 | La ficha del último partido muestra el resultado 2–3 junto a "Sin goles ni tarjetas cargadas" | Media | Alta | **Abierto** |
 | DEF-10 | El listado del panel no tiene filtro: con el archivo de WordPress, encontrar una nota es recorrer la lista entera | Baja | Media | **Cerrado** `c18f612` |
+| DEF-11 | `reuseExistingServer` de Playwright toma cualquier servidor que haya en el puerto 3100, **incluido uno olvidado con un build viejo**: la suite entera reporta contra código que no es el que se quiere probar | Alta | **Alta** | **Abierto** |
+| DEF-12 | `/demo/nota` incumple `aria-prohibited-attr` por el markup del reproductor embebido de YouTube (`div.html5-video-player` con `aria-label` y sin rol) | Media | Baja | **Abierto** |
+| DEF-13 | `medidas.spec.ts` da falsos rojos con los 10 proyectos en paralelo: el `next start` local no acompaña y aparecen errores de consola en rutas al azar. Aislado pasa 34 de 34 | Baja | Media | **Abierto** |
+
+**DEF-13 ya tiene precedente en el repo.** El proyecto `rendimiento` corre con
+`fullyParallel: false` por exactamente esto, y su comentario lo mide: "en
+paralelo la portada da 3264 ms y de a una, 1800". A `medidas` le falta el mismo
+tratamiento. Se reconoce porque las rutas que fallan **cambian de corrida en
+corrida** —`/buscar`, `/analisis`, `/plantel`, `/demo/partido`— y todas pasan al
+correrlas solas.
+
+#### DEF-11, que es el más engañoso de todos
+
+Apareció al verificar este informe. Una corrida de la suite dio **12 fallas** que
+parecían regresiones de `/plantel`, `/fixture` y la accesibilidad de
+`/demo/nota`. No lo eran: había un `next start` olvidado en el 3100 desde horas
+antes, con un build anterior a dos arreglos, y `reuseExistingServer: true` lo
+reusó sin avisar. Contra un build fresco, los tres tests pasan.
+
+**Es el mismo tipo de defecto que DEF-07**, y por eso van juntos: en los dos
+casos la suite no prueba lo que quien la corre cree que prueba. Uno no ejecutaba
+nada; el otro ejecuta contra lo que no es. El segundo es peor, porque da verde.
+
+Se cierra con un puerto efímero o con `reuseExistingServer: false`. Mientras no
+esté, la regla es: **ante un rojo raro, antes de buscar la causa en el código,
+rebuildear y apuntar la suite con `E2E_BASE_URL` a un servidor recién
+levantado.**
 
 ### Dos correcciones al informe previo
 
