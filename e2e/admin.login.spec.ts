@@ -67,13 +67,23 @@ test.describe('el ingreso al panel', () => {
     await expect(page.getByLabel('Mail')).toBeFocused()
   })
 
-  test('con el mail puesto y sin contraseña lo dice el servidor', async ({ page }) => {
+  /**
+   * **Y lo dice con un 400, que ahora se puede afirmar.** El formulario entra
+   * por `POST /api/auth/login`: un pedido mal armado es 400 y unas credenciales
+   * que no sirven son 401, dos hechos distintos con dos códigos distintos.
+   * Cuando esto era un Server Action los dos eran 200 y no había nada que
+   * mirar más que el texto en pantalla.
+   */
+  test('con el mail puesto y sin contraseña lo dice el servidor, con un 400', async ({ page }) => {
     await page.goto('/admin/login')
+
+    const respuesta = page.waitForResponse('**/api/auth/login')
 
     await page.getByLabel('Mail').fill(EMAIL as string)
     await page.getByRole('button', { name: 'Entrar' }).click()
 
-    await expect(avisoDelFormulario(page)).toHaveText('Faltan el mail o la contraseña')
+    expect((await respuesta).status()).toBe(400)
+    await expect(avisoDelFormulario(page)).toHaveText('Falta la contraseña')
   })
 
   /**
@@ -82,25 +92,36 @@ test.describe('el ingreso al panel', () => {
    * cualquiera qué mails tienen cuenta en el panel. Si alguien algún día
    * "mejora" el mensaje para que sea más útil, este test se pone rojo.
    */
-  test('con la contraseña equivocada no entra, y no dice qué falló', async ({ page }) => {
+  test('con la contraseña equivocada no entra, da 401 y no dice qué falló', async ({ page }) => {
     await page.goto('/admin/login')
+
+    const respuesta = page.waitForResponse('**/api/auth/login')
 
     await page.getByLabel('Mail').fill(EMAIL as string)
     await page.getByLabel('Contraseña').fill('esta-no-es-la-contrasena')
     await page.getByRole('button', { name: 'Entrar' }).click()
 
-    await expect(avisoDelFormulario(page)).toHaveText('No pudimos entrar con esos datos')
+    // **El assert que antes no se podía escribir.** Con el Server Action esto
+    // era un 200 con el error adentro del cuerpo, igual que un login correcto.
+    expect((await respuesta).status()).toBe(401)
+
+    await expect(avisoDelFormulario(page)).toHaveText('No pudimos entrar con esos datos.')
     await expect(page).toHaveURL(/\/admin\/login/)
   })
 
   test('con un mail que no tiene cuenta dice exactamente lo mismo', async ({ page }) => {
     await page.goto('/admin/login')
 
+    const respuesta = page.waitForResponse('**/api/auth/login')
+
     await page.getByLabel('Mail').fill('nadie-con-este-mail@periodicodelfos.com')
     await page.getByLabel('Contraseña').fill('cualquier-cosa')
     await page.getByRole('button', { name: 'Entrar' }).click()
 
-    await expect(avisoDelFormulario(page)).toHaveText('No pudimos entrar con esos datos')
+    // Mismo código y mismo mensaje que la contraseña equivocada: distinguirlos
+    // le confirmaría a cualquiera qué mails tienen cuenta en el panel.
+    expect((await respuesta).status()).toBe(401)
+    await expect(avisoDelFormulario(page)).toHaveText('No pudimos entrar con esos datos.')
   })
 
   test('con los datos bien entra y ve la barra del panel', async ({ page }) => {

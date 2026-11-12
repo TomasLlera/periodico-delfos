@@ -11,10 +11,15 @@ Entorno de medición .. next start local (build de producción) contra el
 Materia .............. Metodología de Sistemas de Pruebas — Clase 8
 
 OBJETIVO
-  El panel entra por Server Actions, que responden 200 (o una redirección) y
+  El panel entraba por Server Actions, que responden 200 (o una redirección) y
   ponen el error adentro del cuerpo. Desde Network, Postman o un test, un login
-  fallido y uno exitoso son indistinguibles. Estas rutas existen para que el
+  fallido y uno exitoso eran indistinguibles. Estas rutas existen para que el
   código de estado lo dé el servidor y haya algo sobre lo cual afirmar.
+
+  EL PANEL YA USA ESTAS RUTAS. En una primera vuelta las rutas quedaron en
+  paralelo y la interfaz siguió con los Server Actions, así que el panel seguía
+  mostrando 200 en Network. Se corrigió: entrar y crear una nota ahora pasan
+  por /api/auth/login y POST /api/notas. Ver la sección 8.
 
 REGLA QUE ORDENA TODO
   Un 500 nunca es un resultado esperado. Todo error previsible se traduce a un
@@ -215,11 +220,63 @@ SECRETS DEL JOB DE CI — los tiene que cargar una persona.
   los casos que crean una nota se saltean solos en vez de fallar). Sin los dos
   primeros el job nace rojo. No se pueden cargar desde acá.
 
-COLECCIÓN DE POSTMAN — se creó, no se actualizó.
+COLECCIÓN DE POSTMAN — se creó, no se actualizó. (sigue en la sección 7)
 
   El encargo pedía actualizarla. No existía ninguna en el repositorio: el
   informe de pruebas ya lo decía ("los 12 casos de la clase 8 no están en el
   repositorio"). Queda en postman/periodico-delfos.postman_collection.json, con
   sus pm.test. No se corrió con Newman: no está instalado en esta máquina.
+
+================================================================================
+
+================================================================================
+8. EL PANEL, MEDIDO EN EL NAVEGADOR
+================================================================================
+
+Las rutas solas no alcanzaban: lo que se pide es ver el código en la pestaña
+Network al usar el panel. El formulario de login y la creacion de notas ahora
+hablan con las rutas por fetch, asi que el panel muestra el codigo real.
+
+Medido con Edge contra el build de produccion, escuchando las respuestas:
+
+  1) Login con contrasena incorrecta, desde el panel
+     POST /api/auth/login -> 401
+
+  2) Login correcto, desde el panel
+     POST /api/auth/login -> 200   (y entra: aparece la barra del panel)
+
+  3) Crear una nota desde el panel
+     POST /api/notas -> 201
+     {"id":"a3476c80-...","titulo":"Nota debug","slug":"prueba-dbg-...",
+      "categoria":"cronica","estado":"borrador","autor_id":"e0f6cf38-..."}
+     URL final: /admin/notas/a3476c80-ce3b-4891-bfc8-6e3aede7d301
+     (el editor salta a la nota creada: recargar no crea una segunda)
+
+QUE SE MOVIO Y QUE NO
+  Se movieron ...... entrar con contrasena, y crear una nota.
+  No se movieron ... editar una nota, publicar, programar y el magic link.
+                     Editar no agrega ningun codigo nuevo: es el mismo 200 de
+                     siempre. Publicar y programar disparan el auto-posteo a
+                     las redes y ese camino no se toca sin motivo. El magic
+                     link manda un mail y contesta que lo mando.
+
+LO QUE SE PAGA
+  El envio del login pasa a depender de JavaScript: antes el <form action={}>
+  de React andaba sin JS. Es aceptable en el panel, que ya es una aplicacion de
+  cliente de punta a punta —el editor es TipTap— y no lo seria en el buscador
+  del sitio publico, que sigue siendo un <form method="get"> sin JS.
+
+TESTS ACTUALIZADOS
+  e2e/admin.login.spec.ts ahora afirma sobre el codigo, que es lo que antes no
+  se podia escribir:
+    contrasena equivocada ....... expect(respuesta.status()).toBe(401)
+    mail sin cuenta ............. expect(respuesta.status()).toBe(401)
+    sin contrasena .............. expect(respuesta.status()).toBe(400)
+  Los 8 casos del login pasan, y la suite completa tambien: 293 passed,
+  0 failed, 8 skipped.
+
+CODIGO MUERTO RETIRADO
+  Las funciones entrar() y entrarConContrasena() de src/actions/sesion.ts se
+  borraron: ya no las llama nadie. Quedan enviarMagicLink() y salir().
 
 ================================================================================

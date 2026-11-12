@@ -31,6 +31,28 @@ export interface CuerpoError {
   }
 }
 
+/**
+ * El mensaje de un cuerpo de error, leído desde el otro lado.
+ *
+ * Lo usan los formularios del panel, que ahora hablan con estas rutas por
+ * `fetch`: lo que viene es `unknown` —puede ser el cuerpo esperado, puede ser
+ * una página de error de la plataforma, puede no ser JSON— y hay que llegar al
+ * texto sin romperse en el camino. Vive acá y no en cada formulario para que
+ * el formato se lea en un solo lugar: si cambia, cambia una vez.
+ */
+export function mensajeDelError(cuerpo: unknown, porOmision: string): string {
+  if (cuerpo !== null && typeof cuerpo === 'object' && 'error' in cuerpo) {
+    const error = (cuerpo as { error?: unknown }).error
+
+    if (error !== null && typeof error === 'object' && 'mensaje' in error) {
+      const mensaje = (error as { mensaje?: unknown }).mensaje
+      if (typeof mensaje === 'string' && mensaje.length > 0) return mensaje
+    }
+  }
+
+  return porOmision
+}
+
 /** Un error ya traducido: el estado HTTP y lo que va en el cuerpo. */
 export interface ErrorApi {
   estado: number

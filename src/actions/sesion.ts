@@ -35,43 +35,23 @@ function destino(formData: FormData): string {
 }
 
 /**
- * Las dos formas entran por la misma puerta.
+ * **Entrar con contraseña ya no vive acá: lo hace `POST /api/auth/login`.**
  *
- * Un `<form>` tiene una sola `action`, y tener dos formularios obligaría a
- * escribir el mail dos veces. El botón apretado viaja en el `FormData` —es lo
- * que hace `name` + `value` en un `<button type="submit">`— así que con eso
- * alcanza para saber qué quiso hacer.
+ * Era un Server Action, y un Server Action responde 200 tanto si entrás como
+ * si no, con el error adentro del cuerpo. Desde la pestaña Network, desde
+ * Postman o desde un test, un login fallido y uno exitoso eran la misma
+ * respuesta. La ruta devuelve 400, 401, 429 o 503 según el caso, que es lo que
+ * permite afirmar sobre el protocolo y no sobre el texto de la pantalla.
+ *
+ * El mensaje sigue siendo el mismo para "no existe" y para "contraseña
+ * equivocada" —ahora en `ERRORES.credencialesInvalidas()`—, por la misma razón
+ * de siempre: decir cuál de las dos falló le confirma a cualquiera qué mails
+ * tienen cuenta.
+ *
+ * **El magic link se queda**, abajo: manda un mail y contesta que lo mandó. No
+ * tiene un código de estado interesante que mostrar, y moverlo sería agregar
+ * una ruta para nada.
  */
-export async function entrar(
-  previo: EstadoSesion,
-  formData: FormData,
-): Promise<EstadoSesion> {
-  return formData.get('accion') === 'link'
-    ? enviarMagicLink(previo, formData)
-    : entrarConContrasena(previo, formData)
-}
-
-async function entrarConContrasena(
-  _previo: EstadoSesion,
-  formData: FormData,
-): Promise<EstadoSesion> {
-  const email = String(formData.get('email') ?? '').trim()
-  const password = String(formData.get('password') ?? '')
-
-  if (!email || !password) {
-    return { error: 'Faltan el mail o la contraseña' }
-  }
-
-  const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
-
-  // El mensaje es a propósito el mismo para "no existe" y para "contraseña
-  // equivocada": decir cuál de las dos falló le confirma a cualquiera qué mails
-  // tienen cuenta.
-  if (error) return { error: 'No pudimos entrar con esos datos' }
-
-  redirect(destino(formData))
-}
 
 export async function enviarMagicLink(
   _previo: EstadoSesion,

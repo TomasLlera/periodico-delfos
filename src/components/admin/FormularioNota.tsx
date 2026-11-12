@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState, useTransition } from 'react'
 import { subirImagen } from '@/actions/imagenes'
 import { guardarNota, programarNota, publicarNota } from '@/actions/notas'
+import { crearNotaPorApi } from '@/lib/api/crear-nota'
 import { chequearImagen } from '@/lib/imagen'
 import { entradaDesdeNota, esquemaNota, slugDesdeTitulo, type EntradaNota } from '@/lib/nota'
 import { esSobrePublicada, notaDePrevisualizacion } from '@/lib/vista-previa'
@@ -147,6 +148,21 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
     return false
   }
 
+  /**
+   * **Crear va por `POST /api/notas`; editar sigue yendo por el Server
+   * Action.**
+   *
+   * La diferencia no es capricho: crear tiene códigos propios que vale la pena
+   * que diga el servidor —201 cuando se creó, 409 cuando el slug ya existe— y
+   * un Server Action contesta 200 en los dos casos, con el resultado metido
+   * adentro del cuerpo. Desde la pestaña Network, crear una nota y fallar al
+   * crearla eran la misma respuesta. Editar, en cambio, no agrega ningún
+   * código nuevo: es el mismo 200 de siempre, así que moverlo no ganaba nada y
+   * sí tocaba el camino por el que pasa todo lo ya publicado.
+   *
+   * Publicar y programar tampoco se movieron, por la misma razón y una más:
+   * disparan el auto-posteo a las redes y ese camino no se toca sin motivo.
+   */
   function alGuardar() {
     if (!validar()) return
 
@@ -154,7 +170,10 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
       const lista = await conImagenSubida()
       if (!lista) return
 
-      const r = await guardarNota(lista, nota?.id ?? null)
+      const r = esNueva
+        ? await crearNotaPorApi(lista)
+        : await guardarNota(lista, nota?.id ?? null)
+
       if (r.error) {
         setAviso(r.error)
         return
