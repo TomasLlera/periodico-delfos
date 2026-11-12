@@ -90,6 +90,39 @@ export const esquemaNota = z
 
 export type EntradaNota = z.infer<typeof esquemaNota>
 
+/**
+ * Lo que va a la base, ya sin los campos que decide el servidor.
+ *
+ * **Sin `autor_id`**, que no es un campo editable: al crear lo pone quien crea
+ * (ver `firmaDe()`) y al editar no se toca. Incluirlo acá hacía que cualquier
+ * corrección sobre una nota ajena se la reasignara a quien la abrió, que es la
+ * forma más silenciosa de robarle la firma a alguien: no hay nada en la
+ * pantalla que lo anuncie y la nota ya estaba publicada.
+ *
+ * **Vive acá y no en `src/actions/notas.ts`, que es de donde salió.** Ese
+ * archivo es `'use server'` y un módulo de Server Actions sólo puede exportar
+ * funciones asíncronas, así que desde ahí no se podía compartir. Ahora la usan
+ * los dos caminos que escriben una nota —el Server Action del panel y
+ * `POST /api/notas`— y la fila que arman es, por construcción, la misma.
+ */
+export function filaDesde(entrada: EntradaNota) {
+  return {
+    titulo: entrada.titulo,
+    slug: entrada.slug,
+    bajada: entrada.bajada,
+    cuerpo: entrada.cuerpo,
+    imagen_portada: entrada.imagen_portada,
+    imagen_alt: entrada.imagen_alt,
+    imagen_credito: entrada.imagen_credito,
+    categoria: entrada.categoria,
+    temporada_id: entrada.temporada_id,
+    partido_id: entrada.partido_id,
+    destacada: entrada.destacada,
+    auto_post: entrada.auto_post,
+    redes: entrada.redes,
+  }
+}
+
 // ============================================
 // Publicar
 // ============================================

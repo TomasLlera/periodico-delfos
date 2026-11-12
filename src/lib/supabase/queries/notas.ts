@@ -1,4 +1,5 @@
-import { firmaDe } from '@/lib/nota'
+import { cache } from 'react'
+import { filaDesde, firmaDe } from '@/lib/nota'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAutorDeLaSesion } from '@/lib/supabase/queries/autores'
 import { esRangoFueraDeAlcance, exigir } from '@/lib/supabase/exigir'
@@ -32,7 +33,17 @@ const CAMPOS_COMPLETOS = `
   )
 `
 
-export async function getNotaPorSlug(slug: string): Promise<NotaConRelaciones | null> {
+/**
+ * Una nota publicada por su slug.
+ *
+ * **Va envuelta en `cache()` de React** —el mismo recurso que usa
+ * `queries/estado.ts`— porque la página la pide dos veces en el mismo request:
+ * una en `generateMetadata()`, para el `<title>` y el Open Graph, y otra en el
+ * componente. Sin esto son dos consultas idénticas a la base por cada nota que
+ * se sirve. `cache()` las une dentro del request y no guarda nada entre
+ * requests, así que no interfiere con el ISR.
+ */
+export const getNotaPorSlug = cache(async (slug: string): Promise<NotaConRelaciones | null> => {
   const supabase = await createClient()
   const { data } = exigir(await supabase
     .from('notas')
@@ -42,7 +53,7 @@ export async function getNotaPorSlug(slug: string): Promise<NotaConRelaciones | 
     .maybeSingle(), 'getNotaPorSlug')
 
   return data as unknown as NotaConRelaciones | null
-}
+})
 
 /** La nota principal de la portada: la destacada más reciente. */
 export async function getNotaPrincipal(): Promise<NotaResumen | null> {
@@ -395,6 +406,28 @@ export async function getNotaParaPostear(id: string): Promise<NotaConRelaciones 
  * externa, y un `Record` respondería a claves como `constructor` con algo que
  * no es un título.
  */
+/** Los campos que `POST /api/notas` devuelve de la nota recién creada. */
+const CAMPOS_CREADA = 'id, titulo, slug, categoria, estado, autor_id, created_at'
+
+/**
+ * Inserta una nota. La usa `POST /api/notas`.
+ *
+ * **Devuelve la respuesta de Supabase sin pasar por `exigir()`**, al revés que
+ * todo lo demás de este archivo, y es a propósito: la ruta necesita el `code`
+ * del error para traducir `23505` a un 409. `exigir()` arma un `Error` de texto
+ * y ahí el código deja de ser un dato y pasa a ser parte de un mensaje.
+ *
+ * **Siempre borrador.** El `estado` lo fija quien llama y la ruta no acepta
+ * otro valor: publicar emite el evento de Inngest y dispara el auto-posteo a
+ * las tres redes, y eso no puede pasar por un POST sin confirmación.
+ */
+export async function insertarNota(
+  fila: ReturnType<typeof filaDesde> & { autor_id: string; estado: 'borrador' },
+) {
+  const supabase = await createClient()
+  return supabase.from('notas').insert(fila).select(CAMPOS_CREADA).single()
+}
+
 export async function getTitulosPorSlugs(slugs: readonly string[]): Promise<Map<string, string>> {
   if (slugs.length === 0) return new Map()
 

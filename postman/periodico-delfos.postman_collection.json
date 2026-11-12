@@ -1,0 +1,373 @@
+{
+  "info": {
+    "name": "Periódico Delfos — códigos de estado HTTP",
+    "description": "Los casos de la clase 8 contra las rutas de /api.\n\nQué verifica cada pedido: que el código de estado lo dé el servidor y no el HTML, y que todo error previsible llegue como un 4xx o un 503 con el formato fijo { error: { codigo, mensaje } }. Un 500 nunca es un resultado esperado.\n\nVariables: `base_url` (por omisión producción), `email` y `password` del usuario de prueba del panel. Las credenciales NO viajan en el archivo: se cargan como variables de entorno de Postman. Nunca las de Charlie.\n\nOrden: la carpeta 'Crear notas' depende del login, así que se corre entera o con Newman en orden.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "https://periodico-delfos.vercel.app" },
+    { "key": "slug_de_prueba", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Login",
+      "item": [
+        {
+          "name": "200 — credenciales correctas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200: entró', () => pm.response.to.have.status(200));",
+                  "pm.test('deja la cookie de sesión de Supabase', () => {",
+                  "  const tiene = pm.cookies.toObject();",
+                  "  const nombres = Object.keys(tiene).filter((n) => /^sb-.*-auth-token/.test(n));",
+                  "  pm.expect(nombres.length, 'cookie sb-…-auth-token').to.be.above(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "400 — sin campos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400: el pedido viene mal armado', () => pm.response.to.have.status(400));",
+                  "pm.test('formato de error fijo', () => {",
+                  "  const cuerpo = pm.response.json();",
+                  "  pm.expect(cuerpo.error.codigo).to.eql('datos_invalidos');",
+                  "  pm.expect(cuerpo.error.mensaje).to.be.a('string').and.not.empty;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "400 — mail con formato inválido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 y no 401: así no se pide, no es que las credenciales fallen', () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"sin-arroba\",\n  \"password\": \"lo-que-sea\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "401 — contraseña incorrecta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Supabase Auth responde 400 ante credenciales inválidas; nuestra API lo",
+                  "// traduce a 401 para quedar alineada con la tabla de la materia.",
+                  "pm.test('401: credenciales inválidas', () => pm.response.to.have.status(401));",
+                  "pm.test('no dice qué falló', () => {",
+                  "  pm.expect(pm.response.json().error.codigo).to.eql('credenciales_invalidas');",
+                  "});",
+                  "pm.test('no deja cookie de sesión', () => {",
+                  "  const nombres = Object.keys(pm.cookies.toObject()).filter((n) => /^sb-.*-auth-token/.test(n));",
+                  "  pm.expect(nombres.length).to.eql(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nadie-con-este-mail@periodicodelfos.com\",\n  \"password\": \"no-es-la-contrasena\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Buscar notas",
+      "item": [
+        {
+          "name": "200 — con resultados",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200));",
+                  "pm.test('devuelve una lista', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/notas?q=tiburonas",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notas"],
+              "query": [{ "key": "q", "value": "tiburonas" }]
+            }
+          }
+        },
+        {
+          "name": "200 con [] — sin coincidencias",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Que no haya resultados NO es un error y NO es un 404: el recurso",
+                  "// existe y la consulta fue válida. Es el caso que alguien 'arregla'",
+                  "// por error al leer los 404 de al lado.",
+                  "pm.test('200 y no 404', () => pm.response.to.have.status(200));",
+                  "pm.test('la lista viene vacía', () => pm.expect(pm.response.json()).to.eql([]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/notas?q=zzzzzzzzzzzz",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notas"],
+              "query": [{ "key": "q", "value": "zzzzzzzzzzzz" }]
+            }
+          }
+        },
+        {
+          "name": "400 — búsqueda demasiado corta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400', () => pm.response.to.have.status(400));",
+                  "pm.test('formato de error fijo', () => pm.expect(pm.response.json().error.codigo).to.eql('datos_invalidos'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/notas?q=a",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notas"],
+              "query": [{ "key": "q", "value": "a" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Una nota",
+      "item": [
+        {
+          "name": "404 — la nota no existe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404', () => pm.response.to.have.status(404));",
+                  "pm.test('formato de error fijo', () => pm.expect(pm.response.json().error.codigo).to.eql('no_encontrada'));",
+                  "pm.test('no filtra si el slug existe como borrador', () => {",
+                  "  pm.expect(pm.response.json().error.mensaje).to.not.match(/borrador/i);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/notas/esta-nota-no-existe-en-la-base",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notas", "esta-nota-no-existe-en-la-base"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Crear notas",
+      "item": [
+        {
+          "name": "401 — sin sesión",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('slug_de_prueba', 'prueba-postman-' + Date.now());"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('401: no sabemos quién sos', () => pm.response.to.have.status(401));",
+                  "pm.test('formato de error fijo', () => pm.expect(pm.response.json().error.codigo).to.eql('sin_sesion'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Nota de prueba de Postman\",\n  \"slug\": \"{{slug_de_prueba}}\",\n  \"bajada\": \"No se crea: este pedido va sin sesión.\",\n  \"cuerpo\": { \"type\": \"doc\", \"content\": [] },\n  \"imagen_portada\": null,\n  \"imagen_alt\": \"\",\n  \"imagen_credito\": null,\n  \"categoria\": \"cronica\",\n  \"temporada_id\": null,\n  \"partido_id\": null,\n  \"destacada\": false,\n  \"auto_post\": false,\n  \"redes\": [],\n  \"publicada_en\": null\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/notas", "host": ["{{base_url}}"], "path": ["api", "notas"] }
+          }
+        },
+        {
+          "name": "400 — faltan datos (sin título)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 y no 500: los datos inválidos son del cliente', () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"{{slug_de_prueba}}\",\n  \"bajada\": \"Sin título a propósito.\",\n  \"cuerpo\": { \"type\": \"doc\", \"content\": [] },\n  \"imagen_portada\": null,\n  \"imagen_alt\": \"\",\n  \"imagen_credito\": null,\n  \"categoria\": \"cronica\",\n  \"temporada_id\": null,\n  \"partido_id\": null,\n  \"destacada\": false,\n  \"auto_post\": false,\n  \"redes\": [],\n  \"publicada_en\": null\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/notas", "host": ["{{base_url}}"], "path": ["api", "notas"] }
+          }
+        },
+        {
+          "name": "201 — con sesión (correr después del login)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201: se creó', () => pm.response.to.have.status(201));",
+                  "pm.test('devuelve la nota con su id', () => pm.expect(pm.response.json().id).to.be.a('string'));",
+                  "pm.test('nace como borrador: esta ruta no publica ni postea', () => {",
+                  "  pm.expect(pm.response.json().estado).to.eql('borrador');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Nota de prueba de Postman\",\n  \"slug\": \"{{slug_de_prueba}}\",\n  \"bajada\": \"Creada por la colección. Borrarla al terminar.\",\n  \"cuerpo\": { \"type\": \"doc\", \"content\": [] },\n  \"imagen_portada\": null,\n  \"imagen_alt\": \"\",\n  \"imagen_credito\": null,\n  \"categoria\": \"cronica\",\n  \"temporada_id\": null,\n  \"partido_id\": null,\n  \"destacada\": false,\n  \"auto_post\": false,\n  \"redes\": [],\n  \"publicada_en\": null\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/notas", "host": ["{{base_url}}"], "path": ["api", "notas"] }
+          }
+        },
+        {
+          "name": "409 — el mismo slug otra vez",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('409: conflicto, no 500', () => pm.response.to.have.status(409));",
+                  "pm.test('dice cuál es el campo', () => {",
+                  "  pm.expect(pm.response.json().error.mensaje).to.match(/slug/i);",
+                  "});",
+                  "console.log('Acordate de borrar la nota ' + pm.collectionVariables.get('slug_de_prueba') + ' desde el panel.');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Nota de prueba de Postman\",\n  \"slug\": \"{{slug_de_prueba}}\",\n  \"bajada\": \"El mismo slug, a propósito.\",\n  \"cuerpo\": { \"type\": \"doc\", \"content\": [] },\n  \"imagen_portada\": null,\n  \"imagen_alt\": \"\",\n  \"imagen_credito\": null,\n  \"categoria\": \"cronica\",\n  \"temporada_id\": null,\n  \"partido_id\": null,\n  \"destacada\": false,\n  \"auto_post\": false,\n  \"redes\": [],\n  \"publicada_en\": null\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/notas", "host": ["{{base_url}}"], "path": ["api", "notas"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "La página de una nota inexistente",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// No es API: es la página. Está acá porque es el defecto #12 y se",
+              "// verifica del mismo modo, mirando el número y no la pantalla.",
+              "pm.test('404 real, no un 200 con cara de 404', () => pm.response.to.have.status(404));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/nota/esta-nota-no-existe-en-la-base",
+          "host": ["{{base_url}}"],
+          "path": ["nota", "esta-nota-no-existe-en-la-base"]
+        }
+      }
+    }
+  ]
+}
