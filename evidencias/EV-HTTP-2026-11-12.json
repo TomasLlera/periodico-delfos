@@ -1,0 +1,275 @@
+{
+  "id": "EV-HTTP-2026-11-12",
+  "titulo": "Verificación de códigos de estado HTTP — sitio público y API de Supabase",
+  "fecha": "2026-11-12",
+  "materia": "Metodología de Sistemas de Pruebas — Clase 8 (códigos de estado)",
+  "sistema_bajo_prueba": {
+    "sitio": "https://periodico-delfos.vercel.app",
+    "api": "Supabase PostgREST + Auth (proyecto del .env.local; host no publicado en este archivo)",
+    "rama": "main, árbol de trabajo limpio",
+    "herramienta": "curl 8.16.0 + Playwright 1.62 (Edge)"
+  },
+  "criterio_de_la_materia": {
+    "2xx": "200 OK · 201 Created · 204 No Content",
+    "4xx": "400 datos mal formados · 401 falta login o token · 403 logueado sin permiso · 404 no existe · 409 conflicto/duplicado",
+    "5xx": "500 se rompió algo adentro · 503 caído o saturado",
+    "reglas": [
+      "Un 500 nunca es un resultado esperado",
+      "Ante datos inválidos corresponde un 4xx con mensaje claro y formato fijo",
+      "Que no haya resultados no es un error: es 200",
+      "Si se corta la red no hay código: DevTools muestra (failed)"
+    ]
+  },
+  "resumen": {
+    "total": 18,
+    "pasa": 15,
+    "pasa_con_observacion": 2,
+    "falla": 1,
+    "bloqueado": 0
+  },
+  "casos": [
+    {
+      "id": 1,
+      "grupo": "sitio",
+      "metodo": "GET",
+      "url": "/",
+      "esperado": "200",
+      "obtenido": 200,
+      "tiempo_s": 0.525,
+      "estado": "Pasa",
+      "body": "HTML de la portada, lang=\"es-AR\", 126229 bytes, content-type text/html"
+    },
+    {
+      "id": 2,
+      "grupo": "sitio",
+      "metodo": "GET",
+      "url": "/nota/esta-nota-no-existe",
+      "esperado": "404",
+      "obtenido": 404,
+      "tiempo_s": 1.585,
+      "estado": "Pasa",
+      "body": "Pantalla \"No encontramos\" en español. Defecto #12 cerrado y verificado hoy: antes devolvía 200 con la pantalla en inglés"
+    },
+    {
+      "id": 3,
+      "grupo": "sitio",
+      "metodo": "GET",
+      "url": "/una-ruta-que-no-existe",
+      "esperado": "404",
+      "obtenido": 404,
+      "tiempo_s": 0.642,
+      "estado": "Pasa",
+      "body": "not-found propio del proyecto, lang=\"es-AR\", tres apariciones de \"No encontramos\""
+    },
+    {
+      "id": 4,
+      "grupo": "sitio",
+      "metodo": "GET",
+      "url": "/buscar?q=kl",
+      "esperado": "200 con el mensaje \"No hay notas que coincidan\" (no es error)",
+      "obtenido": 200,
+      "tiempo_s": 0.578,
+      "estado": "Pasa",
+      "body": "\"No hay notas que coincidan con kl.\" + link a todas las crónicas. Una búsqueda vacía es una respuesta exitosa"
+    },
+    {
+      "id": 5,
+      "grupo": "sitio",
+      "metodo": "GET",
+      "url": "/rss.xml",
+      "esperado": "200 en menos de 1 s",
+      "obtenido": 200,
+      "tiempo_s": 0.58,
+      "estado": "Pasa",
+      "body": "application/rss+xml; charset=utf-8, 3996 bytes. 0,58 s, dentro del límite"
+    },
+    {
+      "id": 6,
+      "grupo": "sitio",
+      "metodo": "GET",
+      "url": "/api/inngest",
+      "esperado": "cualquier cosa menos 500",
+      "obtenido": 500,
+      "tiempo_s": 1.206,
+      "estado": "Falla",
+      "body": "{\"code\":\"internal_server_error\"} — Defecto #18 SIGUE ABIERTO. Falta INNGEST_SIGNING_KEY en Vercel: sin auto-posteo ni notas programadas"
+    },
+    {
+      "id": 7,
+      "grupo": "sitio",
+      "metodo": "GET",
+      "url": "/admin (sin sesión)",
+      "esperado": "redirección al login, sin exponer datos",
+      "obtenido": 307,
+      "tiempo_s": 0.997,
+      "estado": "Pasa",
+      "body": "Location: /admin/login?volver=%2Fadmin. Body de 15 bytes (\"Redirecting...\"): cero datos del panel en la respuesta"
+    },
+    {
+      "id": 8,
+      "grupo": "sitio",
+      "metodo": "GET",
+      "url": "/a-dos-anos-de-aquel-20-de-abril-el-dia-que-comenzo-el-camino-hacia-el-ascenso (URL vieja de WordPress)",
+      "esperado": "301",
+      "obtenido": 308,
+      "tiempo_s": 0.231,
+      "estado": "Pasa con observación",
+      "body": "Location: /nota/a-dos-anos-de-aquel-20-de-abril-... — 308 es el permanente que además preserva el método. Lo emite Vercel por \"permanent\": true en vercel.json (82 redirecciones). Para buscadores equivale a 301: transfiere autoridad y no rompe links"
+    },
+    {
+      "id": 9,
+      "grupo": "api",
+      "metodo": "GET",
+      "url": "/rest/v1/notas?select=id,titulo,estado&estado=eq.publicada&limit=3 (anon key)",
+      "esperado": "200 con una lista",
+      "obtenido": 200,
+      "tiempo_s": 0.693,
+      "estado": "Pasa",
+      "body": "Array con 3 notas publicadas (id, titulo, estado)"
+    },
+    {
+      "id": 10,
+      "grupo": "api",
+      "metodo": "GET",
+      "url": "/rest/v1/notas?estado=eq.borrador&limit=5 (anon key, sin sesión)",
+      "esperado": "vacío o bloqueado, nunca con datos",
+      "obtenido": 200,
+      "tiempo_s": 0.266,
+      "estado": "Pasa",
+      "body": "[] — RLS filtra los borradores. El 200 con lista vacía es correcto: la consulta fue válida y la respuesta informa que no hay nada visible"
+    },
+    {
+      "id": 11,
+      "grupo": "api",
+      "metodo": "POST",
+      "url": "/rest/v1/notas (sin sesión)",
+      "esperado": "401 o 403, nunca 201",
+      "obtenido": 401,
+      "tiempo_s": 0.215,
+      "estado": "Pasa",
+      "body": "{\"code\":\"42501\",\"message\":\"new row violates row-level security policy for table \\\"notas\\\"\"}"
+    },
+    {
+      "id": 12,
+      "grupo": "api",
+      "metodo": "GET",
+      "url": "/rest/v1/notas?publicada_en=gte.no-es-una-fecha&limit=1",
+      "esperado": "400 con mensaje, nunca 500",
+      "obtenido": 400,
+      "tiempo_s": 0.253,
+      "estado": "Pasa",
+      "body": "{\"code\":\"22007\",\"message\":\"invalid input syntax for type timestamp with time zone: \\\"no-es-una-fecha\\\"\"}"
+    },
+    {
+      "id": 13,
+      "grupo": "api",
+      "metodo": "POST",
+      "url": "/auth/v1/token?grant_type=password (contraseña incorrecta)",
+      "esperado": "4xx con mensaje (la materia pide 401)",
+      "obtenido": 400,
+      "tiempo_s": 0.396,
+      "estado": "Pasa con observación",
+      "body": "{\"code\":400,\"error_code\":\"invalid_credentials\",\"msg\":\"Invalid login credentials\"} — GoTrue usa 400 para credenciales inválidas y reserva 401 para el token ausente o ilegible. Es un 4xx coherente, con formato fijo, y no revela si el mail existe. No se cuenta como defecto"
+    },
+    {
+      "id": 14,
+      "grupo": "api",
+      "metodo": "POST",
+      "url": "/auth/v1/token?grant_type=password (campos vacíos)",
+      "esperado": "4xx",
+      "obtenido": 400,
+      "tiempo_s": 0.141,
+      "estado": "Pasa",
+      "body": "{\"code\":400,\"error_code\":\"validation_failed\",\"msg\":\"missing email or phone\"}"
+    },
+    {
+      "id": 15,
+      "grupo": "api",
+      "metodo": "GET",
+      "url": "/rest/v1/notas?select=id&limit=1 (Bearer inválido)",
+      "esperado": "401",
+      "obtenido": 401,
+      "tiempo_s": 0.177,
+      "estado": "Pasa",
+      "body": "{\"code\":\"PGRST301\",\"details\":\"None of the keys was able to decode the JWT\"}"
+    },
+    {
+      "id": 16,
+      "grupo": "api",
+      "metodo": "POST",
+      "url": "/rest/v1/eventos con minuto=121 (usuario de prueba E2E)",
+      "esperado": "4xx por el CHECK, nunca 500",
+      "obtenido": 400,
+      "tiempo_s": 0.188,
+      "estado": "Pasa",
+      "body": "{\"code\":\"23514\",\"message\":\"new row for relation \\\"eventos\\\" violates check constraint \\\"minuto_valido\\\"\"} — el CHECK es minuto between 0 and 120, migración 0003_partidos_eventos.sql"
+    },
+    {
+      "id": 17,
+      "grupo": "api",
+      "metodo": "POST",
+      "url": "/rest/v1/eventos, el mismo gol con el mismo id dos veces (usuario de prueba E2E)",
+      "esperado": "el segundo da 409 y queda uno solo",
+      "obtenido": "201 y luego 409",
+      "tiempo_s": 0.19,
+      "estado": "Pasa",
+      "body": "2.º POST: {\"code\":\"23505\",\"message\":\"duplicate key value violates unique constraint \\\"eventos_pkey\\\"\"}. Consulta posterior: una sola fila"
+    },
+    {
+      "id": 18,
+      "grupo": "api",
+      "metodo": "DELETE",
+      "url": "/rest/v1/eventos?id=eq.<evento de prueba> (limpieza)",
+      "esperado": "204",
+      "obtenido": 204,
+      "tiempo_s": 0.19,
+      "estado": "Pasa",
+      "body": "Limpieza verificada: la consulta por id y la consulta por jugadora_nombre devuelven [] "
+    }
+  ],
+  "escrituras_en_produccion": {
+    "autorizadas": "sólo las del usuario de prueba E2E (credenciales leídas del entorno, nunca escritas en archivos)",
+    "creado": "1 evento de prueba — id 00000000-aaaa-4000-8000-000000000017, partido fecha-1-aldosivi-defensores-de-belgrano-2026, jugadora_nombre \"QA PRUEBA HTTP\"",
+    "borrado": true,
+    "verificacion_post_borrado": "[] tanto en la consulta por id como en la consulta por jugadora_nombre",
+    "precaucion": "se usó jugadora_nombre (el campo de texto para rivales) y no jugadora_id, para no tocar las estadísticas de ninguna jugadora real; y el partido más viejo de la base, el menos visible"
+  },
+  "defectos": [
+    {
+      "id": "#18 (DEF-09 en REPORTE_PRUEBAS.md)",
+      "descripcion": "/api/inngest responde 500 en producción por falta de INNGEST_SIGNING_KEY en Vercel. Sin auto-posteo ni notas programadas",
+      "severidad": "Alta",
+      "prioridad": "Alta",
+      "estado": "Abierto — reconfirmado el 12/11/2026",
+      "tipo": "configuración del entorno de despliegue, no de código"
+    },
+    {
+      "id": "#12 (DEF-02 + DEF-05 en REPORTE_PRUEBAS.md)",
+      "descripcion": "Toda página inexistente devolvía 200 con la pantalla de 404, y esa pantalla estaba en inglés",
+      "severidad": "Alta",
+      "prioridad": "Alta",
+      "estado": "Cerrado — verificado el 12/11/2026: 404 real y pantalla en español",
+      "tipo": "código"
+    }
+  ],
+  "test_login": {
+    "archivo": "e2e/admin.login.spec.ts",
+    "proyecto_playwright": "login",
+    "comando": "pnpm test:e2e --project=login e2e/admin.login.spec.ts",
+    "resultado": "8 passed (30.0s)",
+    "escenarios": [
+      "sin sesión, cualquier pantalla del panel lleva al login (con ?volver=)",
+      "el formulario pide el mail antes de mandar nada",
+      "con el mail puesto y sin contraseña lo dice el servidor",
+      "con la contraseña equivocada no entra, y no dice qué falló",
+      "con un mail que no tiene cuenta dice exactamente lo mismo",
+      "con los datos bien entra y ve la barra del panel",
+      "después de entrar vuelve a la pantalla de la que lo echaron",
+      "al salir se cierra la sesión de verdad"
+    ],
+    "hallazgo_server_action": "Medido con Playwright contra next start en el 3130: el POST del Server Action ante contraseña incorrecta devuelve HTTP 200. El test afirma sobre el mensaje en pantalla y sobre la URL, que es el nivel correcto; no afirma 401, que sería falso.",
+    "campos_vacios": "No se emite ningún POST: el atributo required del navegador frena el envío. Verificado: 0 peticiones al Server Action.",
+    "sesion_tras_fallo": "0 cookies de sesión creadas tras el intento fallido",
+    "brecha": "El test no cubre el nivel de la API de Auth: ningún assert sobre el 400/invalid_credentials de /auth/v1/token. Ese nivel está cubierto por los casos 13 a 15 de esta evidencia, pero a mano."
+  }
+}
