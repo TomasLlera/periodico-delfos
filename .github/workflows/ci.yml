@@ -57,3 +57,69 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  # ============================================
+  # Los códigos de estado, en CI
+  # ============================================
+  #
+  # Es el riesgo R-02 del informe de pruebas, acotado a lo que de verdad hace
+  # falta: **el proyecto `estados` y nada más**. No usa pantalla —habla por
+  # `request`, sin navegar—, así que corre en segundos y no arrastra las 282
+  # ejecuciones de la suite completa a cada push.
+  #
+  # Por qué justo éste y no otro: es el único que afirma sobre el protocolo. El
+  # resto de la suite mira lo que se dibuja, y en pantalla un 404 con status 200
+  # se ve idéntico a un 404 de verdad. Ése fue el DEF-02, y estuvo semanas
+  # tapando dos páginas caídas en producción.
+  #
+  # NECESITA SECRETS, y sin ellos nace rojo. En Settings → Secrets → Actions:
+  #   NEXT_PUBLIC_SUPABASE_URL       la base que lee la API
+  #   NEXT_PUBLIC_SUPABASE_ANON_KEY  idem; es pública por diseño, RLS la limita
+  #   E2E_ADMIN_EMAIL / E2E_ADMIN_PASSWORD   el usuario de prueba del panel
+  # Las dos últimas son opcionales: sin ellas los casos que crean una nota se
+  # saltean solos (`HAY_CREDENCIALES`) en vez de fallar, y queda cubierto todo
+  # lo que no necesita sesión.
+  estados:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+      # Ninguna prueba de acá postea, pero el flag va igual: que una corrida de
+      # CI pueda escribirle a Facebook es la clase de accidente que se evita
+      # antes y no después.
+      SOCIAL_DRY_RUN: 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # El proyecto `estados` declara `channel: 'msedge'`, como todos los demás
+      # de la suite. Sin esto el proyecto no arranca.
+      - name: Navegador
+        run: pnpm exec playwright install --with-deps msedge
+
+      - name: Build
+        run: pnpm build
+
+      # `playwright.config.ts` levanta `next start` en el 3100 por su cuenta y
+      # no reusa nada que haya en el puerto (ver DEF-11).
+      - name: Códigos de estado
+        run: pnpm test:e2e --project=estados
+
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-estados
+          path: playwright-report/
+          retention-days: 7
