@@ -3,8 +3,8 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useTransition } from 'react'
 import { subirImagen } from '@/actions/imagenes'
-import { guardarNota, programarNota, publicarNota } from '@/actions/notas'
-import { crearNotaPorApi } from '@/lib/api/crear-nota'
+import { programarNota } from '@/actions/notas'
+import { crearNotaPorApi, editarNotaPorApi, publicarNotaPorApi } from '@/lib/api/notas-cliente'
 import { chequearImagen } from '@/lib/imagen'
 import { entradaDesdeNota, esquemaNota, slugDesdeTitulo, type EntradaNota } from '@/lib/nota'
 import { esSobrePublicada, notaDePrevisualizacion } from '@/lib/vista-previa'
@@ -170,9 +170,9 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
       const lista = await conImagenSubida()
       if (!lista) return
 
-      const r = esNueva
-        ? await crearNotaPorApi(lista)
-        : await guardarNota(lista, nota?.id ?? null)
+      // Crear es 201 y editar es 200: dos códigos porque son dos hechos. Lo
+      // decide que la nota tenga id, que es lo mismo que decide `esNueva`.
+      const r = nota?.id ? await editarNotaPorApi(lista, nota.id) : await crearNotaPorApi(lista)
 
       if (r.error) {
         setAviso(r.error)
@@ -239,10 +239,15 @@ export function FormularioNota({ nota, temporadas, partidos, enlazables, autor }
         return
       }
 
-      const r = await publicarNota(lista, nota?.id ?? null, publicadaEn)
+      // **Publicar va por `POST /api/publicaciones`, que devuelve 201.** Antes
+      // iba por el Server Action y eso era un 200 tanto si la nota salía como
+      // si le faltaba la bajada. Publicar hace existir `/nota/<slug>`, que
+      // hasta ese momento devolvía 404: lo que ocurre es una creación, y el
+      // código lo dice.
+      const r = await publicarNotaPorApi(lista, nota?.id ?? null, publicadaEn)
       if (r.error) {
         setPrevia(false)
-        setAviso([r.error, ...(r.motivos ?? [])].join(' · '))
+        setAviso(r.error)
         return
       }
       router.push('/admin')

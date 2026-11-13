@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { esErrorDeRed } from '@/lib/api/errores'
 import { inngest, notaPublicada } from '@/lib/inngest/client'
 import {
   chequearFechaDeArchivo,
@@ -39,12 +40,80 @@ import { createClient } from '@/lib/supabase/server'
  * no pasa a ser su autor.
  */
 
+/**
+ * Por qué falló, en una palabra que puede leer el código.
+ *
+ * **Existe para que `POST /api/publicaciones` pueda elegir el código HTTP.** El
+ * `error` de al lado es una frase para mostrarle a quien escribe, y adivinar el
+ * estado HTTP comparando strings es exactamente la clase de atadura que se
+ * rompe el día que alguien corrige una tilde. Esto no cambia nada para la
+ * interfaz, que sigue mostrando `error` y `motivos` y nunca mira `codigo`.
+ */
+export type MotivoNota =
+  | 'sin_sesion'
+  | 'datos_invalidos'
+  | 'no_publicable'
+  | 'fecha_invalida'
+  | 'slug_duplicado'
+  | 'no_encontrada'
+  | 'no_disponible'
+  | 'falla'
+
+/**
+ * De un error de Postgres al motivo que le corresponde.
+ *
+ * **Está acá y no en `lib/api/` para no armar un ciclo**: aquel módulo importa
+ * los tipos de éste. Y existe porque los tres caminos de escritura —guardar,
+ * publicar, borrar— fallan igual y tienen que contestar igual.
+ *
+ * **El `23514` es el que costó encontrar.** Es un CHECK de la base violado:
+ * editar una nota publicada mandando `publicada_en` en null choca contra
+ * `publicada_tiene_fecha`. Caía en `falla` y salía **500**, que es justo lo que
+ * la regla prohíbe: el pedido traía un dato que no sirve, y eso es un 400.
+ */
+function motivoDeError(error: { code?: string | null }): MotivoNota {
+  if (error.code === '23505') return 'slug_duplicado'
+  // `PGRST116` es "la consulta no devolvió ninguna fila": ese id no existe, o
+  // RLS no deja verlo.
+  if (error.code === 'PGRST116') return 'no_encontrada'
+  // CHECK violado y fechas mal formadas: el dato vino mal.
+  if (error.code === '23514' || error.code === '22007' || error.code === '22008') {
+    return 'datos_invalidos'
+  }
+  // RLS rechazó con sesión puesta: la fila existe y no es tuya, que se cuenta
+  // como no encontrada para no delatar de quién es.
+  if (error.code === '42501') return 'no_encontrada'
+  if (esErrorDeRed(error)) return 'no_disponible'
+
+  return 'falla'
+}
+
+/** Qué decirle a quien escribe, según el motivo. */
+const MENSAJE_POR_MOTIVO: Record<MotivoNota, string> = {
+  sin_sesion: 'Se cerró la sesión. Entrá de nuevo.',
+  datos_invalidos: 'Alguno de los datos no cumple una regla de la base.',
+  no_publicable: 'La nota todavía no se puede publicar',
+  fecha_invalida: 'Esa fecha no se puede usar.',
+  slug_duplicado: 'Ya existe una nota con ese slug',
+  no_encontrada: 'Esa nota no existe, o no es tuya.',
+  no_disponible: 'El servicio no está disponible en este momento. Probá de nuevo en un rato.',
+  falla: 'No se pudo guardar',
+}
+
+function fallaDe(error: { code?: string | null }, siEsFalla: string): ResultadoNota {
+  const codigo = motivoDeError(error)
+
+  return { error: codigo === 'falla' ? siEsFalla : MENSAJE_POR_MOTIVO[codigo], codigo }
+}
+
 export interface ResultadoNota {
   id?: string
   slug?: string
   error?: string
   /** Lo que le falta a la nota para poder publicarse, en palabras. */
   motivos?: string[]
+  /** Para la ruta de API. La interfaz lo ignora. */
+  codigo?: MotivoNota
 }
 
 /**
@@ -70,11 +139,15 @@ function revalidarRutasPublicas(slug: string): void {
  */
 export async function guardarNota(datos: unknown, id: string | null): Promise<ResultadoNota> {
   const autor = await getAutorDeLaSesion()
-  if (!autor) return { error: 'Se cerró la sesión. Entrá de nuevo.' }
+  if (!autor) return { error: 'Se cerró la sesión. Entrá de nuevo.', codigo: 'sin_sesion' }
 
   const parseo = esquemaNota.safeParse(datos)
   if (!parseo.success) {
-    return { error: 'Faltan datos', motivos: parseo.error.issues.map((i) => i.message) }
+    return {
+      error: 'Faltan datos',
+      motivos: parseo.error.issues.map((i) => i.message),
+      codigo: 'datos_invalidos',
+    }
   }
 
   const supabase = await createClient()
@@ -102,11 +175,10 @@ export async function guardarNota(datos: unknown, id: string | null): Promise<Re
   // El caso frecuente es el slug repetido: dos notas del mismo partido con el
   // mismo título. Decirlo con el nombre del campo evita que parezca un error
   // del sistema.
-  if (error) {
-    return {
-      error: error.code === '23505' ? 'Ya existe una nota con ese slug' : 'No se pudo guardar',
-    }
-  }
+  // El caso frecuente es el slug repetido: dos notas del mismo partido con el
+  // mismo título. Decirlo con el nombre del campo evita que parezca un error
+  // del sistema.
+  if (error) return fallaDe(error, 'No se pudo guardar')
 
   return { id: data.id, slug: data.slug }
 }
@@ -181,18 +253,26 @@ export async function publicarNota(
   publicadaEn: string | null = null,
 ): Promise<ResultadoNota> {
   const autor = await getAutorDeLaSesion()
-  if (!autor) return { error: 'Se cerró la sesión. Entrá de nuevo.' }
+  if (!autor) return { error: 'Se cerró la sesión. Entrá de nuevo.', codigo: 'sin_sesion' }
 
   const parseo = esquemaNota.safeParse(datos)
   if (!parseo.success) {
-    return { error: 'Faltan datos', motivos: parseo.error.issues.map((i) => i.message) }
+    return {
+      error: 'Faltan datos',
+      motivos: parseo.error.issues.map((i) => i.message),
+      codigo: 'datos_invalidos',
+    }
   }
 
   // El mismo chequeo que hizo el formulario antes de abrir la vista previa. Se
   // repite porque el action se puede llamar sin haber pasado por ahí.
   const chequeo = chequearPublicacion(parseo.data)
   if (!chequeo.puede) {
-    return { error: 'La nota todavía no se puede publicar', motivos: chequeo.motivos }
+    return {
+      error: 'La nota todavía no se puede publicar',
+      motivos: chequeo.motivos,
+      codigo: 'no_publicable',
+    }
   }
 
   const supabase = await createClient()
@@ -213,7 +293,9 @@ export async function publicarNota(
   // es una ruta HTTP y se puede llamar sin pasar por la pantalla.
   if (elegida !== null) {
     const chequeo = chequearFechaDeArchivo(elegida)
-    if (!chequeo.puede) return { error: chequeo.motivo ?? 'Esa fecha no se puede usar.' }
+    if (!chequeo.puede) {
+      return { error: chequeo.motivo ?? 'Esa fecha no se puede usar.', codigo: 'fecha_invalida' }
+    }
   }
 
   const fila = {
@@ -230,11 +312,9 @@ export async function publicarNota(
         .select('id, slug')
         .single()
 
-  if (error) {
-    return {
-      error: error.code === '23505' ? 'Ya existe una nota con ese slug' : 'No se pudo publicar',
-    }
-  }
+  // La base sin responder no es "no se pudo publicar": es "ahora no se puede",
+  // y la ruta lo traduce a 503 y no a 500.
+  if (error) return fallaDe(error, 'No se pudo publicar')
 
   revalidarRutasPublicas(data.slug)
 
@@ -305,7 +385,7 @@ export async function despublicarNota(id: string): Promise<ResultadoNota> {
  */
 export async function borrarNota(id: string): Promise<ResultadoNota> {
   const autor = await getAutorDeLaSesion()
-  if (!autor) return { error: 'Se cerró la sesión. Entrá de nuevo.' }
+  if (!autor) return { error: 'Se cerró la sesión. Entrá de nuevo.', codigo: 'sin_sesion' }
 
   const supabase = await createClient()
 
@@ -315,10 +395,12 @@ export async function borrarNota(id: string): Promise<ResultadoNota> {
   // botón decía "borrada", el listado se refrescaba y la nota seguía ahí.
   const { data, error } = await supabase.from('notas').delete().eq('id', id).select('slug')
 
-  if (error) return { error: 'No se pudo borrar la nota.' }
+  if (error) return fallaDe(error, 'No se pudo borrar la nota.')
 
   const borrada = (data ?? [])[0]
-  if (!borrada) return { error: 'No se borró: la nota ya no existe, o no es tuya.' }
+  if (!borrada) {
+    return { error: 'No se borró: la nota ya no existe, o no es tuya.', codigo: 'no_encontrada' }
+  }
 
   revalidarRutasPublicas(borrada.slug)
 

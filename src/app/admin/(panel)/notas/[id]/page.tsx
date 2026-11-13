@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { borrarNota } from '@/actions/notas'
-import { BotonBorrar } from '@/components/admin/BotonBorrar'
+import { BorrarNotaPorApi } from '@/components/admin/BorrarNotaPorApi'
 import { FormularioNota } from '@/components/admin/FormularioNota'
 import { firmaDe } from '@/lib/nota'
 import { getAutorDeLaSesion } from '@/lib/supabase/queries/autores'
@@ -64,14 +63,15 @@ export default async function EditarNota({ params }: Params) {
       <FormularioNota nota={nota} temporadas={temporadas} partidos={partidos} enlazables={enlazables} autor={nota.autor} />
 
       <div className="mt-8 border-t border-border pt-4">
-        <BotonBorrar
+        {/*
+          Borrar va por `DELETE /api/notas/<id>`, que devuelve 200 si borró y
+          404 si esa nota no existe o no es tuya. Antes era un Server Action:
+          200 en los dos casos, con el aviso adentro del cuerpo.
+        */}
+        <BorrarNotaPorApi
+          id={id}
           que={`«${nota.titulo}»`}
           consecuencia={consecuenciaDeBorrar(nota)}
-          borrar={async () => {
-            'use server'
-            return borrarNota(id)
-          }}
-          volverA="/admin"
         />
       </div>
     </main>

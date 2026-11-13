@@ -254,11 +254,36 @@ test.describe('POST /api/auth/login', () => {
   })
 })
 
-test('POST /api/notas sin sesión es 401 y no crea nada', async ({ request }) => {
-  const respuesta = await request.post('/api/notas', { data: cuerpoDeNota('no-se-crea-nunca') })
+test.describe('sin sesión, nada del panel contesta 2xx', () => {
+  test('POST /api/notas es 401 y no crea nada', async ({ request }) => {
+    const respuesta = await request.post('/api/notas', { data: cuerpoDeNota('no-se-crea-nunca') })
 
-  expect(respuesta.status()).toBe(401)
-  expect((await respuesta.json()).error.codigo).toBe('sin_sesion')
+    expect(respuesta.status()).toBe(401)
+    expect((await respuesta.json()).error.codigo).toBe('sin_sesion')
+  })
+
+  test('PUT /api/notas/<id> es 401', async ({ request }) => {
+    const respuesta = await request.put('/api/notas/00000000-0000-0000-0000-000000000000', {
+      data: cuerpoDeNota('no-se-edita-nunca'),
+    })
+
+    expect(respuesta.status()).toBe(401)
+  })
+
+  test('DELETE /api/notas/<id> es 401', async ({ request }) => {
+    const respuesta = await request.delete('/api/notas/00000000-0000-0000-0000-000000000000')
+
+    expect(respuesta.status()).toBe(401)
+  })
+
+  test('POST /api/publicaciones es 401 y no publica nada', async ({ request }) => {
+    const respuesta = await request.post('/api/publicaciones', {
+      data: { id: null, nota: cuerpoDeNota('no-se-publica-nunca'), publicada_en: null },
+    })
+
+    expect(respuesta.status()).toBe(401)
+    expect((await respuesta.json()).error.codigo).toBe('sin_sesion')
+  })
 })
 
 test.describe('las rutas de /api con el usuario de prueba', () => {
@@ -298,6 +323,22 @@ test.describe('las rutas de /api con el usuario de prueba', () => {
 
       expect(repetida.status()).toBe(409)
       expect((await repetida.json()).error.codigo).toBe('conflicto')
+
+      // **Editar es 200 y no 201**: no nace nada, cambia lo que ya estaba.
+      const editada = await request.put(`/api/notas/${nota.id}`, {
+        data: { ...cuerpoDeNota(slug), titulo: 'Nota de prueba, corregida' },
+      })
+
+      expect(editada.status()).toBe(200)
+
+      // Y borrar también es 200, con lo borrado en el cuerpo.
+      const borrada = await request.delete(`/api/notas/${nota.id}`)
+
+      expect(borrada.status()).toBe(200)
+
+      // **Borrar lo mismo dos veces es 404**, no un 200 con el aviso adentro:
+      // la segunda vez ya no hay nada que borrar.
+      expect((await request.delete(`/api/notas/${nota.id}`)).status()).toBe(404)
     } finally {
       // Pase lo que pase arriba, la nota de prueba no queda en la base.
       await borrarNotaDePrueba(slug)

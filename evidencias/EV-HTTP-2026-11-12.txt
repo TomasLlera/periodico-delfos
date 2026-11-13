@@ -280,3 +280,56 @@ CODIGO MUERTO RETIRADO
   borraron: ya no las llama nadie. Quedan enviarMagicLink() y salir().
 
 ================================================================================
+
+================================================================================
+9. EL CONTRATO COMPLETO DEL PANEL
+================================================================================
+
+Las cuatro acciones del panel dan ahora el codigo que corresponde. Medido con
+curl contra el build de produccion, en una sola corrida y en este orden:
+
+  login (POST /api/auth/login) ................... 200
+  crear (POST /api/notas) ........................ 201
+  editar un borrador (PUT /api/notas/<id>) ....... 200
+  publicar (POST /api/publicaciones) ............. 201 Created
+                                      Location: /nota/prueba-pub2-...
+  /nota/<slug> ya existe (antes daba 404) ........ 200
+  editar con un dato que viola un CHECK .......... 400 datos_invalidos
+  editar un id inexistente ....................... 404
+  borrar (DELETE /api/notas/<id>) ................ 200
+  borrar otra vez ................................ 404
+
+POR QUE PUBLICAR ES 201 Y NO 200
+  Antes de publicarla, /nota/<slug> devolvia 404. Despues devuelve 200. La
+  peticion hace existir un recurso publico que no existia, que es exactamente
+  lo que significa 201 Created, y por eso la respuesta lleva Location. Esta
+  modelado como coleccion propia —/api/publicaciones— porque lo que se crea es
+  la publicacion. Guardar el texto de una nota que ya existe sigue siendo una
+  edicion y sigue siendo 200: ahi no nace nada.
+
+UN DEFECTO QUE ENCONTRO ESTA VERIFICACION
+  Editar una nota publicada mandando publicada_en en null choca contra el CHECK
+  publicada_tiene_fecha (codigo 23514 de Postgres) y devolvia 500. Un CHECK
+  violado es un dato que vino mal: corresponde 400. Estaba mal mapeado —caia en
+  "falla"— y es justo lo que la regla de la clase 8 prohibe. Corregido: 23514,
+  22007 y 22008 van a datos_invalidos, PGRST116 y 42501 a no_encontrada.
+  Se encontro corriendo el contrato entero de punta a punta, no leyendo codigo.
+
+SIN SESION, NADA DEL PANEL CONTESTA 2xx
+  POST /api/notas ............ 401     PUT /api/notas/<id> ....... 401
+  DELETE /api/notas/<id> ..... 401     POST /api/publicaciones ... 401
+
+CUIDADO AL PROBAR PUBLICAR
+  Publicar con fecha de hoy dispara el auto-posteo a Facebook, Instagram y X.
+  No es efecto de la ruta —lo decide publicarNota() igual que siempre— pero
+  conviene saberlo: para verificar se uso una fecha vieja (nota de archivo),
+  que no postea. La nota de prueba se borro al terminar.
+
+SUITES
+  pnpm lint ...... 0 errores (5 avisos de <img>, los de siempre)
+  pnpm exec tsc .. limpio
+  pnpm test ...... 856 pasan, 53 archivos
+  pnpm test:e2e .. 296 pasan, 0 fallan, 8 saltean
+  proyecto estados 25 pasan
+
+================================================================================
