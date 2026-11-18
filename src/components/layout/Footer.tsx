@@ -27,6 +27,7 @@ const SECCIONES = [
     titulo: 'El equipo',
     links: [
       { href: '/plantel', label: 'Plantel' },
+      { href: '/dorsales', label: 'Dorsales' },
       { href: '/cronicas', label: 'Crónicas' },
       { href: '/analisis', label: 'Análisis' },
       { href: '/fixture', label: 'Fixture y tabla' },

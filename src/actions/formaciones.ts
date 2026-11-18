@@ -47,6 +47,12 @@ export async function guardarFormacion(
 
   const supabase = await createClient()
 
+  // El equipo de cada una se resuelve **antes** de borrar nada: si esa consulta
+  // falla, el partido se queda con la formación que ya tenía en vez de quedarse
+  // sin ninguna.
+  const equipos = await equiposDeLasJugadoras(supabase, filas)
+  if ('error' in equipos) return equipos
+
   const { error: errorBorrado } = await supabase
     .from('formaciones')
     .delete()
@@ -55,14 +61,61 @@ export async function guardarFormacion(
   if (errorBorrado) return { error: 'No se pudo guardar la formación' }
 
   if (filas.length > 0) {
-    const { error } = await supabase
-      .from('formaciones')
-      .insert(filas.map((fila) => ({ ...fila, partido_id: partidoId })))
+    const { error } = await supabase.from('formaciones').insert(
+      filas.map((fila) => ({
+        ...fila,
+        partido_id: partidoId,
+        equipo_id: equipos.porJugadora.get(fila.jugadora_id),
+      })),
+    )
 
-    if (error) return { error: errorDeBase(error, 'Una jugadora está repetida en la formación') }
+    // `formaciones_dorsal_unico_idx`: dos jugadoras del mismo equipo no usan el
+    // mismo número en el mismo partido. La pantalla ya lo avisa mientras se
+    // carga; esto es la red.
+    if (error) return { error: errorDeBase(error, 'Dos jugadoras tienen el mismo dorsal') }
   }
 
   revalidarPartidos()
 
   return { id: partidoId }
+}
+
+/**
+ * Con qué equipo entra cada jugadora a la formación.
+ *
+ * **Sin esto no se podía guardar ninguna formación**, y es el síntoma que trajo
+ * Carlos al crear la fecha 6. La migración `0020` agregó `formaciones.equipo_id`
+ * con `not null` —hacía falta para poder cargar también la del rival— pero el
+ * insert de acá siguió mandando las cuatro columnas de antes, así que Postgres
+ * contestaba `23502: null value in column "equipo_id"`. Como `errorDeBase()` no
+ * conoce ese código, a la pantalla le llegaba "No se pudo guardar" y no había
+ * manera de saber qué faltaba. El partido quedaba además sin formación, porque
+ * el delete ya había pasado.
+ *
+ * El equipo sale de `jugadoras.equipo_id` —el club en el que está hoy—, que es
+ * exactamente lo que hizo la `0020` para rellenar las filas viejas. Queda
+ * guardado en la formación: si mañana se va a otro club, los partidos que ya
+ * jugó siguen diciendo con quién los jugó.
+ */
+async function equiposDeLasJugadoras(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  filas: readonly FilaFormacion[],
+): Promise<{ porJugadora: Map<string, string> } | { error: string }> {
+  if (filas.length === 0) return { porJugadora: new Map() }
+
+  const { data, error } = await supabase
+    .from('jugadoras')
+    .select('id, equipo_id')
+    .in('id', [...new Set(filas.map((fila) => fila.jugadora_id))])
+
+  if (error) return { error: 'No se pudo guardar la formación' }
+
+  const porJugadora = new Map((data ?? []).map((j) => [j.id, j.equipo_id]))
+
+  // Una jugadora que ya no está en la base no se puede convocar, y mandarla
+  // igual haría fallar el insert entero cuando el delete ya pasó.
+  const perdida = filas.find((fila) => !porJugadora.get(fila.jugadora_id))
+  if (perdida) return { error: 'Hay una jugadora que ya no existe: volvé a abrir la formación' }
+
+  return { porJugadora }
 }

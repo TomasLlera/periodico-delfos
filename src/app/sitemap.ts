@@ -17,6 +17,9 @@ const FIJAS = [
   { ruta: '/', priority: 1 },
   { ruta: '/cronicas', priority: 0.8 },
   { ruta: '/analisis', priority: 0.8 },
+  // El índice de dorsales es fijo: existe con la base vacía porque lo único
+  // que hace es listar los campeonatos que haya.
+  { ruta: '/dorsales', priority: 0.5 },
   { ruta: '/quienes-somos', priority: 0.5 },
   { ruta: '/contacto', priority: 0.4 },
   { ruta: '/privacidad', priority: 0.3 },
@@ -70,8 +73,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly' as const,
       priority: 0.6,
     })),
-    // Las dos páginas de cada temporada. La de temporada cambia cada fecha
-    // —fixture, tabla y goleadoras— y el plantel casi nunca.
+    // Las tres páginas de cada temporada. La de temporada cambia cada fecha
+    // —fixture, tabla y goleadoras—, los dorsales cada vez que se carga una
+    // formación, y el plantel casi nunca.
     ...temporadas.flatMap(({ slug }) => [
       {
         url: `${base}/temporada/${slug}`,
@@ -82,6 +86,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${base}/plantel/${slug}`,
         changeFrequency: 'monthly' as const,
         priority: 0.6,
+      },
+      {
+        url: `${base}/dorsales/${slug}`,
+        changeFrequency: 'weekly' as const,
+        priority: 0.5,
       },
     ]),
   ]

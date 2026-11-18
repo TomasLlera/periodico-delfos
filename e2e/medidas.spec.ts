@@ -36,6 +36,7 @@ const RUTAS = [
   '/analisis',
   '/buscar',
   '/plantel',
+  '/dorsales',
   '/fixture',
   '/quienes-somos',
 ]

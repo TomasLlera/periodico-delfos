@@ -52,6 +52,7 @@ function formacion(id: string, apellido: string, es_titular: boolean): Formacion
     es_titular,
     dorsal: null,
     posicion: null,
+    equipo_id: 'eq-aldosivi',
     jugadora: jugadora(id, apellido),
   }
 }
