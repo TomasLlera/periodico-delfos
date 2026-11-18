@@ -7,12 +7,17 @@ import { guardarFormacion } from '@/actions/formaciones'
 import {
   avisosDeFormacion,
   contar,
+  dorsalesRepetidos,
+  erroresDeFormacion,
   filasDeConvocatoria,
   filasParaGuardar,
+  DORSAL_MAX,
+  DORSAL_MIN,
   type Convocatoria,
   type FilaConvocatoria,
 } from '@/lib/entidades/formacion'
 import { Aviso } from '@/components/admin/Aviso'
+import { CampoNumero } from '@/components/admin/CampoNumero'
 import type { FormacionConJugadora, JugadoraEnPlantel } from '@/types'
 
 /**
@@ -50,10 +55,18 @@ export function EditorFormacion({ partidoId, plantel, formacion }: Props) {
   const titulares = contar(filas, 'titular')
   const suplentes = contar(filas, 'suplente')
   const avisos = avisosDeFormacion(filas)
+  const errores = erroresDeFormacion(filas)
+  const repetidos = dorsalesRepetidos(filas)
 
   function mover(jugadoraId: string, convocatoria: Convocatoria) {
     setFilas((previas) =>
       previas.map((f) => (f.jugadora_id === jugadoraId ? { ...f, convocatoria } : f)),
+    )
+  }
+
+  function ponerDorsal(jugadoraId: string, dorsal: number | null) {
+    setFilas((previas) =>
+      previas.map((f) => (f.jugadora_id === jugadoraId ? { ...f, dorsal } : f)),
     )
   }
 
@@ -84,6 +97,13 @@ export function EditorFormacion({ partidoId, plantel, formacion }: Props) {
         {titulares} titulares · {suplentes} suplentes
       </p>
 
+      {/* Los errores arriba de los avisos: son los que frenan el guardado. */}
+      {errores.map((texto) => (
+        <Aviso key={texto} tono="error">
+          {texto}
+        </Aviso>
+      ))}
+
       {avisos.map((texto) => (
         <Aviso key={texto} tono="atencion">
           {texto}
@@ -96,9 +116,40 @@ export function EditorFormacion({ partidoId, plantel, formacion }: Props) {
             key={fila.jugadora_id}
             className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border py-2"
           >
-            <span className="w-8 font-mono text-[0.9rem] text-text-muted">
-              {fila.dorsal ?? '—'}
-            </span>
+            {/* **El dorsal del partido, editable acá y en ningún otro lado.**
+                Desde la `0020` el número vive en `formaciones`, así que es el
+                que usó ese día: una jugadora puede salir con el 9 en marzo y
+                con el 11 en agosto, y las dos cosas son ciertas. Antes esto era
+                un `<span>` de sólo lectura y no había pantalla donde cargarlo.
+
+                Sólo aparece para las convocadas: el número de alguien que no
+                entró a la planilla no se guarda, y un campo que no hace nada
+                invita a escribir en él. */}
+            <div className="w-16">
+              {fila.convocatoria === 'fuera' ? (
+                <span className="block py-2 text-center font-mono text-[0.9rem] text-text-muted">
+                  —
+                  <span className="sr-only">
+                    {fila.apellido} no está convocada, no lleva dorsal
+                  </span>
+                </span>
+              ) : (
+                <CampoNumero
+                  id={`dorsal-${fila.jugadora_id}`}
+                  etiqueta={`Dorsal de ${fila.nombre} ${fila.apellido} en este partido`}
+                  etiquetaOculta
+                  valor={fila.dorsal}
+                  min={DORSAL_MIN}
+                  max={DORSAL_MAX}
+                  onCambio={(dorsal) => ponerDorsal(fila.jugadora_id, dorsal)}
+                  error={
+                    fila.dorsal !== null && repetidos.includes(fila.dorsal)
+                      ? 'Repetido'
+                      : undefined
+                  }
+                />
+              )}
+            </div>
 
             <span className="font-display text-[0.95rem] font-bold">
               {fila.apellido}, {fila.nombre}
@@ -158,12 +209,18 @@ export function EditorFormacion({ partidoId, plantel, formacion }: Props) {
         <button
           type="button"
           onClick={guardar}
-          disabled={guardando}
+          disabled={guardando || errores.length > 0}
           className="tactil flex items-center gap-2 bg-text px-5 font-display text-[0.9rem] font-extrabold text-bg hover:bg-text/85 disabled:opacity-60"
         >
           <Save size={16} aria-hidden="true" />
           {guardando ? 'Guardando…' : 'Guardar la formación'}
         </button>
+
+        {errores.length > 0 && (
+          <span className="text-[0.85rem] text-text-muted">
+            Hay que resolver lo de arriba antes de guardar.
+          </span>
+        )}
       </div>
     </div>
   )

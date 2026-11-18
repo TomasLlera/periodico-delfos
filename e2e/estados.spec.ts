@@ -32,7 +32,7 @@ import { EMAIL, HAY_CREDENCIALES, PASSWORD, SIN_CREDENCIALES } from './credencia
 /**
  * Un recurso que no existe es 404.
  *
- * Son las cinco rutas públicas con parámetro, que son todas las que pueden
+ * Son las seis rutas públicas con parámetro, que son todas las que pueden
  * recibir un slug inventado. Cada una llama `notFound()` cuando la base no
  * tiene la fila.
  */
@@ -42,6 +42,7 @@ const INEXISTENTES = [
   '/jugadora/esta-jugadora-no-existe',
   '/temporada/esta-temporada-no-existe',
   '/plantel/este-plantel-no-existe',
+  '/dorsales/estos-dorsales-no-existen',
 ]
 
 for (const ruta of INEXISTENTES) {

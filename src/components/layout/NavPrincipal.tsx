@@ -29,6 +29,9 @@ const SECCIONES = [
   { href: '/cronicas', label: 'Crónicas' },
   { href: '/analisis', label: 'Análisis' },
   { href: '/plantel', label: 'Plantel' },
+  // `/dorsales` no es puerta corta de nada: su índice es elegir el campeonato,
+  // así que no necesita prefijos y se enciende con sus propias subrutas.
+  { href: '/dorsales', label: 'Dorsales' },
   { href: '/fixture', label: 'Fixture y tabla', prefijos: ['/temporada'] },
   { href: '/quienes-somos', label: 'Quiénes somos' },
 ] as const

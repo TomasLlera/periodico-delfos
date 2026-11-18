@@ -43,6 +43,25 @@ export async function getTemporadas(): Promise<Temporada[]> {
  * corta con "`cookies` was called outside a request scope". Es el mismo par
  * que ya tienen notas y partidos.
  */
+/**
+ * Todas las temporadas, en build y sin cookies.
+ *
+ * Es `getTemporadas()` con el cliente estático, por la misma razón que
+ * `getSlugsTemporadas()`: el índice de `/dorsales` las lista y nada más, así
+ * que puede prerenderizarse con ISR. Con `getTemporadas()` —que pide las
+ * cookies del request— la ruta sale `ƒ` del build y consulta la base en cada
+ * visita para dibujar una lista que cambia una vez al año.
+ */
+export async function getTemporadasEstatico(): Promise<Temporada[]> {
+  const supabase = createStaticClient()
+  const { data } = exigir(await supabase
+    .from('temporadas')
+    .select('*')
+    .order('anio', { ascending: false }), 'getTemporadasEstatico')
+
+  return data ?? []
+}
+
 export async function getSlugsTemporadas(): Promise<{ slug: string }[]> {
   const supabase = createStaticClient()
   const { data } = exigir(await supabase.from('temporadas').select('slug'), 'getSlugsTemporadas')

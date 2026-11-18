@@ -347,6 +347,7 @@ describe('titulares y suplentes', () => {
     es_titular,
     dorsal,
     posicion: jug.posicion,
+    equipo_id: 'eq-aldosivi',
     jugadora: jug,
   })
 

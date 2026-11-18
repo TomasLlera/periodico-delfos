@@ -25,6 +25,7 @@ const RUTAS = [
   '/cronicas',
   '/analisis',
   '/buscar',
+  '/dorsales',
   '/quienes-somos',
   '/demo/portada',
   '/demo/nota',

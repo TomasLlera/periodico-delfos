@@ -32,8 +32,8 @@ function jugadora(id: string, apellido: string): Jugadora {
 }
 
 const FORMACIONES: FormacionConJugadora[] = [
-  { partido_id: PARTIDO, jugadora_id: CORTADI, es_titular: true, dorsal: 10, posicion: null, jugadora: jugadora(CORTADI, 'Cortadi') },
-  { partido_id: PARTIDO, jugadora_id: GARRO, es_titular: false, dorsal: 9, posicion: null, jugadora: jugadora(GARRO, 'Garro') },
+  { partido_id: PARTIDO, jugadora_id: CORTADI, es_titular: true, dorsal: 10, posicion: null, equipo_id: 'eq-aldosivi', jugadora: jugadora(CORTADI, 'Cortadi') },
+  { partido_id: PARTIDO, jugadora_id: GARRO, es_titular: false, dorsal: 9, posicion: null, equipo_id: 'eq-aldosivi', jugadora: jugadora(GARRO, 'Garro') },
 ]
 
 function evento(id: string, minuto: number, jugadoraId: string | null = CORTADI): EventoNuevo {

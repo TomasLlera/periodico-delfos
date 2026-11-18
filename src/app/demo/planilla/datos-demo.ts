@@ -108,6 +108,7 @@ function formaciones(partidoId: string): FormacionConJugadora[] {
     es_titular: indice < 11,
     dorsal: indice + 1,
     posicion: jug.posicion,
+    equipo_id: ALDOSIVI.id,
     jugadora: jug,
   }))
 }

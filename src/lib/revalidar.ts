@@ -41,6 +41,10 @@ export function revalidarTemporadas(): void {
   revalidarPortada()
   revalidatePath('/temporada/[slug]', 'page')
   revalidatePath('/plantel/[temporadaSlug]', 'page')
+  // El índice de dorsales es la lista de campeonatos: una temporada nueva
+  // aparece ahí antes que en ningún otro lado.
+  revalidatePath('/dorsales')
+  revalidatePath('/dorsales/[temporadaSlug]', 'page')
 }
 
 /** Una jugadora cambió: su ficha, el plantel y las goleadoras de la portada. */
@@ -48,6 +52,9 @@ export function revalidarJugadoras(): void {
   revalidarPortada()
   revalidatePath('/jugadora/[slug]', 'page')
   revalidatePath('/plantel/[temporadaSlug]', 'page')
+  // La tabla de dorsales la nombra y linkea a su ficha: un apellido corregido
+  // o un slug nuevo la dejan desactualizada igual que al plantel.
+  revalidatePath('/dorsales/[temporadaSlug]', 'page')
 }
 
 /**
@@ -62,6 +69,10 @@ export function revalidarPartidos(slug?: string): void {
   revalidarPortada()
   revalidatePath('/partido/[slug]', 'page')
   revalidatePath('/temporada/[slug]', 'page')
+  // La formación de un partido es de donde sale el dorsal desde la `0020`, y
+  // `guardarFormacion()` pasa por acá: sin esta línea, cargar la planilla de la
+  // fecha 6 no cambia nada en `/dorsales` hasta que vence el ISR.
+  revalidatePath('/dorsales/[temporadaSlug]', 'page')
   if (slug) revalidatePath(`/partido/${slug}`)
 }
 

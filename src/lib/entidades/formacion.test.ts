@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   avisosDeFormacion,
   contar,
+  dorsalesRepetidos,
+  erroresDeFormacion,
   filasDeConvocatoria,
   filasParaGuardar,
   type FilaConvocatoria,
@@ -39,6 +41,7 @@ function enFormacion(
     es_titular,
     dorsal,
     posicion: 'arquera',
+    equipo_id: 'eq-aldosivi',
     jugadora: jugadora(id, apellido),
   }
 }
@@ -114,7 +117,9 @@ describe('avisosDeFormacion', () => {
     return { jugadora_id: id, apellido: 'A', nombre: 'N', dorsal, posicion: null, convocatoria, fueraDelPlantel: false }
   }
 
-  const once = Array.from({ length: 11 }, (_, i) => fila(`id-${i}`, 'titular'))
+  // Con un dorsal distinto cada una: once jugadoras con el 5 no es una
+  // formación, es el caso de error que prueba `erroresDeFormacion`.
+  const once = Array.from({ length: 11 }, (_, i) => fila(`id-${i}`, 'titular', i + 1))
 
   it('once titulares con dorsal no tienen nada raro', () => {
     expect(avisosDeFormacion(once)).toEqual([])
@@ -133,7 +138,85 @@ describe('avisosDeFormacion', () => {
     expect(avisos.some((a) => a.includes('sin dorsal'))).toBe(true)
   })
 
+  /**
+   * El dorsal dejó de vivir en `plantel` con la `0020`. El aviso que mandaba a
+   * esa pantalla mandaba a un lugar donde ya no hay nada que tocar.
+   */
+  it('el aviso de sin dorsal manda a esta lista y no al plantel', () => {
+    const aviso = avisosDeFormacion([fila('y', 'titular', null)]).find((a) =>
+      a.includes('sin dorsal'),
+    )
+    expect(aviso).toContain('esta misma lista')
+    expect(aviso).not.toContain('plantel')
+  })
+
   it('no mira el dorsal de las que no fueron convocadas', () => {
     expect(avisosDeFormacion([...once, fila('z', 'fuera', null)])).toEqual([])
+  })
+})
+
+describe('erroresDeFormacion', () => {
+  function fila(
+    id: string,
+    convocatoria: FilaConvocatoria['convocatoria'],
+    dorsal: number | null,
+  ): FilaConvocatoria {
+    return { jugadora_id: id, apellido: 'A', nombre: 'N', dorsal, posicion: null, convocatoria, fueraDelPlantel: false }
+  }
+
+  it('una formación con números distintos no tiene errores', () => {
+    expect(erroresDeFormacion([fila('a', 'titular', 1), fila('b', 'suplente', 12)])).toEqual([])
+  })
+
+  /**
+   * Es lo que rechaza `formaciones_dorsal_unico_idx`, y llegar hasta la base
+   * con esto cuesta la formación entera: `guardarFormacion()` borra antes de
+   * insertar.
+   */
+  it('dos jugadoras con el mismo número frenan el guardado', () => {
+    const errores = erroresDeFormacion([fila('a', 'titular', 10), fila('b', 'titular', 10)])
+    expect(errores).toHaveLength(1)
+    expect(errores[0]).toContain('10')
+  })
+
+  it('una titular y una suplente también chocan: es el mismo partido', () => {
+    expect(erroresDeFormacion([fila('a', 'titular', 7), fila('b', 'suplente', 7)])).toHaveLength(1)
+  })
+
+  it('la que quedó fuera no choca con nadie: su número no se guarda', () => {
+    expect(erroresDeFormacion([fila('a', 'titular', 7), fila('b', 'fuera', 7)])).toEqual([])
+  })
+
+  it('dos sin número no son un número repetido', () => {
+    expect(erroresDeFormacion([fila('a', 'titular', null), fila('b', 'titular', null)])).toEqual([])
+  })
+
+  it('nombra todos los números repetidos, ordenados', () => {
+    const errores = erroresDeFormacion([
+      fila('a', 'titular', 9),
+      fila('b', 'titular', 9),
+      fila('c', 'titular', 4),
+      fila('d', 'suplente', 4),
+    ])
+    expect(errores[0]).toContain('4, 9')
+  })
+
+  it('el dorsal fuera de rango también frena: lo rechaza el CHECK', () => {
+    expect(erroresDeFormacion([fila('a', 'titular', 0)])[0]).toContain('1 a 99')
+    expect(erroresDeFormacion([fila('a', 'titular', 100)])[0]).toContain('1 a 99')
+  })
+})
+
+describe('dorsalesRepetidos', () => {
+  function fila(id: string, dorsal: number | null): FilaConvocatoria {
+    return { jugadora_id: id, apellido: 'A', nombre: 'N', dorsal, posicion: null, convocatoria: 'titular', fueraDelPlantel: false }
+  }
+
+  it('devuelve sólo los que están dos veces', () => {
+    expect(dorsalesRepetidos([fila('a', 1), fila('b', 1), fila('c', 2)])).toEqual([1])
+  })
+
+  it('sin repetidos devuelve la lista vacía', () => {
+    expect(dorsalesRepetidos([fila('a', 1), fila('b', 2)])).toEqual([])
   })
 })

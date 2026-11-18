@@ -220,6 +220,13 @@ export interface Formacion {
   es_titular: boolean
   dorsal: number | null
   posicion: Posicion | null
+  /**
+   * Con qué equipo jugó **ese día**, de la `0020`. Está duplicado respecto de
+   * `jugadoras.equipo_id` a propósito: la regla de que dos jugadoras del mismo
+   * equipo no comparten dorsal en un partido es un índice único, y un índice no
+   * puede mirar a través de una foreign key.
+   */
+  equipo_id: string
 }
 
 export interface FormacionConJugadora extends Formacion {
