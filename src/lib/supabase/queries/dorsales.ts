@@ -1,6 +1,7 @@
-import type { UsoCrudo } from '@/lib/dorsales'
+import { conDatosCargados, type EnPlantel, type UsoCrudo } from '@/lib/dorsales'
 import { exigir } from '@/lib/supabase/exigir'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createStaticClient } from '@/lib/supabase/server'
+import type { Temporada } from '@/types'
 
 /**
  * Las convocatorias de Aldosivi en un campeonato, con el número de cada una.
@@ -72,4 +73,65 @@ export async function getPartidosConFormacion(temporadaId: string): Promise<numb
   type Fila = { partido_id: string }
 
   return new Set(((data ?? []) as unknown as Fila[]).map((f) => f.partido_id)).size
+}
+
+/**
+ * El plantel de la temporada, con lo mínimo para la tabla de dorsales.
+ *
+ * No reusa `getPlantel()` a propósito: ésa resuelve además el último dorsal de
+ * cada jugadora con una segunda consulta a `formaciones`, que acá se tira —la
+ * página ya trae todos los usos de todas—. Son cuatro columnas y un join.
+ */
+export async function getPlantelParaDorsales(temporadaId: string): Promise<EnPlantel[]> {
+  const supabase = await createClient()
+
+  const { data } = exigir(await supabase
+    .from('plantel')
+    .select('jugadora:jugadoras!inner(id, nombre, apellido, slug)')
+    .eq('temporada_id', temporadaId), 'getPlantelParaDorsales')
+
+  type Fila = { jugadora: { id: string; nombre: string; apellido: string; slug: string } }
+
+  return ((data ?? []) as unknown as Fila[]).map((fila) => ({
+    jugadora_id: fila.jugadora.id,
+    nombre: fila.jugadora.nombre,
+    apellido: fila.jugadora.apellido,
+    slug: fila.jugadora.slug,
+  }))
+}
+
+/**
+ * Las temporadas que tienen algo que mostrar, de la más nueva a la más vieja.
+ *
+ * Reemplaza a `getTemporadasEstatico()` en el índice de `/dorsales`: una
+ * temporada existe en la tabla desde que alguien la crea, y listarla sin datos
+ * manda al lector a una pantalla vacía. El criterio —plantel o formaciones— y
+ * sus casos están en `conDatosCargados()`, que es puro y tiene tests.
+ *
+ * Tres consultas en paralelo, todas con el cliente estático para que el índice
+ * siga prerenderizándose con ISR. Son dos columnas y un join: lo que se evita
+ * es traer las formaciones enteras para contar temporadas.
+ */
+export async function getTemporadasConDatos(): Promise<Temporada[]> {
+  const supabase = createStaticClient()
+
+  const [temporadas, plantel, formaciones] = await Promise.all([
+    supabase.from('temporadas').select('*').order('anio', { ascending: false }),
+    supabase.from('plantel').select('temporada_id'),
+    supabase.from('formaciones').select('partido:partidos!inner(temporada_id)'),
+  ])
+
+  const filas = exigir(temporadas, 'getTemporadasConDatos/temporadas').data ?? []
+  const conPlantel = exigir(plantel, 'getTemporadasConDatos/plantel').data ?? []
+  const conFormacion = exigir(formaciones, 'getTemporadasConDatos/formaciones').data ?? []
+
+  type FilaFormacion = { partido: { temporada_id: string } }
+
+  return conDatosCargados(
+    filas,
+    new Set(conPlantel.map((fila) => fila.temporada_id as string)),
+    new Set(
+      (conFormacion as unknown as FilaFormacion[]).map((fila) => fila.partido.temporada_id),
+    ),
+  )
 }

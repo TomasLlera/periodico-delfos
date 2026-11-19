@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { nombreCompleto } from '@/lib/plantel'
-import { resumenDeUsos, type DorsalesDeJugadora } from '@/lib/dorsales'
+import { resumenDeFila, type DorsalesDeJugadora } from '@/lib/dorsales'
 
 /**
  * Qué número usó cada jugadora en los partidos de un campeonato.
@@ -65,11 +65,13 @@ export function TablaDorsales({ filas, temporada, partidosCargados }: Props) {
               </th>
 
               <td className="py-3 pr-3">
-                <span className="sr-only">{resumenDeUsos(fila.usos)}</span>
+                <span className="sr-only">{resumenDeFila(fila)}</span>
 
                 {fila.usos.length === 0 ? (
+                  // Nunca convocada y convocada sin número anotado no son lo
+                  // mismo: la primera es el dato, la segunda es un dato que falta.
                   <span aria-hidden="true" className="font-mono text-[0.9rem] text-text-muted">
-                    Sin dorsal registrado
+                    {fila.partidos === 0 ? 'Sin convocatorias' : 'Sin dorsal registrado'}
                   </span>
                 ) : (
                   <ul aria-hidden="true" className="flex flex-wrap gap-2">

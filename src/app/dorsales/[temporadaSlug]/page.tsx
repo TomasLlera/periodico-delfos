@@ -4,11 +4,13 @@ import { notFound } from 'next/navigation'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { TablaDorsales } from '@/components/dorsales/TablaDorsales'
-import { dorsalesDistintos, dorsalesPorJugadora } from '@/lib/dorsales'
+import { conPlantelCompleto, dorsalesDistintos, dorsalesPorJugadora } from '@/lib/dorsales'
 import { openGraphBase } from '@/lib/seo'
 import {
   getDorsalesDeTemporada,
   getPartidosConFormacion,
+  getPlantelParaDorsales,
+  getTemporadasConDatos,
 } from '@/lib/supabase/queries/dorsales'
 import { getSlugsTemporadas, getTemporadaPorSlug } from '@/lib/supabase/queries/temporadas'
 import { haySupabase } from '@/lib/supabase/server'
@@ -71,13 +73,19 @@ export default async function DorsalesDeTemporada({ params }: Params) {
 
   if (!temporada) notFound()
 
-  const [crudos, partidosCargados] = await Promise.all([
+  const [crudos, partidosCargados, plantel, temporadas] = await Promise.all([
     getDorsalesDeTemporada(temporada.id),
     getPartidosConFormacion(temporada.id),
+    getPlantelParaDorsales(temporada.id),
+    getTemporadasConDatos(),
   ])
 
-  const filas = dorsalesPorJugadora(crudos)
+  // El plantel entero, no sólo las convocadas: nueve jugadoras de Primera B
+  // 2026 no entraron en ninguna planilla y no figuraban en esta página.
+  const filas = conPlantelCompleto(dorsalesPorJugadora(crudos), plantel)
   const numeros = dorsalesDistintos(filas)
+  const convocadas = filas.filter((fila) => fila.partidos > 0).length
+  const otras = temporadas.filter((otra) => otra.slug !== temporada.slug)
 
   return (
     <>
@@ -85,10 +93,19 @@ export default async function DorsalesDeTemporada({ params }: Params) {
 
       <main className="contenedor py-10">
         <div className="border-b-[3px] border-border-strong pb-3">
-          <p className="meta">
+          <Link
+            href="/dorsales"
+            className="meta inline-block text-text-muted underline underline-offset-[3px] hover:text-accent-text"
+          >
+            ← Dorsales
+          </Link>
+
+          <p className="meta mt-2">
             {temporada.nombre}
             {filas.length > 0 &&
-              ` · ${filas.length} ${filas.length === 1 ? 'jugadora' : 'jugadoras'} · ${numeros} ${numeros === 1 ? 'número' : 'números'}`}
+              ` · ${filas.length} ${filas.length === 1 ? 'jugadora' : 'jugadoras'}`}
+            {convocadas > 0 && convocadas < filas.length && ` · ${convocadas} convocadas`}
+            {numeros > 0 && ` · ${numeros} ${numeros === 1 ? 'número' : 'números'}`}
           </p>
           <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
             <h1 className="marca text-[1.8rem] uppercase md:text-[2.3rem]">Dorsales</h1>
@@ -129,6 +146,28 @@ export default async function DorsalesDeTemporada({ params }: Params) {
             />
           )}
         </div>
+
+        {/* Cambiar de campeonato sin volver al índice. Antes de esto, una vez
+            adentro de una temporada la única salida era el botón atrás del
+            navegador: el encabezado sólo ofrecía el plantel. */}
+        {otras.length > 0 && (
+          <nav aria-label="Otros campeonatos" className="mt-12 border-t border-border pt-6">
+            <p className="meta text-text-muted">Otros campeonatos</p>
+
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {otras.map((otra) => (
+                <li key={otra.id}>
+                  <Link
+                    href={`/dorsales/${otra.slug}`}
+                    className="tactil inline-block border border-border px-3 py-2 font-display text-[0.9rem] font-bold hover:border-accent"
+                  >
+                    {otra.nombre}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
       </main>
 
       <Footer />

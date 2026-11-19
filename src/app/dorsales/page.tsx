@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { SinTemporada } from '@/components/layout/SinTemporada'
-import { getTemporadasEstatico } from '@/lib/supabase/queries/temporadas'
+import { getTemporadasConDatos } from '@/lib/supabase/queries/dorsales'
 import { haySupabase } from '@/lib/supabase/server'
 
 /**
@@ -28,7 +28,10 @@ export const metadata: Metadata = {
 }
 
 export default async function Dorsales() {
-  const temporadas = haySupabase() ? await getTemporadasEstatico() : []
+  // Sólo las que tienen plantel o formaciones: una temporada recién creada
+  // existe en la tabla sin un solo dato, y su tarjeta lleva a una pantalla
+  // que no tiene nada que mostrar.
+  const temporadas = haySupabase() ? await getTemporadasConDatos() : []
 
   if (temporadas.length === 0) {
     return (
@@ -36,7 +39,7 @@ export default async function Dorsales() {
         <Header />
         <SinTemporada
           titulo="Dorsales"
-          explicacion="Todavía no hay ningún campeonato cargado. Cuando lo haya, acá va el número que usó cada jugadora en cada partido, y cuántas veces usó cada uno."
+          explicacion="Todavía no hay ningún campeonato con datos cargados. Cuando haya uno, acá va el número que usó cada jugadora en cada partido, y cuántas veces usó cada uno."
         />
         <Footer />
       </>

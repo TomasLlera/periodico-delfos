@@ -142,3 +142,91 @@ export function resumenDeUsos(usos: readonly UsoDeDorsal[]): string {
     .map((uso) => `${uso.dorsal} en ${uso.veces} ${uso.veces === 1 ? 'partido' : 'partidos'}`)
     .join(' · ')
 }
+
+/** Lo mínimo que hace falta de una jugadora del plantel. */
+export interface EnPlantel {
+  jugadora_id: string
+  nombre: string
+  apellido: string
+  slug: string
+}
+
+/**
+ * Suma las jugadoras del plantel que no entraron en ninguna planilla.
+ *
+ * Sin esto la página no muestra el campeonato sino las convocatorias: en
+ * Primera B 2026 el plantel tiene 33 jugadoras y sólo 24 aparecen en alguna
+ * formación, así que nueve no figuraban en ninguna parte —ni con cero, ni
+ * nombradas—. "No fue convocada nunca" es un dato sobre la temporada, y que no
+ * se vea se lee como que la jugadora no existe.
+ *
+ * Las que jugaron y **no** están en el plantel se conservan igual: entraron a
+ * la cancha, y el que falta cargado es el plantel.
+ *
+ * Una fila con `partidos === 0` es exactamente eso: está en el plantel y no
+ * tiene una sola convocatoria. No hace falta otro campo para distinguirla,
+ * porque una fila que viene de `formaciones` siempre tiene al menos una.
+ */
+export function conPlantelCompleto(
+  filas: readonly DorsalesDeJugadora[],
+  plantel: readonly EnPlantel[],
+): DorsalesDeJugadora[] {
+  const yaEstan = new Set(filas.map((fila) => fila.jugadora_id))
+
+  const sinConvocatorias: DorsalesDeJugadora[] = plantel
+    .filter((jugadora) => !yaEstan.has(jugadora.jugadora_id))
+    .map((jugadora) => ({ ...jugadora, usos: [], partidos: 0, sinDorsal: 0 }))
+
+  return [...filas, ...sinConvocatorias].sort(compararConSinConvocatorias)
+}
+
+/**
+ * Primero las que jugaron, por número; al final las que nunca fueron citadas.
+ *
+ * `compararPorDorsalPrincipal()` ya manda al final a las que no tienen número,
+ * pero no distingue entre "jugó y no quedó anotado el dorsal" y "nunca fue
+ * convocada", que son cosas distintas y no se pueden mezclar en el mismo
+ * bloque: la primera es un dato que falta, la segunda es el dato.
+ */
+function compararConSinConvocatorias(a: DorsalesDeJugadora, b: DorsalesDeJugadora): number {
+  const jugoA = a.partidos > 0 ? 0 : 1
+  const jugoB = b.partidos > 0 ? 0 : 1
+
+  return jugoA - jugoB || compararPorDorsalPrincipal(a, b)
+}
+
+/**
+ * La frase de una fila, que no es siempre la de sus números.
+ *
+ * `resumenDeUsos()` contesta "con qué números jugó". Una jugadora sin
+ * convocatorias no tiene números porque no jugó, no porque falte el dato, y
+ * decirle "sin dorsal registrado" sugiere lo segundo.
+ */
+export function resumenDeFila(fila: DorsalesDeJugadora): string {
+  if (fila.partidos === 0) return 'Sin convocatorias en el campeonato'
+  return resumenDeUsos(fila.usos)
+}
+
+/**
+ * Las temporadas que tienen algo que mostrar en dorsales.
+ *
+ * El índice de `/dorsales` listaba todas las filas de `temporadas`, y una
+ * temporada existe en esa tabla desde mucho antes de tener datos: hoy hay dos
+ * cargadas sin un solo partido ni una sola jugadora. Entrar a una de esas
+ * tarjetas lleva a una pantalla que sólo explica que no hay nada, y —hasta que
+ * existió el link de volver— sin forma de elegir otra.
+ *
+ * Alcanza con el plantel: una temporada con plantel y sin formaciones muestra
+ * a todas sus jugadoras sin convocatorias, que es una página legítima. Sin
+ * plantel **y** sin formaciones no hay nada que dibujar.
+ */
+export function conDatosCargados<T extends { id: string }>(
+  temporadas: readonly T[],
+  temporadasConPlantel: ReadonlySet<string>,
+  temporadasConFormaciones: ReadonlySet<string>,
+): T[] {
+  return temporadas.filter(
+    (temporada) =>
+      temporadasConPlantel.has(temporada.id) || temporadasConFormaciones.has(temporada.id),
+  )
+}
