@@ -127,6 +127,7 @@ export type TipoAdvertencia =
   | 'nodos-descartados'
   | 'datos-deportivos-en-el-cuerpo'
   | 'portada-repetida-en-el-cuerpo'
+  | 'reemplazada-por-nota-nueva'
 
 export interface Advertencia {
   tipo: TipoAdvertencia
@@ -187,6 +188,13 @@ export interface NotaMigrada {
    * bajada a mano y se vuelve a correr.
    */
   listaParaEscribir: boolean
+  /**
+   * Slug de la nota del panel que ya cuenta este partido, o `null`.
+   *
+   * Cuando tiene valor la nota **no se escribe**: la versión a mano gana. Su
+   * permalink viejo redirige igual, pero a este slug. Ver `reemplazos.ts`.
+   */
+  reemplazadaPor: string | null
 }
 
 export interface Redireccion {

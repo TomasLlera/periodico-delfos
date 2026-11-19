@@ -30,6 +30,7 @@ import { z } from 'zod'
 import { armarInforme, resumenDeConsola } from '@/lib/migracion/informe'
 import { categoriaDesdeWordPress } from '@/lib/migracion/categorias'
 import { urlPublicaDeBucket } from '@/lib/migracion/imagenes'
+import { REEMPLAZOS } from '@/lib/migracion/reemplazos'
 import {
   REDIRECCIONES_FIJAS,
   redireccionesDeAutores,
@@ -245,16 +246,33 @@ const esquemaPendientes = z.record(z.string(), z.string())
  * Nunca pisa lo que ya está escrito: el archivo es trabajo humano. Sólo agrega
  * las claves que faltan, con el valor vacío, y ordena para que el diff entre
  * dos corridas se lea.
+ *
+ * Lo único que saca son las claves **vacías** que ya no están pendientes —una
+ * nota que pasó a estar reescrita a mano, una foto que dejó de usarse—. Una
+ * clave con algo escrito se conserva siempre, incluso si no está en `claves`:
+ * borrarla sería tirar el trabajo de alguien por un cambio de criterio que
+ * mañana se revierte. Una vacía que ya no corresponde, en cambio, manda a
+ * escribir una bajada para una nota que no se va a escribir.
  */
 async function sincronizarPendientes(
   archivo: string,
   claves: readonly string[],
 ): Promise<Record<string, string>> {
   const previo = esquemaPendientes.catch({}).parse((await leerJSON(archivo)) ?? {})
+  const pendientes = new Set(claves)
+
+  const escritas = Object.keys(previo).filter((clave) => (previo[clave] ?? '').trim() !== '')
+  const sobrantes = Object.keys(previo).filter(
+    (clave) => (previo[clave] ?? '').trim() === '' && !pendientes.has(clave),
+  )
 
   const completo: Record<string, string> = {}
-  for (const clave of [...new Set([...Object.keys(previo), ...claves])].sort()) {
+  for (const clave of [...new Set([...escritas, ...claves])].sort()) {
     completo[clave] = previo[clave] ?? ''
+  }
+
+  if (sobrantes.length > 0) {
+    detalle(`${path.basename(archivo)}: ${sobrantes.length} ya no hacen falta`)
   }
 
   await guardarJSON(archivo, completo)
@@ -379,7 +397,16 @@ async function escribirEnSupabase(
 
   // ── Las notas ──────────────────────────────────────────────
   const escribibles = notas.filter((nota) => nota.listaParaEscribir)
-  paso(`Escribiendo ${escribibles.length} notas (${notas.length - escribibles.length} esperan bajada)`)
+  // Las reemplazadas no esperan nada: no se escriben nunca. Contarlas acá dice
+  // que faltan tres bajadas más de las que hay que escribir.
+  const esperanBajada = notas.filter(
+    (nota) => !nota.listaParaEscribir && nota.reemplazadaPor === null,
+  ).length
+  const reemplazadas = notas.length - escribibles.length - esperanBajada
+  paso(
+    `Escribiendo ${escribibles.length} notas (${esperanBajada} esperan bajada` +
+      `${reemplazadas > 0 ? `, ${reemplazadas} ya escritas a mano` : ''})`,
+  )
 
   const filas = escribibles.map((nota) => {
     const temporadaId = nota.temporada ? idDeTemporada.get(nota.temporada.slug) ?? null : null
@@ -449,6 +476,7 @@ async function principal(): Promise<void> {
     bajadas,
     alts,
     autorSlug: opciones.autorSlug,
+    reemplazos: REEMPLAZOS,
   })
 
   const redirecciones = unificarRedirecciones(
@@ -483,7 +511,12 @@ async function principal(): Promise<void> {
 
   await sincronizarPendientes(
     bajadasArchivo,
-    resultado.notas.filter((nota) => !nota.listaParaEscribir).map((nota) => nota.slug),
+    // Una nota reemplazada también tiene `listaParaEscribir` en false, pero no
+    // por falta de bajada: no se escribe y punto. Pedirla sería mandar a
+    // redactar la bajada de una nota que nadie va a publicar.
+    resultado.notas
+      .filter((nota) => !nota.listaParaEscribir && nota.reemplazadaPor === null)
+      .map((nota) => nota.slug),
   )
   await sincronizarPendientes(
     altArchivo,

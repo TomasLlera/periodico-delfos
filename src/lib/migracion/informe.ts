@@ -56,6 +56,8 @@ export function armarInforme({
   const sinTemporada = conAdvertencia(notas, 'temporada-sin-detectar')
   const conDatosDeportivos = conAdvertencia(notas, 'datos-deportivos-en-el-cuerpo')
   const publicables = notas.filter((nota) => nota.estado === 'publicada')
+  const reemplazadas = notas.filter((nota) => nota.reemplazadaPor !== null)
+  const aMigrar = notas.filter((nota) => nota.reemplazadaPor === null)
 
   // Cada elemento de `partes` es un bloque entero con sus propios saltos: los
   // `''` sueltos se filtran al final para sacar las secciones vacías, y una
@@ -74,12 +76,14 @@ export function armarInforme({
         ['Qué', 'Cuántas'],
         [
           ['Notas leídas', String(notas.length)],
+          ['Ya escritas a mano, no se migran', String(reemplazadas.length)],
+          ['A migrar', String(aMigrar.length)],
           [
             'Listas para escribir (con bajada)',
             String(notas.filter((n) => n.listaParaEscribir).length),
           ],
           ['Quedarían publicadas', String(publicables.length)],
-          ['Quedarían en borrador', String(notas.length - publicables.length)],
+          ['Quedarían en borrador', String(aMigrar.length - publicables.length)],
           ['Imágenes a subir al bucket `media`', String(imagenes.length)],
           ['Redirecciones 301', String(redirecciones.length)],
         ],
@@ -88,6 +92,25 @@ export function armarInforme({
     ].join('\n'),
   ]
 
+  partes.push(
+    seccion('Ya escritas a mano en el panel', [
+      `Estas ${reemplazadas.length} notas cubren partidos que ya tienen su crónica escrita a`,
+      `mano en el sitio nuevo. **No se migran**: la versión del panel gana. El`,
+      `\`upsert\` es por slug, así que sin esta exclusión entrarían como notas nuevas`,
+      `y el sitio quedaría con dos crónicas del mismo partido.`,
+      ``,
+      `Su permalink viejo **sí** redirige 301, pero a la nota nueva. La tabla vive en`,
+      `\`src/lib/migracion/reemplazos.ts\`.`,
+      ``,
+      ...tabla(
+        ['Slug viejo', 'Redirige a'],
+        reemplazadas.map((nota) => [
+          `\`${nota.slug}\``,
+          `\`/nota/${nota.reemplazadaPor ?? ''}\``,
+        ]),
+      ),
+    ]),
+  )
   partes.push(
     seccion('Bajadas a escribir a mano', [
       `\`bajada\` es obligatoria y no se inventa: la base la exige no vacía`,
@@ -149,7 +172,7 @@ export function armarInforme({
       ``,
       ...tabla(
         ['Slug', 'Título nuevo', 'Temporada', 'Fecha', 'Etapa'],
-        notas.map((nota) => [
+        aMigrar.map((nota) => [
           nota.slug,
           nota.titulo,
           nota.temporada?.slug ?? '—',
@@ -171,7 +194,7 @@ export function armarInforme({
       `blueprint descarta (sección 5: se cargan a mano desde el admin)— pero deja la`,
       `lista para que el trabajo tenga un largo conocido.`,
       ``,
-      `${conDatosDeportivos.length} de ${notas.length} notas traen la ficha del partido tipeada.`,
+      `${conDatosDeportivos.length} de ${aMigrar.length} notas traen la ficha del partido tipeada.`,
       ``,
       ...tabla(
         ['Slug', 'Secciones'],
@@ -207,6 +230,7 @@ export function resumenDeConsola(resultado: ResultadoMigracion, rutaInforme: str
 
   return [
     `notas leídas          ${notas.length}`,
+    `ya escritas a mano    ${notas.filter((n) => n.reemplazadaPor !== null).length}`,
     `listas para escribir  ${notas.filter((n) => n.listaParaEscribir).length}`,
     `sin bajada            ${sinBajada}`,
     `con alt pendiente     ${sinAlt}`,

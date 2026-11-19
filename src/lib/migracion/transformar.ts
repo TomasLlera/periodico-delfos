@@ -12,6 +12,7 @@
 
 import { bajadaDeExtracto } from '@/lib/migracion/bajada'
 import { categoriaDesdeWordPress, indiceDeCategorias } from '@/lib/migracion/categorias'
+import { temporadaCorregida } from '@/lib/migracion/correcciones'
 import { htmlATipTap, seccionesDeDatosDeportivos } from '@/lib/migracion/cuerpo'
 import type { ImagenCruda } from '@/lib/migracion/extensiones'
 import {
@@ -20,6 +21,7 @@ import {
   urlOriginal,
   urlPublicaDeBucket,
 } from '@/lib/migracion/imagenes'
+import { slugQueReemplaza } from '@/lib/migracion/reemplazos'
 import { normalizarEspacios, textoPlano } from '@/lib/migracion/texto'
 import { limpiarTitulo } from '@/lib/migracion/titulo'
 import type {
@@ -45,6 +47,13 @@ export interface OpcionesTransformar {
   alts: Readonly<Record<string, string>>
   /** Slug en la tabla `autores` al que se atribuyen las notas. */
   autorSlug: string
+  /**
+   * Notas de WordPress ya reescritas a mano, por slug viejo. Ver `reemplazos.ts`.
+   *
+   * Es obligatorio y no tiene valor por omisión: olvidarlo escribe dos crónicas
+   * del mismo partido, y eso recién se ve en producción.
+   */
+  reemplazos: Readonly<Record<string, string>>
 }
 
 export interface ResultadoMigracion {
@@ -168,7 +177,51 @@ function transformarPost(post: PostWP, contexto: Contexto): PostTransformado {
 
   // ── Título, fecha y temporada ──────────────────────────────
   const titulo = limpiarTitulo(post.title.rendered)
-  if (!titulo.temporada) {
+  // Un título puede decir mal el campeonato; ver `correcciones.ts`.
+  const temporada = temporadaCorregida(post.slug, titulo.temporada)
+
+  // ── ¿Ya está reescrita a mano? ─────────────────────────────
+  // Se corta acá, antes de convertir el cuerpo. No es sólo ahorrar trabajo: si
+  // siguiera, sus imágenes entrarían en `alt.json` y su extracto en
+  // `bajadas.json`, mandando a escribir a mano los pendientes de una nota que
+  // no se va a escribir nunca. Lo único que se conserva es lo que necesita la
+  // 301 —`urlVieja` y el slug nuevo— y el título, para que el informe diga de
+  // cuál se trata.
+  const reemplazadaPor = slugQueReemplaza(post.slug, contexto.opciones.reemplazos)
+
+  if (reemplazadaPor !== null) {
+    return {
+      nota: {
+        wpId: post.id,
+        slug: post.slug,
+        urlVieja: post.link,
+        titulo: titulo.titulo,
+        tituloOriginal: titulo.original,
+        bajada: '',
+        cuerpo: { type: 'doc', content: [] },
+        portada: null,
+        imagenes: [],
+        categoria: 'cronica',
+        temporada,
+        fechaNumero: titulo.fechaNumero,
+        etapa: titulo.etapa,
+        autorSlug: contexto.opciones.autorSlug,
+        estado: 'borrador',
+        publicadaEn: aISO(post.date_gmt),
+        advertencias: [
+          {
+            tipo: 'reemplazada-por-nota-nueva',
+            detalle: `No se migra: ya está escrita a mano en /nota/${reemplazadaPor}. Su URL vieja redirige ahí.`,
+          },
+        ],
+        listaParaEscribir: false,
+        reemplazadaPor,
+      },
+      descartados: {},
+      categoriasSinMapear: [],
+    }
+  }
+  if (!temporada) {
     advertencias.push({
       tipo: 'temporada-sin-detectar',
       detalle: 'El título no dice el torneo: hay que elegir la temporada a mano.',
@@ -279,7 +332,7 @@ function transformarPost(post: PostWP, contexto: Contexto): PostTransformado {
       portada: portada && portada.alt !== '' ? portada : null,
       imagenes: registro.imagenes,
       categoria: categoria.categoria,
-      temporada: titulo.temporada,
+      temporada,
       fechaNumero: titulo.fechaNumero,
       etapa: titulo.etapa,
       autorSlug: contexto.opciones.autorSlug,
@@ -287,6 +340,7 @@ function transformarPost(post: PostWP, contexto: Contexto): PostTransformado {
       publicadaEn: aISO(post.date_gmt),
       advertencias,
       listaParaEscribir: bajada !== '',
+      reemplazadaPor: null,
     },
     descartados: cuerpo.descartados,
     categoriasSinMapear: categoria.sinMapear,
@@ -310,6 +364,12 @@ export function transformarVolcado(
   const categoriasSinMapear = new Set<string>()
 
   for (const { nota, ...resto } of transformados) {
+    // Una nota reemplazada no aporta imágenes: nadie las va a mostrar, y si
+    // entraran acá el script las bajaría, las subiría al bucket y pediría su
+    // `alt` a mano. Si alguna foto además la usa una nota que sí se migra, esa
+    // nota la registra por su cuenta.
+    if (nota.reemplazadaPor !== null) continue
+
     for (const imagen of nota.imagenes) {
       // Una misma foto puede aparecer en dos notas. Se queda la versión que
       // tenga el `alt` escrito, si alguna lo tiene.

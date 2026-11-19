@@ -29,6 +29,7 @@ function nota(slug: string, urlVieja: string): NotaMigrada {
     publicadaEn: '2026-08-08T18:30:00.000Z',
     advertencias: [],
     listaParaEscribir: true,
+    reemplazadaPor: null,
   }
 }
 

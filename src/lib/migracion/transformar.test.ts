@@ -16,6 +16,7 @@ const OPCIONES: OpcionesTransformar = {
   bajadas: {},
   alts: {},
   autorSlug: 'charlie-redondo',
+  reemplazos: {},
 }
 
 const VOLCADO: VolcadoWP = {
@@ -205,5 +206,64 @@ describe('transformarVolcado', () => {
 
   it('atribuye las notas al autor configurado', () => {
     expect(resultado.notas.every((nota) => nota.autorSlug === 'charlie-redondo')).toBe(true)
+  })
+})
+
+describe('notas ya reescritas a mano', () => {
+  // La crónica del volcado trae la imagen destacada sin `alt`, así que en una
+  // corrida normal pide bajada y pide `alt`. Reemplazada no debería pedir nada:
+  // es trabajo a mano para una nota que no se va a escribir.
+  const SLUG_CRONICA =
+    'defensa-y-justicia-2-1-tiburonas-fecha-n12-aldosivi-femenino-en-la-primera-b-2026'
+
+  const reemplazada = () =>
+    transformarVolcado(VOLCADO, {
+      ...OPCIONES,
+      reemplazos: { [SLUG_CRONICA]: 'la-nota-del-panel' },
+    })
+
+  it('no se escribe, aunque tenga bajada escrita a mano', () => {
+    const resultado = transformarVolcado(VOLCADO, {
+      ...OPCIONES,
+      bajadas: { [SLUG_CRONICA]: 'Una bajada perfectamente válida.' },
+      reemplazos: { [SLUG_CRONICA]: 'la-nota-del-panel' },
+    })
+
+    const nota = resultado.notas.find((n) => n.slug === SLUG_CRONICA)
+    expect(nota?.reemplazadaPor).toBe('la-nota-del-panel')
+    expect(nota?.listaParaEscribir).toBe(false)
+    expect(nota?.estado).toBe('borrador')
+  })
+
+  it('sigue apareciendo en el resultado: su URL vieja necesita la 301', () => {
+    expect(reemplazada().notas.map((n) => n.slug)).toContain(SLUG_CRONICA)
+  })
+
+  it('no pide bajada ni alt a mano', () => {
+    const nota = reemplazada().notas.find((n) => n.slug === SLUG_CRONICA)
+    const tipos = nota?.advertencias.map((a) => a.tipo) ?? []
+
+    expect(tipos).toEqual(['reemplazada-por-nota-nueva'])
+  })
+
+  it('no aporta imágenes al bucket', () => {
+    const sinReemplazo = transformarVolcado(VOLCADO, OPCIONES)
+
+    expect(reemplazada().imagenes.length).toBeLessThan(sinReemplazo.imagenes.length)
+  })
+
+  it('una foto que también usa una nota que sí se migra no se pierde', () => {
+    // La del entrenamiento la usa el análisis, que no está reemplazado.
+    const rutas = reemplazada().imagenes.map((i) => i.ruta)
+
+    expect(rutas).toContain('wp/2026/07/entrenamiento.jpg')
+  })
+
+  it('las demás notas se migran igual', () => {
+    const resultado = reemplazada()
+    const otras = resultado.notas.filter((n) => n.slug !== SLUG_CRONICA)
+
+    expect(otras.length).toBeGreaterThan(0)
+    expect(otras.every((n) => n.reemplazadaPor === null)).toBe(true)
   })
 })

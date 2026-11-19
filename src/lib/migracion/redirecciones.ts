@@ -35,11 +35,19 @@ export function pathDeUrl(url: string): string {
   }
 }
 
-/** Una nota vieja → su lugar nuevo. Los slugs no cambian. */
+/**
+ * Una nota vieja → su lugar nuevo. Los slugs no cambian.
+ *
+ * La excepción es una nota reemplazada: no se migra porque ya se reescribió a
+ * mano en el panel (ver `reemplazos.ts`), así que su permalink no puede
+ * apuntar a `/nota/<slug-viejo>` —ese slug no va a existir nunca— sino a la
+ * nota nueva. La 301 se emite igual: la URL vieja está indexada y perderla es
+ * exactamente lo que la regla no negociable 8 prohíbe.
+ */
 export function redireccionesDeNotas(notas: readonly NotaMigrada[]): Redireccion[] {
   return notas.map((nota) => ({
     origen: pathDeUrl(nota.urlVieja),
-    destino: `/nota/${nota.slug}`,
+    destino: `/nota/${nota.reemplazadaPor ?? nota.slug}`,
     permanente: true,
   }))
 }
